@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1200px;
+    height: 630px;
+    background: #1a1f2e;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #c8cdd8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 36px 80px 20px;
+    overflow: hidden;
+  }
+  h1 {
+    color: #ffffff;
+    font-size: 42px;
+    font-weight: 800;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  .subtitle {
+    font-size: 17px;
+    color: #8891a4;
+    margin-bottom: 20px;
+  }
+  .table-wrap {
+    width: 100%;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead th {
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: #6b7280;
+    text-transform: uppercase;
+    padding: 7px 16px;
+    border-bottom: 1px solid #2a3040;
+  }
+  thead th:nth-child(2) {
+    text-align: center;
+  }
+  tbody td {
+    padding: 7px 16px;
+    font-size: 14px;
+    border-bottom: 1px solid #222838;
+  }
+  tbody td:first-child {
+    color: #7dd3fc;
+    font-weight: 500;
+  }
+  tbody td:nth-child(2) {
+    text-align: center;
+    color: #7dd3fc;
+    font-weight: 600;
+  }
+  tbody td:nth-child(3) {
+    color: #9ca3af;
+  }
+  .url {
+    font-size: 14px;
+    color: #6b7280;
+    margin-top: 14px;
+  }
+</style>
+</head>
+<body>
+  <h1>Agent Skill Implementation</h1>
+  <p class="subtitle">22 checks across 9 categories</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Checks</th>
+          <th>What it evaluates</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Loading Timing</td>
+          <td>3</td>
+          <td>When skill content enters context, how much is loaded at each stage</td>
+        </tr>
+        <tr>
+          <td>Directory Recognition</td>
+          <td>3</td>
+          <td>Which directories a platform recognizes as part of a skill</td>
+        </tr>
+        <tr>
+          <td>Resource Access Patterns</td>
+          <td>4</td>
+          <td>How platforms make supporting files available to the model</td>
+        </tr>
+        <tr>
+          <td>Content Presentation</td>
+          <td>2</td>
+          <td>What the model sees when a skill is activated, and how it's formatted</td>
+        </tr>
+        <tr>
+          <td>Lifecycle Management</td>
+          <td>3</td>
+          <td>How platforms manage skill content over a conversation</td>
+        </tr>
+        <tr>
+          <td>Access Control</td>
+          <td>2</td>
+          <td>How platforms gate skill loading and handle control fields</td>
+        </tr>
+        <tr>
+          <td>Structural Edge Cases</td>
+          <td>2</td>
+          <td>Nested skills, deeply nested resources, non-standard structures</td>
+        </tr>
+        <tr>
+          <td>Skill-to-Skill Invocation</td>
+          <td>4</td>
+          <td>Whether and how a skill can activate another skill</td>
+        </tr>
+        <tr>
+          <td>Skill Dependencies</td>
+          <td>4</td>
+          <td>How platforms handle one skill depending on another</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="url">agentskillimplementation.com</p>
+</body>
+</html>

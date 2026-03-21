@@ -1,0 +1,19 @@
+colorScheme = "congo"
+defaultAppearance = "dark"
+autoSwitchAppearance = true
+description = "Empirical research into how agent platforms implement Agent Skill loading, management, and presentation."
+mainSections = ["checks"]
+images = ["sharing.png"]
+
+[homepage]
+layout = "page"
+showRecent = false
+
+[article]
+showTableOfContents = false
+
+[header]
+layout = "basic"
+
+[author]
+name = "Dachary Carey"

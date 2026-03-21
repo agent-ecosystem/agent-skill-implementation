@@ -1,0 +1,16 @@
+[[main]]
+name = "Loading Behavior"
+pageRef = "checks"
+weight = 10
+
+[[main]]
+name = "GitHub"
+url = "https://github.com/agent-ecosystem/agent-skill-implementation"
+weight = 20
+pre = "github"
+
+[[main]]
+identifier = "appearance"
+weight = 30
+[main.params]
+action = "appearance"

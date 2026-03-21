@@ -1,0 +1,14 @@
+# Agent Skill Implementation
+
+> Empirical research into how agent platforms implement Agent Skill loading, management, and presentation. 22 checks across 9 categories, with benchmark skills for cross-platform testing.
+
+## Docs
+
+- [Loading Behavior Checks](https://agentskillimplementation.com/checks/index.md): The complete catalog of 22 loading behavior checks across 9 categories, with descriptions and rationale for each.
+- [Home](https://agentskillimplementation.com/index.md): Overview, current status, and links to the GitHub repository for benchmark skills and platform results.
+
+## Tools
+
+- [skill-validator](https://github.com/agent-ecosystem/skill-validator): CLI tool for validating Agent Skills against the spec.
+- [Benchmark Skills](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills): 16 spec-compliant skills with canary phrases for cross-platform loading behavior testing.
+- [Platform Template](https://github.com/agent-ecosystem/agent-skill-implementation/blob/main/platform-loading-implementation/template.md): Template for recording per-platform loading behavior findings.

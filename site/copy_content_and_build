@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SITE_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_DIR="$(dirname "$SITE_DIR")"
+CONTENT_SOURCE="$REPO_DIR/loading-behavior.md"
+CONTENT_DEST="$SITE_DIR/content/checks/_index.md"
+
+# Ensure content/checks/ directory exists
+mkdir -p "$SITE_DIR/content/checks"
+
+# Prepend front matter to loading-behavior.md and write to content directory
+cat > "$CONTENT_DEST" <<'FRONTMATTER'
+---
+title: "Skill Loading Behavior"
+description: "22 checks across 9 categories for empirically testing how agent platforms load, manage, and present Agent Skills."
+showTableOfContents: true
+---
+
+FRONTMATTER
+
+# Strip the first H1 header line (duplicates the page title from front matter)
+tail -n +2 "$CONTENT_SOURCE" >> "$CONTENT_DEST"
+
+echo "Generated $CONTENT_DEST"
+
+# Run Hugo, passing through any arguments (e.g., "server")
+cd "$SITE_DIR"
+hugo "$@"
