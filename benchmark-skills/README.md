@@ -104,6 +104,23 @@ skills** provide additional signal or are needed as part of the test setup.
 | `nonstandard-dependency-fields` | `probe-nonstandard-fields` | | Activate the skill. It has `requires` and `depends-on` frontmatter fields. Check whether the platform acted on them or ignored them. |
 | `cross-scope-dependency` | `probe-cross-scope` | `probe-loading` | Install probe-cross-scope at project level and probe-loading at user level. Activate probe-cross-scope and see if it can invoke probe-loading across scopes. Then remove probe-loading from user level and test again. |
 
+## Structural Validation
+
+These skills have been validated with
+[skill-validator](https://github.com/anthropics/skill-validator) `validate structure`.
+All 16 skills pass. Four skills produce expected warnings because they
+intentionally use nonstandard structures to test platform loading behavior:
+
+| Skill | Warnings | Why they're expected |
+|-------|----------|----------------------|
+| `probe-deep-nesting` | Deep nesting in `references/` | Tests whether platforms follow nested resource paths |
+| `probe-linked-resources` | Orphaned files in `references/` and `assets/` | Tests eager link resolution vs. bulk directory loading |
+| `probe-nonstandard-dirs` | Unknown directories `evals/`, `resources/`, `templates/` | Tests how platforms handle non-spec directory names |
+| `probe-nonstandard-fields` | Unrecognized frontmatter fields `requires`, `depends-on`, `priority` | Tests whether platforms act on or ignore extra fields |
+
+If you run the validator yourself and see only these warnings, everything is
+fine. Errors or warnings on other skills would indicate a problem.
+
 ## Canary Phrase Index
 
 Each file contains a unique canary phrase. If a tester can identify which
