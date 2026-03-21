@@ -1,0 +1,9 @@
+{
+  "eval_canary": "ROBIN-JADE-3847",
+  "test_cases": [
+    {
+      "input": "What does this skill do?",
+      "expected_behavior": "Describes the benchmark purpose"
+    }
+  ]
+}

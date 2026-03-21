@@ -1,0 +1,6 @@
+# Benchmark asset for testing resource loading behavior.
+# Asset canary phrase: CRANE-TOPAZ-6638
+api:
+  endpoint: https://api.example.com
+  timeout: 30
+  retries: 3
