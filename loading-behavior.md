@@ -253,9 +253,9 @@ The spec defines six frontmatter fields (`name`, `description`, `license`, `comp
 
 ## Benchmark Skills
 
-The [`benchmark-skills/`](benchmark-skills/) directory contains 16 spec-compliant skills designed to exercise these checks. Each skill contains unique **canary phrases** (e.g., CARDINAL-ZEBRA-7742) embedded in specific files. By asking the model whether it knows a canary phrase, testers can determine exactly what the platform loaded and when, without relying on the model's self-reporting about its own context.
+The [`benchmark-skills/`](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills) directory contains 16 spec-compliant skills designed to exercise these checks. Each skill contains unique **canary phrases** (e.g., CARDINAL-ZEBRA-7742) embedded in specific files. By asking the model whether it knows a canary phrase, testers can determine exactly what the platform loaded and when, without relying on the model's self-reporting about its own context.
 
-See [`benchmark-skills/README.md`](benchmark-skills/README.md) for:
+See [`benchmark-skills/README.md`](https://github.com/agent-ecosystem/agent-skill-implementation/blob/main/benchmark-skills/README.md) for:
 
 - The full skill inventory and what each skill tests
 - A **check-to-skill mapping** showing which skill(s) to use for each check and the recommended test procedure
@@ -263,6 +263,6 @@ See [`benchmark-skills/README.md`](benchmark-skills/README.md) for:
 
 ## Contributing
 
-We need empirical data from people testing on real platforms. If you can test any of these checks on a specific platform, please open a PR with your findings using the template at [`platform-loading-implementation/template.md`](platform-loading-implementation/template.md).
+We need empirical data from people testing on real platforms. If you can test any of these checks on a specific platform, please open a PR with your findings using the template at [`platform-loading-implementation/template.md`](https://github.com/agent-ecosystem/agent-skill-implementation/blob/main/platform-loading-implementation/template.md).
 
 Even partial data is valuable. A single platform tested thoroughly is more useful than speculation about all of them.
