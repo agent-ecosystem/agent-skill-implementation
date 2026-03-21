@@ -1,0 +1,13 @@
+# IDE and editor artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Site build artifacts
+site/public/
+site/resources/
+site/content/checks/_index.md
+site/build_and_sync
