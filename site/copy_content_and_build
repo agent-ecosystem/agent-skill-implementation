@@ -13,7 +13,7 @@ mkdir -p "$SITE_DIR/content/checks"
 cat > "$CONTENT_DEST" <<'FRONTMATTER'
 ---
 title: "Skill Loading Behavior"
-description: "22 checks across 9 categories for empirically testing how agent platforms load, manage, and present Agent Skills."
+description: "23 checks across 9 categories for empirically testing how agent platforms load, manage, and present Agent Skills."
 showTableOfContents: true
 ---
 

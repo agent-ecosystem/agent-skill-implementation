@@ -18,6 +18,7 @@ determine what content the platform loaded and when.
 | `probe-traversal` | Path traversal boundary enforcement | SKILL.md only (references siblings and parents) |
 | `probe-compatibility` | Compatibility field handling | SKILL.md with compatibility field |
 | `probe-nonstandard-fields` | Nonstandard frontmatter field handling | SKILL.md with requires, depends-on, priority |
+| `probe-metadata-values` | Metadata value edge cases (nulls, empty strings) | SKILL.md with edge-case metadata values |
 | `invoke-alpha` | Invocation chain entry point (3-skill chain) | SKILL.md only |
 | `invoke-beta` | Invocation chain middle link | SKILL.md only |
 | `invoke-gamma` | Invocation chain terminal link | SKILL.md only |
@@ -62,6 +63,7 @@ skills** provide additional signal or are needed as part of the test setup.
 | Check | Primary Skill | Test Procedure |
 |-------|--------------|----------------|
 | `frontmatter-handling` | `probe-loading` | Activate the skill and check step 1. The skill has `allowed-tools`, `compatibility`, and `metadata` fields. If the model can see them, frontmatter was passed through. Also test with `probe-compatibility` for a skill where the compatibility field contains meaningful requirements. |
+| `metadata-value-edge-cases` | `probe-metadata-values` | Activate the skill. If it loads successfully, the platform didn't reject the edge-case metadata. Check step 2-3 to see which values the model received and whether any keys were dropped. Look for canary phrase THRUSH-FLINT-8294 to confirm the body loaded. |
 | `content-wrapping-format` | `probe-loading` | Activate the skill and check step 2. Ask the model to describe how the skill content was presented to it. |
 
 ### Category 5: Lifecycle Management
@@ -108,7 +110,7 @@ skills** provide additional signal or are needed as part of the test setup.
 
 These skills have been validated with
 [skill-validator](https://github.com/anthropics/skill-validator) `validate structure`.
-All 16 skills pass. Four skills produce expected warnings because they
+All 17 skills pass. Five skills produce expected warnings because they
 intentionally use nonstandard structures to test platform loading behavior:
 
 | Skill | Warnings | Why they're expected |
@@ -117,6 +119,7 @@ intentionally use nonstandard structures to test platform loading behavior:
 | `probe-linked-resources` | Orphaned files in `references/` and `assets/` | Tests eager link resolution vs. bulk directory loading |
 | `probe-nonstandard-dirs` | Unknown directories `evals/`, `resources/`, `templates/` | Tests how platforms handle non-spec directory names |
 | `probe-nonstandard-fields` | Unrecognized frontmatter fields `requires`, `depends-on`, `priority` | Tests whether platforms act on or ignore extra fields |
+| `probe-metadata-values` | Non-string values in `metadata` (`null`, `~`, `None`, `!!null null`) | Tests whether platforms handle null metadata values gracefully |
 
 If you run the validator yourself and see only these warnings, everything is
 fine. Errors or warnings on other skills would indicate a problem.
@@ -135,6 +138,7 @@ it reveals what the platform loaded automatically.
 | OSPREY-COBALT-5567 | references/unreferenced-detail.md | probe-loading |
 | HERON-AMBER-2204 | scripts/check-status.sh | probe-loading |
 | CRANE-TOPAZ-6638 | assets/config-template.yaml | probe-loading |
+| THRUSH-FLINT-8294 | SKILL.md body | probe-metadata-values |
 | PARROT-SILVER-4412 | references/setup-guide.md | probe-linked-resources |
 | TOUCAN-BRONZE-9931 | references/troubleshooting.md | probe-linked-resources |
 | EAGLE-COPPER-1178 | references/unlinked-data.md | probe-linked-resources |

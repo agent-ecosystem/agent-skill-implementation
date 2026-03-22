@@ -14,3 +14,4 @@ choose to be listed by your real name, GitHub handle, or not at all.
 | Contributor | Contributions |
 |-------------|---------------|
 | [@dacharyc](https://github.com/dacharyc) | Project creator, loading behavior checks, benchmark skills |
+| [@masukomi](https://github.com/masukomi) | Proposed `metadata-value-edge-cases` check ([#1](https://github.com/agent-ecosystem/agent-skill-implementation/issues/1)) |

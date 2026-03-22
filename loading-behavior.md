@@ -1,5 +1,7 @@
 # Skill Loading Behavior
 
+**Check list version: 0.1**
+
 How do agent platforms actually load skill content? The [Agent Skills specification](https://agentskills.io/specification) defines a file format and recommends a three-tier "progressive disclosure" model, but gives platforms wide latitude in implementation. The [client implementation guide](https://agentskills.io/client-implementation/adding-skills-support) provides more detailed guidance, but was derived from analysis of 7 of 25+ adopting platforms and published months after most platforms had already shipped their implementations.
 
 This raises a question: does loading behavior actually vary across platforms, and if so, how? Skill authors currently have no way to know what will happen when their skill is activated on a given platform. This page catalogs the behaviors that need empirical testing to find out.
@@ -116,6 +118,12 @@ These checks evaluate what the model actually sees when a skill is activated, an
 - **Category**: Content Presentation
 - **What it checks**: Whether the platform passes the full SKILL.md file to the model (including YAML frontmatter) or strips the frontmatter and passes only the markdown body.
 - **Why it matters**: The model sees different content on different platforms for the same skill. Frontmatter fields like `allowed-tools` and `compatibility` may influence model behavior on platforms that pass them through, and be invisible on platforms that strip them. A skill author who puts important context in the `compatibility` field ("requires Python 3.14+ and network access") may find that information reaches the model on one platform and is silently dropped on another.
+
+### `metadata-value-edge-cases`
+
+- **Category**: Content Presentation
+- **What it checks**: Whether platforms successfully parse and load a skill whose `metadata` frontmatter contains edge-case YAML values: empty strings (`''`, `""`), explicit nulls (`null`, `~`, `None`), and tagged nulls (`!!null null`).
+- **Why it matters**: The spec defines `metadata` as a string-to-string mapping, but YAML parsers interpret `null`, `~`, and `None` as null values rather than strings. A platform whose loader expects all metadata values to be strings may throw a type error, silently drop the affected keys, or fail to load the skill entirely. Since the spec doesn't explicitly prohibit null values and YAML makes them easy to produce accidentally (an author who writes `foo:` with no value gets null, not an empty string), these edge cases will appear in real-world skills. The question is whether each platform handles them gracefully or breaks.
 
 ### `content-wrapping-format`
 

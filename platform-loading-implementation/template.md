@@ -14,6 +14,7 @@
 |-------|-------|
 | **Platform** | <!-- e.g., Claude Code, GitHub Copilot, Cursor, Roo Code --> |
 | **Platform version** | <!-- e.g., 1.0.20, VS Code 1.107 + Copilot Chat 0.24 --> |
+| **Check list version** | <!-- The version from loading-behavior.md (e.g., 0.1). Lets readers know which checks existed when this platform was tested. --> |
 | **Date tested** | <!-- YYYY-MM-DD. Implementation details change; this is a snapshot. --> |
 | **Model used** | <!-- e.g., Claude Sonnet 4.6, GPT-4o, Gemini 2.5 Pro. Note the specific model, not just the family. --> |
 | **Tester** | <!-- Your name or GitHub handle --> |
@@ -215,6 +216,15 @@ work on that platform.
 - **Evidence**: <!--  -->
 - **Platform-level or model-level?**: <!-- Platform-level -->
 - **Fallback behavior**: <!-- If frontmatter is stripped, can the user instruct the agent to re-read the raw SKILL.md file to see the frontmatter? Is there a platform setting to change stripping behavior? -->
+
+#### `metadata-value-edge-cases`
+
+- **Benchmark skill**: `probe-metadata-values` — Activate the skill. If it loads, the platform didn't reject the edge-case metadata values. Check steps 2-3 to see which values the model received and whether any keys were dropped. Look for canary phrase THRUSH-FLINT-8294 to confirm the body loaded.
+- **Status**: Not tested
+- **Observation**: <!-- Did the skill load successfully? Were all seven metadata keys preserved? Were null values coerced to strings, dropped, or passed through as null? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level -->
+- **Fallback behavior**: <!-- If the platform rejects the skill, can the metadata values be quoted to force string interpretation? Does removing null-valued keys allow the skill to load? -->
 
 #### `content-wrapping-format`
 

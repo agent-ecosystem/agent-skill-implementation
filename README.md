@@ -30,11 +30,11 @@ through empirical testing rather than assumptions.
 
 ## What's here
 
-- **[loading-behavior.md](loading-behavior.md)** — 22 checks across 9 categories
+- **[loading-behavior.md](loading-behavior.md)** — 23 checks across 9 categories
   of skill loading behavior that need empirical testing. Each check describes what
   it evaluates and why it matters for skill authors.
 
-- **[benchmark-skills/](benchmark-skills/)** — 16 spec-compliant skills designed
+- **[benchmark-skills/](benchmark-skills/)** — 17 spec-compliant skills designed
   to exercise those checks. Each contains unique canary phrases that reveal what a
   platform loaded and when, without relying on model self-reporting. See the
   [benchmark skills README](benchmark-skills/README.md) for the full inventory,
