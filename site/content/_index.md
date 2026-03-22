@@ -23,14 +23,14 @@ through empirical testing rather than assumptions.
 
 The current focus is on **skill loading behavior**: how platforms load skill
 content into the agent's context, what they load, and when. We've cataloged
-**[22 checks across 9 categories](/checks/)** that need empirical testing:
+**[23 checks across 9 categories](/checks/)** that need empirical testing:
 
 | Category | Checks | What it evaluates |
 |----------|--------|-------------------|
 | Loading Timing | 3 | When skill content enters the agent's context, and how much is loaded at each stage |
 | Directory Recognition | 3 | Which directories a platform recognizes as part of a skill |
 | Resource Access Patterns | 4 | How platforms make supporting files available to the model |
-| Content Presentation | 2 | What the model actually sees when a skill is activated |
+| Content Presentation | 3 | What the model actually sees when a skill is activated |
 | Lifecycle Management | 3 | How platforms manage skill content over the course of a conversation |
 | Access Control | 2 | How platforms gate skill loading and handle control-related fields |
 | Structural Edge Cases | 2 | Platform behavior with skill structures that push beyond the spec's core examples |
@@ -42,7 +42,7 @@ content into the agent's context, what they load, and when. We've cataloged
 ## Benchmark Skills
 
 The [benchmark-skills](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills)
-directory on GitHub contains 16 spec-compliant skills designed to exercise these
+directory on GitHub contains 17 spec-compliant skills designed to exercise these
 checks. Each contains unique **canary phrases** (e.g., CARDINAL-ZEBRA-7742)
 embedded in specific files. By asking the model whether it knows a canary phrase,
 testers can determine exactly what the platform loaded and when, without relying
@@ -57,7 +57,7 @@ If you use Agent Skills on any platform, you can contribute:
 
 1. Install the [benchmark skills](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills)
    on your platform
-2. Run through the test procedures for any of the 22 checks
+2. Run through the test procedures for any of the 23 checks
 3. Submit your findings via a PR using the
    [platform template](https://github.com/agent-ecosystem/agent-skill-implementation/blob/main/platform-loading-implementation/template.md)
 
