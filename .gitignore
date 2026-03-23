@@ -11,3 +11,4 @@ site/public/
 site/resources/
 site/content/checks/_index.md
 site/build_and_sync
+site/node_modules/
