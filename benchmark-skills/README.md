@@ -12,7 +12,7 @@ determine what content the platform loaded and when.
 | `probe-loading` | Core loading behavior: timing, resource enumeration, content presentation, lifecycle | SKILL.md + 3 references + 1 script + 1 asset |
 | `probe-linked-resources` | Eager link resolution and path resolution | SKILL.md + 3 references (2 linked, 1 unlinked) |
 | `probe-nonstandard-dirs` | Directory recognition and naming divergence | SKILL.md + evals/ + templates/ + resources/ |
-| `probe-deep-nesting` | Deep resource nesting and nested skill discovery | SKILL.md + references nested 1-3 levels + nested SKILL.md |
+| `probe-deep-nesting` | Deep resource nesting and nested skill discovery | SKILL.md + references nested 1-5 levels + nested SKILL.md |
 | `probe-shadow-alpha` | Cross-skill resource shadowing (pair with beta) | SKILL.md + references/API.md |
 | `probe-shadow-beta` | Cross-skill resource shadowing (pair with alpha) | SKILL.md + references/API.md |
 | `probe-traversal` | Path traversal boundary enforcement | SKILL.md only (references siblings and parents) |
@@ -26,6 +26,14 @@ determine what content the platform loaded and when.
 | `probe-circular-beta` | Circular invocation (pair with alpha) | SKILL.md only |
 | `probe-missing-dep` | Missing dependency behavior | SKILL.md only (references nonexistent skill) |
 | `probe-cross-scope` | Cross-scope dependency resolution | SKILL.md only (references skill at different scope) |
+| `probe-mismatch-dir` | Name vs. directory mismatch (frontmatter name: `probe-name-mismatch`) | SKILL.md only |
+| `probe-group` | Recursive root discovery: a plain grouping directory (not a skill) containing `probe-grouped/SKILL.md` one level down | probe-grouped/SKILL.md |
+| `probe-stray` | Recursive root discovery: a valid skill installed OUTSIDE any skills root | SKILL.md only |
+| `probe-malformed-yaml` | Malformed YAML tolerance (unquoted colon in description) | SKILL.md only |
+| `probe-no-description` | Missing description handling | SKILL.md only |
+| `probe-collision` | Name-collision precedence: PROJECT-scope variant | SKILL.md only |
+| `probe-collision-user` | Wrapper holding the USER-scope `probe-collision` variant (install the inner directory at user scope) | probe-collision/SKILL.md |
+| `overlay-agents-convention` | Wrapper holding `.agents/skills/probe-interop` for the cross-client interop check (copy its contents onto the project root) | .agents/skills/probe-interop/SKILL.md |
 
 ## Check-to-Skill Mapping
 
@@ -86,7 +94,18 @@ skills** provide additional signal or are needed as part of the test setup.
 | Check | Primary Skill | Test Procedure |
 |-------|--------------|----------------|
 | `nested-skill-discovery` | `probe-deep-nesting` | Install the skill and check the available skills list. Does `nested-skill` appear as a separate skill? Its SKILL.md is at `probe-deep-nesting/references/nested-skill/SKILL.md`. |
-| `resource-nesting-depth` | `probe-deep-nesting` | Activate the skill and follow its instructions to read files at 1, 2, and 3 levels of nesting. Note which depths succeed. |
+| `resource-nesting-depth` | `probe-deep-nesting` | Activate the skill and follow its instructions to read files at 1, 2, 3, and 5 levels of nesting. Note the deepest level that succeeds. |
+| `name-directory-mismatch` | `probe-mismatch-dir` | Install the directory as-is. Check the available skills list: does the skill appear as `probe-name-mismatch` (frontmatter), `probe-mismatch-dir` (directory), or not at all? Then activate it by whichever name appeared and look for SWAN-BERYL-3324. |
+| `recursive-root-discovery` | `probe-group` + `probe-stray` | Install `probe-group` (with its nested `probe-grouped` skill) into the skills directory, and copy `probe-stray` somewhere in the project OUTSIDE the skills directory. Check the listing for `probe-grouped` (CROW-AGATE-6105) and `probe-stray` (MERLIN-GYPSUM-8852), then activate whichever appeared. |
+
+### Category 10: Discovery and Validation
+
+| Check | Primary Skill | Test Procedure |
+|-------|--------------|----------------|
+| `cross-client-directory-interop` | `overlay-agents-convention` | Copy the wrapper's contents onto the project root so the skill lands at `<project>/.agents/skills/probe-interop/`, and do NOT install it in the platform's native skills directory. Is `probe-interop` listed? Can it activate (SNIPE-OCHRE-2217)? On platforms whose native directory IS `.agents/skills/`, record that instead. |
+| `malformed-yaml-tolerance` | `probe-malformed-yaml` | Install normally. Is the skill listed despite the invalid YAML? What description text survived? Activate and look for QUAIL-FELDSPAR-7448. |
+| `missing-description-handling` | `probe-no-description` | Install normally. Is the skill listed with no description, a placeholder, or skipped entirely? Activate and look for VIREO-PUMICE-3049. |
+| `name-collision-precedence` | `probe-collision` + `probe-collision-user` | Install `probe-collision` at project scope and `probe-collision-user/probe-collision` at USER scope. Activate `probe-collision`. RAVEN-CITRINE-6634 = project variant won; PIPIT-SHALE-1147 = user variant won. |
 
 ### Category 8: Skill-to-Skill Invocation
 
@@ -110,8 +129,11 @@ skills** provide additional signal or are needed as part of the test setup.
 
 These skills have been validated with
 [skill-validator](https://github.com/anthropics/skill-validator) `validate structure`.
-All 17 skills pass. Five skills produce expected warnings because they
-intentionally use nonstandard structures to test platform loading behavior:
+All pass except `probe-mismatch-dir`, whose single error is the point of
+the fixture (see below). `probe-group/` is a grouping wrapper, not a skill —
+validate its inner `probe-group/probe-grouped/` instead. Several fixtures
+produce expected warnings or errors because they intentionally use
+nonstandard structures to test platform loading behavior:
 
 | Skill | Warnings | Why they're expected |
 |-------|----------|----------------------|
@@ -120,6 +142,9 @@ intentionally use nonstandard structures to test platform loading behavior:
 | `probe-nonstandard-dirs` | Unknown directories `evals/`, `resources/`, `templates/` | Tests how platforms handle non-spec directory names |
 | `probe-nonstandard-fields` | Unrecognized frontmatter fields `requires`, `depends-on`, `priority` | Tests whether platforms act on or ignore extra fields |
 | `probe-metadata-values` | Non-string values in `metadata` (`null`, `~`, `None`, `!!null null`) | Tests whether platforms handle null metadata values gracefully |
+| `probe-mismatch-dir` | **Error**: name does not match directory name | Tests which identity platforms use when frontmatter name and directory name disagree — the mismatch is the fixture |
+| `probe-malformed-yaml` | **Error**: frontmatter fails strict YAML parsing | Tests parser leniency — the unquoted colon is the fixture |
+| `probe-no-description` | **Error**: missing required description | Tests skip-vs-load behavior — the omission is the fixture |
 
 If you run the validator yourself and see only these warnings, everything is
 fine. Errors or warnings on other skills would indicate a problem.
@@ -149,6 +174,7 @@ it reveals what the platform loaded automatically.
 | LARK-RUBY-4483 | references/api/endpoints.md | probe-deep-nesting |
 | OWL-EMERALD-7756 | references/api/v2/migration-guide.md | probe-deep-nesting |
 | FINCH-SAPPHIRE-2098 | references/guides/advanced/performance-tuning.md | probe-deep-nesting |
+| PLOVER-JASPER-5590 | references/api/v2/history/deprecated/removed-endpoints.md | probe-deep-nesting |
 | HAWK-ONYX-5534 | references/nested-skill/SKILL.md | probe-deep-nesting |
 | STORK-CORAL-4471 | references/API.md | probe-shadow-alpha |
 | EGRET-SLATE-8823 | references/API.md | probe-shadow-beta |
@@ -159,3 +185,11 @@ it reveals what the platform loaded automatically.
 | WREN-SLATE-7738 | SKILL.md body | probe-circular-beta |
 | GULL-IRON-4492 | SKILL.md body | probe-missing-dep |
 | CRANE-STEEL-1163 | SKILL.md body | probe-cross-scope |
+| SWAN-BERYL-3324 | SKILL.md body | probe-mismatch-dir (name: probe-name-mismatch) |
+| CROW-AGATE-6105 | probe-grouped/SKILL.md body | probe-group |
+| MERLIN-GYPSUM-8852 | SKILL.md body | probe-stray |
+| SNIPE-OCHRE-2217 | .agents/skills/probe-interop/SKILL.md body | overlay-agents-convention |
+| QUAIL-FELDSPAR-7448 | SKILL.md body | probe-malformed-yaml |
+| VIREO-PUMICE-3049 | SKILL.md body | probe-no-description |
+| RAVEN-CITRINE-6634 | SKILL.md body (project variant) | probe-collision |
+| PIPIT-SHALE-1147 | probe-collision/SKILL.md body (user variant) | probe-collision-user |

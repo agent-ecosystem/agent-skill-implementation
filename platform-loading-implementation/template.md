@@ -14,7 +14,7 @@
 |-------|-------|
 | **Platform** | <!-- e.g., Claude Code, GitHub Copilot, Cursor, Roo Code --> |
 | **Platform version** | <!-- e.g., 1.0.20, VS Code 1.107 + Copilot Chat 0.24 --> |
-| **Check list version** | <!-- The version from loading-behavior.md (e.g., 0.1). Lets readers know which checks existed when this platform was tested. --> |
+| **Check list version** | <!-- The version from loading-behavior.md (e.g., 0.2). Lets readers know which checks existed when this platform was tested. --> |
 | **Date tested** | <!-- YYYY-MM-DD. Implementation details change; this is a snapshot. --> |
 | **Model used** | <!-- e.g., Claude Sonnet 4.6, GPT-4o, Gemini 2.5 Pro. Note the specific model, not just the family. --> |
 | **Tester** | <!-- Your name or GitHub handle --> |
@@ -303,12 +303,70 @@ work on that platform.
 
 #### `resource-nesting-depth`
 
-- **Benchmark skill**: `probe-deep-nesting` — Activate the skill and follow its instructions to read files at 1 level (DOVE-GARNET-1029), 2 levels (LARK-RUBY-4483), and 3 levels (OWL-EMERALD-7756, FINCH-SAPPHIRE-2098) of nesting.
+- **Benchmark skill**: `probe-deep-nesting` — Activate the skill and follow its instructions to read files at 1 level (DOVE-GARNET-1029), 2 levels (LARK-RUBY-4483), 3 levels (OWL-EMERALD-7756, FINCH-SAPPHIRE-2098), and 5 levels (PLOVER-JASPER-5590) of nesting. Note the deepest level that succeeds.
 - **Status**: Not tested
 - **Observation**: <!-- Can the model access deeply nested resource files? At what depth does it fail? -->
 - **Evidence**: <!--  -->
 - **Platform-level or model-level?**: <!-- Platform-level (whether the harness enumerates nested files) and model-level (whether the model attempts to traverse deeper). -->
 - **Fallback behavior**: <!-- If deeply nested files aren't enumerated, can the agent access them via explicit path? Does the user need to provide the full path, or can the agent navigate the directory tree? -->
+
+#### `name-directory-mismatch`
+
+- **Benchmark skill**: `probe-mismatch-dir` — Install the directory as-is (its frontmatter declares `name: probe-name-mismatch`). Check the available skills list, then activate the skill by whichever name appeared. Canary phrase: SWAN-BERYL-3324.
+- **Status**: Not tested
+- **Observation**: <!-- Which identity does the platform use when the directory name and frontmatter name disagree — frontmatter name, directory name, both, or is the skill rejected? Any warning shown? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (the loader decides the index identity before any model involvement). -->
+- **Fallback behavior**: <!-- If the skill is rejected or listed under an unexpected name, can the user still activate it by path or by the other name? -->
+
+#### `recursive-root-discovery`
+
+- **Benchmark skills**: `probe-group` + `probe-stray` — Install `probe-group` (containing `probe-grouped/SKILL.md` one level down) into the skills directory, and copy `probe-stray` into the project OUTSIDE the skills directory. Check the listing for both, then activate whichever appeared. Canary phrases: CROW-AGATE-6105 (grouped), MERLIN-GYPSUM-8852 (stray).
+- **Status**: Not tested
+- **Observation**: <!-- Does the platform scan its skills root recursively (probe-grouped discovered), and does it discover SKILL.md files outside the root entirely (probe-stray discovered)? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level for discovery. If the model reads the stray SKILL.md as an ordinary file when asked, that is model-level file access, not discovery. -->
+- **Fallback behavior**: <!-- If grouped skills aren't discovered, does flattening the layout restore them? If the stray skill IS discovered, can the user exclude paths from scanning? -->
+
+---
+
+### Category 10: Discovery and Validation
+
+#### `cross-client-directory-interop`
+
+- **Benchmark skill**: `overlay-agents-convention` — Copy the wrapper's contents onto the project root so the skill lands at `<project>/.agents/skills/probe-interop/`; do NOT install it in the platform's native skills directory. Canary phrase: SNIPE-OCHRE-2217.
+- **Status**: Not tested
+- **Observation**: <!-- Is probe-interop listed and activatable from the .agents/skills convention path? If the platform's native directory IS .agents/skills, record that. -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (scan locations are fixed before any model involvement). -->
+- **Fallback behavior**: <!-- If the convention path isn't scanned, does a symlink from the native directory work? -->
+
+#### `malformed-yaml-tolerance`
+
+- **Benchmark skill**: `probe-malformed-yaml` — Install normally; its description contains an unquoted colon (invalid YAML). Canary phrase: QUAIL-FELDSPAR-7448.
+- **Status**: Not tested
+- **Observation**: <!-- Is the skill discovered despite the invalid YAML? What description text survived (repaired, truncated, or intact)? Does activation work? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (parser behavior). -->
+- **Fallback behavior**: <!-- If skipped, does quoting the description restore the skill? Is any diagnostic surfaced to the user? -->
+
+#### `missing-description-handling`
+
+- **Benchmark skill**: `probe-no-description` — Install normally; it has no description field. Canary phrase: VIREO-PUMICE-3049.
+- **Status**: Not tested
+- **Observation**: <!-- Skipped (guide's prescription), loaded with empty/placeholder description, or something else? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (validation policy). -->
+- **Fallback behavior**: <!-- If skipped, is a diagnostic surfaced anywhere (log, debug command, UI)? -->
+
+#### `name-collision-precedence`
+
+- **Benchmark skills**: `probe-collision` + `probe-collision-user` — Install `probe-collision` at project scope and `probe-collision-user/probe-collision` at USER scope, then activate `probe-collision`. Canary phrases: RAVEN-CITRINE-6634 (project variant), PIPIT-SHALE-1147 (user variant).
+- **Status**: Not tested
+- **Observation**: <!-- Which variant's canary loaded? Project-wins (the guide's "universal convention"), user-wins, both, or an error? Any collision warning logged? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (precedence is resolved at discovery). -->
+- **Fallback behavior**: <!-- Can the user reach the shadowed variant at all (by path, by disambiguated name)? -->
 
 ---
 

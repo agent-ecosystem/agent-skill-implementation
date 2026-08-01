@@ -1,10 +1,10 @@
 # Agent Skill Implementation
 
-> Empirical research into how agent platforms implement Agent Skill loading, management, and presentation. 23 checks across 9 categories, with benchmark skills for cross-platform testing.
+> Empirical research into how agent platforms implement Agent Skill loading, management, and presentation. 34 checks across 10 categories, with benchmark skills for cross-platform testing.
 
 ## Docs
 
-- [Loading Behavior Checks](https://agentskillimplementation.com/checks/index.md): The complete catalog of 23 loading behavior checks across 9 categories, with descriptions and rationale for each.
+- [Loading Behavior Checks](https://agentskillimplementation.com/checks/index.md): The complete catalog of 34 loading behavior checks across 10 categories, with descriptions and rationale for each.
 - [Home](https://agentskillimplementation.com/index.md): Overview, current status, and links to the GitHub repository for benchmark skills and platform results.
 
 ## Tools

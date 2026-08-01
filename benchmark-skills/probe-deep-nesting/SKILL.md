@@ -19,7 +19,10 @@ probe-deep-nesting/
     ├── api/
     │   ├── endpoints.md (two levels deep)
     │   └── v2/
-    │       └── migration-guide.md (three levels deep)
+    │       ├── migration-guide.md (three levels deep)
+    │       └── history/
+    │           └── deprecated/
+    │               └── removed-endpoints.md (five levels deep)
     ├── guides/
     │   └── advanced/
     │       └── performance-tuning.md (three levels deep)
@@ -38,9 +41,12 @@ When activated, report:
 3. **Three levels deep**: Try to read `references/api/v2/migration-guide.md`
    and `references/guides/advanced/performance-tuning.md`. Do they work?
 
-4. **Enumeration depth**: Were any of these nested files listed or enumerated
+4. **Five levels deep**: Try to read
+   `references/api/v2/history/deprecated/removed-endpoints.md`. Does it work?
+
+5. **Enumeration depth**: Were any of these nested files listed or enumerated
    to you at activation time? If so, how deep did the enumeration go?
 
-5. **Nested skill**: Is `nested-skill` listed as a separate available skill
+6. **Nested skill**: Is `nested-skill` listed as a separate available skill
    in your skill catalog? This tests whether the platform discovered the
    SKILL.md at `references/nested-skill/SKILL.md`.

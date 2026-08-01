@@ -163,7 +163,7 @@ This work is licensed under [Creative Commons Attribution 4.0 International](LIC
 ## AI Usage Disclosure
 
 I (dacharyc) - the project creator - yeeted this into existence with the aid of
-Claude Code across a few hours on a Saturday morning. All content was informed by
+Claude Code across a couple of Saturday mornings. All content was informed by
 my ideas and questions I want to answer for the reasons enumerated here, but Claude
 helped with landscape research, drafting the benchmark skills, and creating some of
 the content. I have attempted to validate the accuracy of all assertions here (and

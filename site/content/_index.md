@@ -23,7 +23,7 @@ through empirical testing rather than assumptions.
 
 The current focus is on **skill loading behavior**: how platforms load skill
 content into the agent's context, what they load, and when. We've cataloged
-**[23 checks across 9 categories](/checks/)** that need empirical testing:
+**[34 checks across 10 categories](/checks/)** that need empirical testing:
 
 | Category | Checks | What it evaluates |
 |----------|--------|-------------------|
@@ -33,9 +33,10 @@ content into the agent's context, what they load, and when. We've cataloged
 | Content Presentation | 3 | What the model actually sees when a skill is activated |
 | Lifecycle Management | 3 | How platforms manage skill content over the course of a conversation |
 | Access Control | 2 | How platforms gate skill loading and handle control-related fields |
-| Structural Edge Cases | 2 | Platform behavior with skill structures that push beyond the spec's core examples |
+| Structural Edge Cases | 4 | Platform behavior with skill structures that push beyond the spec's core examples |
 | Skill-to-Skill Invocation | 4 | Whether and how a skill can instruct the model to activate another skill |
 | Skill Dependencies | 4 | How platforms handle the concept of one skill depending on another |
+| Discovery and Validation | 4 | Where platforms look for skills and how strictly they validate them |
 
 **[Read the Full Checks Catalog](/checks/)**
 
