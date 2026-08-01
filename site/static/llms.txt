@@ -1,14 +1,21 @@
 # Agent Skill Implementation
 
-> Empirical research into how agent platforms implement Agent Skill loading, management, and presentation. 34 checks across 10 categories, with benchmark skills for cross-platform testing.
+> Empirical research into how agent platforms implement Agent Skill loading, management, and presentation. 35 checks across 10 categories, with benchmark skills for cross-platform testing and automated, transcript-cited platform reports.
 
 ## Docs
 
-- [Loading Behavior Checks](https://agentskillimplementation.com/checks/index.md): The complete catalog of 34 loading behavior checks across 10 categories, with descriptions and rationale for each.
+- [Loading Behavior Checks](https://agentskillimplementation.com/checks/index.md): The complete catalog of 35 loading behavior checks across 10 categories, with descriptions and rationale for each.
+- [Platform Reports](https://agentskillimplementation.com/platforms/index.md): Side-by-side comparison of skill loading verdicts across tested platforms, one table per check category.
+- [Cross-Platform Authoring Guidance](https://agentskillimplementation.com/guidance/authoring-guidance/index.md): What skill authors should do differently based on observed platform divergence, with each recommendation citing the check that motivates it.
+- [Glossary](https://agentskillimplementation.com/guidance/glossary/index.md): Definitions for the terms used throughout the checks, platform reports, and guidance (canary phrase, push harness, pull harness, and more).
+- [Antigravity CLI Report](https://agentskillimplementation.com/platforms/antigravity/index.md): Full automated findings for Antigravity CLI (headless), per check: verdict, vehicle, confidence, and observed fallback behavior.
+- [Claude Code Report](https://agentskillimplementation.com/platforms/claude-code/index.md): Full automated findings for Claude Code (headless), per check: verdict, vehicle, confidence, and observed fallback behavior.
+- [Codex CLI Report](https://agentskillimplementation.com/platforms/codex/index.md): Full automated findings for Codex CLI (headless), per check: verdict, vehicle, confidence, and observed fallback behavior.
 - [Home](https://agentskillimplementation.com/index.md): Overview, current status, and links to the GitHub repository for benchmark skills and platform results.
 
 ## Tools
 
 - [skill-validator](https://github.com/agent-ecosystem/skill-validator): CLI tool for validating Agent Skills against the spec.
-- [Benchmark Skills](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills): 17 spec-compliant skills with canary phrases for cross-platform loading behavior testing.
+- [Benchmark Skills](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills): 25 benchmark fixtures (spec-compliant skills plus deliberate structural and validation edge cases) with canary phrases for cross-platform loading behavior testing.
 - [Platform Template](https://github.com/agent-ecosystem/agent-skill-implementation/blob/main/platform-loading-implementation/template.md): Template for recording per-platform loading behavior findings.
+- [benchmark-runner](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-runner): Automated runner that executes the checks against installed harnesses and generates the platform reports from transcript-cited findings.

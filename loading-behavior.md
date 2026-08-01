@@ -113,7 +113,13 @@ These checks evaluate how platforms make supporting files (scripts, references, 
 
 ## Category 4: Content Presentation
 
-These checks evaluate what the model actually sees when a skill is activated, and how it's formatted.
+These checks evaluate what the model actually sees, at discovery and at activation, and how it's formatted.
+
+### `discovery-listing-fields`
+
+- **Category**: Content Presentation
+- **What it checks**: Which frontmatter fields the platform's discovery listing surfaces to the model: `name` and `description` only, or also `compatibility`, `metadata` values, file locations, or other fields.
+- **Why it matters**: The guide says the catalog holds name and description (~50-100 tokens per skill), but platforms decide what actually goes in it. This determines what a skill author can rely on the model knowing *before* activation: a `compatibility` warning that only exists in frontmatter is invisible at selection time on a platform that lists name and description alone, so the model may activate a skill it cannot actually run. Combined with `frontmatter-handling` (what survives activation), this check completes the picture of which frontmatter fields ever reach the model through platform channels at all — on a platform that surfaces only name/description at discovery and strips frontmatter at activation, every other field is dead weight unless the model reads the raw file. Listings that include file locations also differ meaningfully from those that do not: a location gives the model a path to read more, on its own initiative.
 
 ### `frontmatter-handling`
 
@@ -327,6 +333,7 @@ Findings submissions record the check list version they were tested against (see
 
 - Added `name-directory-mismatch` and `recursive-root-discovery` (Category 7: Structural Edge Cases), prompted by observed platform divergence in nested-skill discovery: one platform registers and invokes any SKILL.md found recursively under its skills root, indexed by frontmatter name alone.
 - Added Category 10: Discovery and Validation — `cross-client-directory-interop`, `malformed-yaml-tolerance`, `missing-description-handling`, and `name-collision-precedence` — derived from portability-sensitive behaviors the client implementation guide prescribes but platforms adopted independently.
+- Added `discovery-listing-fields` (Category 4: Content Presentation), prompted by the observation that one platform's discovery listing is strictly `name: description` lines while another's includes file locations — which changes what frontmatter can ever reach the model.
 - Reworded `resource-nesting-depth`: the spec's "one level deep" language (now in its File references section) reads as guidance about reference chains rather than directory depth. The probe gained a five-levels-deep rung so findings report a measured depth bound instead of a yes/no.
 - Added a note that spec/guide quotes in this document were verified as of 2026-08-01, since both upstream documents are unversioned and change without a changelog.
 

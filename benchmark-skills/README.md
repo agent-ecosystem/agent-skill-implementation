@@ -70,6 +70,7 @@ skills** provide additional signal or are needed as part of the test setup.
 
 | Check | Primary Skill | Test Procedure |
 |-------|--------------|----------------|
+| `discovery-listing-fields` | `probe-loading` + `probe-compatibility` + `probe-metadata-values` | Install all three, then WITHOUT activating anything, ask the model to reproduce its available-skills catalog verbatim. Which frontmatter reached it: names and descriptions only, or also the compatibility value ("Designed for Claude Code…"), metadata values (`!!null`), or file paths? |
 | `frontmatter-handling` | `probe-loading` | Activate the skill and check step 1. The skill has `allowed-tools`, `compatibility`, and `metadata` fields. If the model can see them, frontmatter was passed through. Also test with `probe-compatibility` for a skill where the compatibility field contains meaningful requirements. |
 | `metadata-value-edge-cases` | `probe-metadata-values` | Activate the skill. If it loads successfully, the platform didn't reject the edge-case metadata. Check step 2-3 to see which values the model received and whether any keys were dropped. Look for canary phrase THRUSH-FLINT-8294 to confirm the body loaded. |
 | `content-wrapping-format` | `probe-loading` | Activate the skill and check step 2. Ask the model to describe how the skill content was presented to it. |

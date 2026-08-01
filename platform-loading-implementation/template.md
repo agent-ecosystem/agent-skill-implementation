@@ -208,6 +208,15 @@ work on that platform.
 
 ### Category 4: Content Presentation
 
+#### `discovery-listing-fields`
+
+- **Benchmark skills**: `probe-loading` + `probe-compatibility` + `probe-metadata-values` — Install all three. WITHOUT activating anything, ask the model to reproduce its available-skills catalog verbatim, including any fields or values beyond name and description.
+- **Status**: Not tested
+- **Observation**: <!-- What does the discovery listing surface: name/description only, or also compatibility values, metadata, file locations, or other fields? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (the listing's contents are fixed before any model involvement). -->
+- **Fallback behavior**: <!-- If a field isn't surfaced at discovery, can the model still obtain it (e.g., by reading the raw SKILL.md at a listed location)? -->
+
 #### `frontmatter-handling`
 
 - **Benchmark skills**: `probe-loading`, `probe-compatibility` — Activate the skill and check whether the model can see frontmatter fields (allowed-tools, compatibility, metadata). probe-loading has multiple optional fields; probe-compatibility has a compatibility field with meaningful requirements text.
