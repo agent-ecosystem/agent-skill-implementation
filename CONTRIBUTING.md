@@ -6,14 +6,14 @@ entirely new checks.
 
 ## Submitting platform results
 
-This is the most valuable contribution. If you can test skill loading behavior on
+This is the most valuable contribution. If you can test skill behavior on
 a platform you use, here's how:
 
 ### Setup
 
 1. Fork and clone this repository.
-2. Copy `platform-loading-implementation/template.md` to a new file named after
-   the platform (e.g., `platform-loading-implementation/claude-code.md`).
+2. Copy `platform-findings/template.md` to a new file named after
+   the platform (e.g., `platform-findings/claude-code.md`).
 3. Install the benchmark skills from `benchmark-skills/` on your platform. See
    `benchmark-skills/README.md` for the full inventory, check-to-skill mapping,
    and test procedures.
@@ -78,8 +78,8 @@ a results file and find different behavior:
 
 ## Proposing new checks
 
-If you've observed a loading behavior that isn't covered by the existing checks in
-`loading-behavior.md`, open an issue describing:
+If you've observed a platform behavior that isn't covered by the existing checks in
+`checks.md`, open an issue describing:
 
 - **What you observed**: The specific platform behavior.
 - **Why it matters**: How it affects skill authors or users.
@@ -88,9 +88,9 @@ If you've observed a loading behavior that isn't covered by the existing checks 
 
 If the check is accepted, it will need:
 
-1. An entry in `loading-behavior.md` with an ID, category, what it checks, and
+1. An entry in `checks.md` with an ID, category, what it checks, and
    why it matters.
-2. A corresponding entry in `platform-loading-implementation/template.md`.
+2. A corresponding entry in `platform-findings/template.md`.
 3. A benchmark skill in `benchmark-skills/` (if existing skills don't cover it),
    with canary phrases and a test procedure.
 4. An entry in the check-to-skill mapping in `benchmark-skills/README.md`.

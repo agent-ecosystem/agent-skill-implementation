@@ -19,7 +19,7 @@ for each (success, error, blocked, or file not found):
 2. **Parent directory**: Try to read `../README.md` or list the contents
    of `../` (the benchmark-skills parent directory).
 
-3. **Two levels up**: Try to read `../../loading-behavior.md`
+3. **Two levels up**: Try to read `../../checks.md`
    (a file two levels above this skill).
 
 For each attempt, report:

@@ -3,17 +3,17 @@ set -euo pipefail
 
 SITE_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(dirname "$SITE_DIR")"
-CONTENT_SOURCE="$REPO_DIR/loading-behavior.md"
+CONTENT_SOURCE="$REPO_DIR/checks.md"
 CONTENT_DEST="$SITE_DIR/content/checks/_index.md"
 
 # Ensure content/checks/ directory exists
 mkdir -p "$SITE_DIR/content/checks"
 
-# Prepend front matter to loading-behavior.md and write to content directory
+# Prepend front matter to checks.md and write to content directory
 cat > "$CONTENT_DEST" <<'FRONTMATTER'
 ---
-title: "Skill Loading Behavior"
-description: "34 checks across 10 categories for empirically testing how agent platforms load, manage, and present Agent Skills."
+title: "Platform Behavior Checks"
+description: "40 checks across 10 categories for empirically testing how agent platforms load, validate, manage, and present Agent Skills."
 showTableOfContents: true
 ---
 

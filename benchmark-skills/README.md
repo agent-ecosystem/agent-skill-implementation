@@ -1,7 +1,7 @@
 # Benchmark Skills
 
-These skills are designed to exercise the loading behaviors described in
-[loading-behavior.md](../loading-behavior.md). Each skill contains canary
+These skills are designed to exercise the platform behaviors described in
+[checks.md](../checks.md). Each skill contains canary
 phrases (unique strings like **CARDINAL-ZEBRA-7742**) that let testers
 determine what content the platform loaded and when.
 
@@ -34,10 +34,18 @@ determine what content the platform loaded and when.
 | `probe-collision` | Name-collision precedence: PROJECT-scope variant | SKILL.md only |
 | `probe-collision-user` | Wrapper holding the USER-scope `probe-collision` variant (install the inner directory at user scope) | probe-collision/SKILL.md |
 | `overlay-agents-convention` | Wrapper holding `.agents/skills/probe-interop` for the cross-client interop check (copy its contents onto the project root) | .agents/skills/probe-interop/SKILL.md |
+| `probe-script-execution` | Bundled script execution (script assembles its output phrase at runtime) | SKILL.md + scripts/emit-canary.sh |
+| `probe-allowed-tools` | Experimental allowed-tools field (pair with control) | SKILL.md with allowed-tools field |
+| `probe-allowed-tools-control` | Control twin with no allowed-tools field | SKILL.md only |
+| `probe-Upper-Case` | Invalid name: uppercase letters (name matches directory) | SKILL.md only |
+| `probe--double-hyphen` | Invalid name: consecutive hyphens (name matches directory) | SKILL.md only |
+| `probe-overlong-name-…-limit` | Invalid name: 72 characters, past the 64-char limit (name matches directory) | SKILL.md only |
+| `probe-long-description` | Oversize description (1116 chars, head + tail markers) | SKILL.md only |
+| `probe-long-compatibility` | Oversize compatibility value (570 chars, tail marker) | SKILL.md only |
 
 ## Check-to-Skill Mapping
 
-Each check from loading-behavior.md maps to one or more benchmark skills. The
+Each check from checks.md maps to one or more benchmark skills. The
 **primary skill** is the one designed specifically for that check. **Secondary
 skills** provide additional signal or are needed as part of the test setup.
 
@@ -61,10 +69,12 @@ skills** provide additional signal or are needed as part of the test setup.
 
 | Check | Primary Skill | Secondary | Test Procedure |
 |-------|--------------|-----------|----------------|
-| `resource-enumeration-behavior` | `probe-loading` | | Activate the skill. The references/ directory has 3 files (2 linked, 1 unreferenced). Check whether all 3 are enumerated, only the linked ones, or none. |
-| `path-resolution-base` | `probe-linked-resources` | | Activate the skill and have the model try to read files using the relative paths in the SKILL.md. Note what directory the paths resolve against. |
+| `resource-enumeration-behavior` | `probe-loading` |  | Activate the skill. The references/ directory has 3 files (2 linked, 1 unreferenced). Check whether all 3 are enumerated, only the linked ones, or none. |
+| `path-resolution-base` | `probe-linked-resources` |  | Activate the skill and have the model try to read files using the relative paths in the SKILL.md. Note what directory the paths resolve against. |
 | `cross-skill-resource-shadowing` | `probe-shadow-alpha` | `probe-shadow-beta` | Activate both skills. Have each one read `references/API.md`. Check which canary phrase appears: STORK-CORAL-4471 (alpha) or EGRET-SLATE-8823 (beta). |
-| `path-traversal-boundary` | `probe-traversal` | | Activate the skill and follow its instructions to attempt reads outside the skill directory. |
+| `path-traversal-boundary` | `probe-traversal` |  | Activate the skill and follow its instructions to attempt reads outside the skill directory. |
+| `resource-nesting-depth` | `probe-deep-nesting` |  | Activate the skill and follow its instructions to read files at 1, 2, 3, and 5 levels of nesting. Note the deepest level that succeeds. |
+| `bundled-script-execution` | `probe-script-execution` |  | Activate the skill and let it run `scripts/emit-canary.sh`. GODWIT-BORNITE-5148 in a tool result proves execution (the script assembles it at runtime; the source never contains the joined phrase). The literal format string `GODWIT-%s-5148` in a tool result means the source was read instead. |
 
 ### Category 4: Content Presentation
 
@@ -72,7 +82,6 @@ skills** provide additional signal or are needed as part of the test setup.
 |-------|--------------|----------------|
 | `discovery-listing-fields` | `probe-loading` + `probe-compatibility` + `probe-metadata-values` | Install all three, then WITHOUT activating anything, ask the model to reproduce its available-skills catalog verbatim. Which frontmatter reached it: names and descriptions only, or also the compatibility value ("Designed for Claude Code…"), metadata values (`!!null`), or file paths? |
 | `frontmatter-handling` | `probe-loading` | Activate the skill and check step 1. The skill has `allowed-tools`, `compatibility`, and `metadata` fields. If the model can see them, frontmatter was passed through. Also test with `probe-compatibility` for a skill where the compatibility field contains meaningful requirements. |
-| `metadata-value-edge-cases` | `probe-metadata-values` | Activate the skill. If it loads successfully, the platform didn't reject the edge-case metadata. Check step 2-3 to see which values the model received and whether any keys were dropped. Look for canary phrase THRUSH-FLINT-8294 to confirm the body loaded. |
 | `content-wrapping-format` | `probe-loading` | Activate the skill and check step 2. Ask the model to describe how the skill content was presented to it. |
 
 ### Category 5: Lifecycle Management
@@ -89,26 +98,9 @@ skills** provide additional signal or are needed as part of the test setup.
 |-------|--------------|----------------|
 | `trust-gating-behavior` | Any skill | Install any benchmark skill at project level in a freshly cloned or untrusted repository. Start a new session and check whether the skill appears in the available skills list, or if the platform prompts for trust approval. |
 | `compatibility-field-behavior` | `probe-compatibility` | Activate the skill and follow its instructions. Also test on a non-Claude platform to see how it handles the "Designed for Claude Code" text. |
+| `allowed-tools-behavior` | `probe-allowed-tools` + `probe-allowed-tools-control` | Run each twin in its own session and compare. GROUSE-MICA-9017 in a tool result = the field-bearing skill's printf ran; LAPWING-FLUORITE-2260 = the control's ran. Execution in both sessions means the platform's permission posture, not the field, allowed it. |
 
-### Category 7: Structural Edge Cases
-
-| Check | Primary Skill | Test Procedure |
-|-------|--------------|----------------|
-| `nested-skill-discovery` | `probe-deep-nesting` | Install the skill and check the available skills list. Does `nested-skill` appear as a separate skill? Its SKILL.md is at `probe-deep-nesting/references/nested-skill/SKILL.md`. |
-| `resource-nesting-depth` | `probe-deep-nesting` | Activate the skill and follow its instructions to read files at 1, 2, 3, and 5 levels of nesting. Note the deepest level that succeeds. |
-| `name-directory-mismatch` | `probe-mismatch-dir` | Install the directory as-is. Check the available skills list: does the skill appear as `probe-name-mismatch` (frontmatter), `probe-mismatch-dir` (directory), or not at all? Then activate it by whichever name appeared and look for SWAN-BERYL-3324. |
-| `recursive-root-discovery` | `probe-group` + `probe-stray` | Install `probe-group` (with its nested `probe-grouped` skill) into the skills directory, and copy `probe-stray` somewhere in the project OUTSIDE the skills directory. Check the listing for `probe-grouped` (CROW-AGATE-6105) and `probe-stray` (MERLIN-GYPSUM-8852), then activate whichever appeared. |
-
-### Category 10: Discovery and Validation
-
-| Check | Primary Skill | Test Procedure |
-|-------|--------------|----------------|
-| `cross-client-directory-interop` | `overlay-agents-convention` | Copy the wrapper's contents onto the project root so the skill lands at `<project>/.agents/skills/probe-interop/`, and do NOT install it in the platform's native skills directory. Is `probe-interop` listed? Can it activate (SNIPE-OCHRE-2217)? On platforms whose native directory IS `.agents/skills/`, record that instead. |
-| `malformed-yaml-tolerance` | `probe-malformed-yaml` | Install normally. Is the skill listed despite the invalid YAML? What description text survived? Activate and look for QUAIL-FELDSPAR-7448. |
-| `missing-description-handling` | `probe-no-description` | Install normally. Is the skill listed with no description, a placeholder, or skipped entirely? Activate and look for VIREO-PUMICE-3049. |
-| `name-collision-precedence` | `probe-collision` + `probe-collision-user` | Install `probe-collision` at project scope and `probe-collision-user/probe-collision` at USER scope. Activate `probe-collision`. RAVEN-CITRINE-6634 = project variant won; PIPIT-SHALE-1147 = user variant won. |
-
-### Category 8: Skill-to-Skill Invocation
+### Category 7: Skill-to-Skill Invocation
 
 | Check | Primary Skill | Secondary | Test Procedure |
 |-------|--------------|-----------|----------------|
@@ -117,15 +109,35 @@ skills** provide additional signal or are needed as part of the test setup.
 | `circular-invocation-handling` | `probe-circular-alpha` | `probe-circular-beta` | Activate probe-circular-alpha. Does the platform detect the circular reference and stop, or does it loop? Look for how many times each canary phrase (KITE-ONYX-2251, WREN-SLATE-7738) appears. |
 | `invocation-language-sensitivity` | `invoke-alpha` | `invoke-beta`, `invoke-gamma` | Run the invocation chain test in English, then repeat in another language (e.g., Japanese: "呼び出しチェーンを開始してください"). Compare success rates. |
 
-### Category 9: Skill Dependencies
+### Category 8: Skill Dependencies
 
 | Check | Primary Skill | Secondary | Test Procedure |
 |-------|--------------|-----------|----------------|
 | `informal-dependency-resolution` | `invoke-alpha` | `invoke-beta` | Same as cross-skill-invocation. The invoke chain uses prose instructions to express dependencies between skills. |
-| `missing-dependency-behavior` | `probe-missing-dep` | | Activate the skill. It references `nonexistent-formatter` which doesn't exist. Observe the failure mode. |
-| `nonstandard-dependency-fields` | `probe-nonstandard-fields` | | Activate the skill. It has `requires` and `depends-on` frontmatter fields. Check whether the platform acted on them or ignored them. |
+| `missing-dependency-behavior` | `probe-missing-dep` |  | Activate the skill. It references `nonexistent-formatter` which doesn't exist. Observe the failure mode. |
+| `nonstandard-dependency-fields` | `probe-nonstandard-fields` |  | Activate the skill. It has `requires` and `depends-on` frontmatter fields. Check whether the platform acted on them or ignored them. |
 | `cross-scope-dependency` | `probe-cross-scope` | `probe-loading` | Install probe-cross-scope at project level and probe-loading at user level. Activate probe-cross-scope and see if it can invoke probe-loading across scopes. Then remove probe-loading from user level and test again. |
 
+### Category 9: Discovery Scope
+
+| Check | Primary Skill | Test Procedure |
+|-------|--------------|----------------|
+| `cross-client-directory-interop` | `overlay-agents-convention` | Copy the wrapper's contents onto the project root so the skill lands at `<project>/.agents/skills/probe-interop/`, and do NOT install it in the platform's native skills directory. Is `probe-interop` listed? Can it activate (SNIPE-OCHRE-2217)? On platforms whose native directory IS `.agents/skills/`, record that instead. |
+| `recursive-root-discovery` | `probe-group` + `probe-stray` | Install `probe-group` (with its nested `probe-grouped` skill) into the skills directory, and copy `probe-stray` somewhere in the project OUTSIDE the skills directory. Check the listing for `probe-grouped` (CROW-AGATE-6105) and `probe-stray` (MERLIN-GYPSUM-8852), then activate whichever appeared. |
+| `nested-skill-discovery` | `probe-deep-nesting` | Install the skill and check the available skills list. Does `nested-skill` appear as a separate skill? Its SKILL.md is at `probe-deep-nesting/references/nested-skill/SKILL.md`. |
+| `name-collision-precedence` | `probe-collision` + `probe-collision-user` | Install `probe-collision` at project scope and `probe-collision-user/probe-collision` at USER scope. Activate `probe-collision`. RAVEN-CITRINE-6634 = project variant won; PIPIT-SHALE-1147 = user variant won. |
+
+### Category 10: Validation Strictness
+
+| Check | Primary Skill | Test Procedure |
+|-------|--------------|----------------|
+| `malformed-yaml-tolerance` | `probe-malformed-yaml` | Install normally. Is the skill listed despite the invalid YAML? What description text survived? Activate and look for QUAIL-FELDSPAR-7448. |
+| `missing-description-handling` | `probe-no-description` | Install normally. Is the skill listed with no description, a placeholder, or skipped entirely? Activate and look for VIREO-PUMICE-3049. |
+| `invalid-name-tolerance` | `probe-Upper-Case` + `probe--double-hyphen` + `probe-overlong-name-…-limit` | Install all three. Check the listing for each (exact or normalized form), then activate each by name. Canaries: DUNLIN-OLIVINE-7821 (uppercase), PETREL-GALENA-3306 (double hyphen), AVOCET-ZIRCON-5573 (overlong). |
+| `name-directory-mismatch` | `probe-mismatch-dir` | Install the directory as-is. Check the available skills list: does the skill appear as `probe-name-mismatch` (frontmatter), `probe-mismatch-dir` (directory), or not at all? Then activate it by whichever name appeared and look for SWAN-BERYL-3324. |
+| `metadata-value-edge-cases` | `probe-metadata-values` | Activate the skill. If it loads successfully, the platform didn't reject the edge-case metadata. Check step 2-3 to see which values the model received and whether any keys were dropped. Look for canary phrase THRUSH-FLINT-8294 to confirm the body loaded. |
+| `oversize-description-handling` | `probe-long-description` | Install normally. Is the skill listed despite the 1116-char description? Does the listing show the head marker SANDERLING-GNEISS-1010 but not the tail marker WHIMBREL-DOLOMITE-2020 (truncation)? Activate and look for BITTERN-HALITE-2264. |
+| `oversize-compatibility-handling` | `probe-long-compatibility` | Install normally. Is the skill listed despite the 570-char compatibility value? Activate and look for KESTREL-BAUXITE-6690; note whether the tail marker TURNSTONE-ARAGONITE-3030 surfaces anywhere. |
 ## Structural Validation
 
 These skills have been validated with
@@ -146,6 +158,12 @@ nonstandard structures to test platform loading behavior:
 | `probe-mismatch-dir` | **Error**: name does not match directory name | Tests which identity platforms use when frontmatter name and directory name disagree — the mismatch is the fixture |
 | `probe-malformed-yaml` | **Error**: frontmatter fails strict YAML parsing | Tests parser leniency — the unquoted colon is the fixture |
 | `probe-no-description` | **Error**: missing required description | Tests skip-vs-load behavior — the omission is the fixture |
+| `probe-Upper-Case` | **Error**: uppercase characters in name | Tests invalid-name tolerance — the case violation is the fixture |
+| `probe--double-hyphen` | **Error**: consecutive hyphens in name | Tests invalid-name tolerance — the hyphen violation is the fixture |
+| `probe-overlong-name-…-limit` | **Error**: name exceeds 64 characters | Tests invalid-name tolerance — the length violation is the fixture |
+| `probe-long-description` | **Error**: description exceeds 1024 characters | Tests oversize-field handling — the overrun is the fixture |
+| `probe-long-compatibility` | **Error**: compatibility exceeds 500 characters | Tests oversize-field handling — the overrun is the fixture |
+| `probe-allowed-tools` | Experimental `allowed-tools` field | Tests whether the field pre-approves tools — pair with its control twin |
 
 If you run the validator yourself and see only these warnings, everything is
 fine. Errors or warnings on other skills would indicate a problem.
@@ -194,3 +212,18 @@ it reveals what the platform loaded automatically.
 | VIREO-PUMICE-3049 | SKILL.md body | probe-no-description |
 | RAVEN-CITRINE-6634 | SKILL.md body (project variant) | probe-collision |
 | PIPIT-SHALE-1147 | probe-collision/SKILL.md body (user variant) | probe-collision-user |
+| REDSHANK-SYENITE-8807 | SKILL.md body | probe-script-execution |
+| GODWIT-BORNITE-5148 | derived: printed by scripts/emit-canary.sh at runtime; never present in any file | probe-script-execution |
+| CURLEW-SCHIST-4419 | SKILL.md body | probe-allowed-tools |
+| GROUSE-MICA-9017 | derived: printed by the instructed printf at runtime; never present joined in any file | probe-allowed-tools |
+| Bash(printf:*) Read | frontmatter allowed-tools value ONLY (the body never spells it out) | probe-allowed-tools |
+| STINT-MARBLE-9912 | SKILL.md body | probe-allowed-tools-control |
+| LAPWING-FLUORITE-2260 | derived: printed by the instructed printf at runtime; never present joined in any file | probe-allowed-tools-control |
+| DUNLIN-OLIVINE-7821 | SKILL.md body | probe-Upper-Case |
+| PETREL-GALENA-3306 | SKILL.md body | probe--double-hyphen |
+| AVOCET-ZIRCON-5573 | SKILL.md body | probe-overlong-name-…-limit |
+| BITTERN-HALITE-2264 | SKILL.md body | probe-long-description |
+| SANDERLING-GNEISS-1010 | SKILL.md description ONLY (head marker; the body never spells it out) | probe-long-description |
+| WHIMBREL-DOLOMITE-2020 | SKILL.md description ONLY (tail marker; the body never spells it out) | probe-long-description |
+| KESTREL-BAUXITE-6690 | SKILL.md body | probe-long-compatibility |
+| TURNSTONE-ARAGONITE-3030 | SKILL.md compatibility ONLY (tail marker; the body never spells it out) | probe-long-compatibility |

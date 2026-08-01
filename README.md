@@ -30,18 +30,19 @@ through empirical testing rather than assumptions.
 
 ## What's here
 
-- **[loading-behavior.md](loading-behavior.md)**: 35 checks across 10 categories
-  of skill loading behavior that need empirical testing. Each check describes what
-  it evaluates and why it matters for skill authors.
+- **[checks.md](checks.md)**: 40 checks across 10 categories
+  of platform behavior (loading, validation, execution, and access control) that
+  need empirical testing. Each check describes what it evaluates and why it
+  matters for skill authors.
 
-- **[benchmark-skills/](benchmark-skills/)**: 25 spec-compliant skills designed
+- **[benchmark-skills/](benchmark-skills/)**: 33 spec-compliant skills designed
   to exercise those checks. Each contains unique canary phrases that reveal what a
   platform loaded and when, without relying on model self-reporting. See the
   [benchmark skills README](benchmark-skills/README.md) for the full inventory,
   check-to-skill mapping, and test procedures.
 
-- **[platform-loading-implementation/](platform-loading-implementation/)**: Per-platform
-  results. The [template](platform-loading-implementation/template.md) captures
+- **[platform-findings/](platform-findings/)**: Per-platform
+  results. The [template](platform-findings/template.md) captures
   platform details, methodology, and findings for each check, including whether
   observed behavior is platform-level or model-level and whether fallback
   workarounds exist.
@@ -60,10 +61,10 @@ that may not match reality anywhere.
 Skill loading behavior is the starting point, but not the only area where platform
 behavior is unspecified and likely diverges. We plan to investigate these areas next:
 
-- **Tool provisioning**: The spec defines an `allowed-tools` frontmatter field but
-  says nothing about how platforms should act on it. Does the platform restrict the
-  model to declared tools, provision additional tools the skill requests, or ignore
-  the field entirely?
+- **Tool restriction**: The `allowed-tools-behavior` check now covers whether the
+  field pre-approves anything, but the other half remains open: does any platform
+  *restrict* the model to declared tools, or provision additional tools a skill
+  requests?
 - **Activation mechanisms**: How does a user activate a skill? Slash command,
   natural language, automatic activation based on context? A skill designed for one
   activation style may never get discovered on a platform that only supports another.
@@ -73,9 +74,11 @@ behavior is unspecified and likely diverges. We plan to investigate these areas 
 - **Instruction authority and conflict resolution**: If two active skills give
   contradictory instructions, or a skill's instructions conflict with the platform's
   system prompt, what wins?
-- **Security boundaries**: Beyond path traversal, can a skill's instructions cause
-  the agent to run shell commands, make network requests, or modify files outside
-  the project? How do platforms sandbox skill-directed actions?
+- **Security boundaries**: Path traversal and skill-directed shell execution are
+  now covered (`path-traversal-boundary`, `bundled-script-execution`), but the
+  rest remains open: can a skill's instructions cause the agent to make network
+  requests or modify files outside the project? How do platforms sandbox
+  skill-directed actions?
 - **Prompt injection resistance**: Can content in a skill's reference files inject
   instructions that override the SKILL.md body or the platform's system prompt?
 - **Skill persistence and session behavior**: Does an activated skill stay active

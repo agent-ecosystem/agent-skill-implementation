@@ -1,5 +1,5 @@
 [[main]]
-name = "Loading Behavior"
+name = "Checks"
 pageRef = "checks"
 weight = 10
 

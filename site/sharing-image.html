@@ -75,7 +75,7 @@
 </head>
 <body>
   <h1>Agent Skill Implementation</h1>
-  <p class="subtitle">35 checks across 10 categories</p>
+  <p class="subtitle">40 checks across 10 categories</p>
   <div class="table-wrap">
     <table>
       <thead>
@@ -98,12 +98,12 @@
         </tr>
         <tr>
           <td>Resource Access Patterns</td>
-          <td>4</td>
+          <td>6</td>
           <td>How platforms make supporting files available to the model</td>
         </tr>
         <tr>
           <td>Content Presentation</td>
-          <td>4</td>
+          <td>3</td>
           <td>What the model sees during discovery and activation, and how it's formatted</td>
         </tr>
         <tr>
@@ -113,13 +113,8 @@
         </tr>
         <tr>
           <td>Access Control</td>
-          <td>2</td>
+          <td>3</td>
           <td>How platforms gate skill loading and handle control fields</td>
-        </tr>
-        <tr>
-          <td>Structural Edge Cases</td>
-          <td>4</td>
-          <td>Nested skills, deeply nested resources, non-standard structures</td>
         </tr>
         <tr>
           <td>Skill-to-Skill Invocation</td>
@@ -132,9 +127,14 @@
           <td>How platforms handle one skill depending on another</td>
         </tr>
         <tr>
-          <td>Discovery and Validation</td>
+          <td>Discovery Scope</td>
           <td>4</td>
-          <td>Where platforms look for skills and how strictly they validate them</td>
+          <td>Where platforms look for skills, how deep, and how collisions resolve</td>
+        </tr>
+        <tr>
+          <td>Validation Strictness</td>
+          <td>7</td>
+          <td>How strictly platforms judge skills that break the spec's rules</td>
         </tr>
       </tbody>
     </table>

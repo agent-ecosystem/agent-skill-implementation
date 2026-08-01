@@ -1,9 +1,7 @@
 <article class="prose max-w-full dark:prose-invert">
-  {{ with .Title }}
-    <header>
-      <h1>{{ . | emojify }}</h1>
-    </header>
-  {{ end }}
+  {{/* The homepage supplies its own hero headline in content; the site
+       name already appears in the header, so the page title is metadata
+       only here. */}}
   <section>
     {{ partial "llms-directive.html" . }}
     {{ .Content | emojify }}

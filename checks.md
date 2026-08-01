@@ -1,10 +1,10 @@
-# Skill Loading Behavior
+# Platform Behavior Checks
 
 **Check list version: 0.2** ([changelog](#changelog))
 
 How do agent platforms actually load skill content? The [Agent Skills specification](https://agentskills.io/specification) defines a file format and recommends a three-tier "progressive disclosure" model, but gives platforms wide latitude in implementation. The [client implementation guide](https://agentskills.io/client-implementation/adding-skills-support) provides more detailed guidance, but claims it was derived from analysis of 7 of 25+ adopting platforms and published months after most platforms had already shipped their implementations.
 
-This raises a question: does loading behavior actually vary across platforms, and if so, how? Skill authors currently have no way to know what will happen when their skill is activated on a given platform. This page catalogs the behaviors that need empirical testing to find out.
+This raises a question: does platform behavior actually vary, and if so, how? Skill authors currently have no way to know what will happen when their skill is activated on a given platform. This page catalogs the behaviors that need empirical testing to find out. The checks began with loading behavior and have grown to cover validation strictness, script execution, and access control.
 
 ## Background
 
@@ -25,7 +25,7 @@ A note on quotes: the spec and the client implementation guide are unversioned a
 Each check has:
 
 - **ID**: A short identifier (e.g., `discovery-reading-depth`).
-- **Category**: The area of loading behavior it evaluates.
+- **Category**: The area of platform behavior it evaluates.
 - **What it checks**: A description of what the check evaluates.
 - **Why it matters**: The observed or anticipated agent behavior that motivates the check.
 
@@ -109,6 +109,18 @@ These checks evaluate how platforms make supporting files (scripts, references, 
 - **What it checks**: Whether the model can access files outside the skill directory via relative paths (e.g., `../../other-file.md` or `../other-skill/SKILL.md`).
 - **Why it matters**: Path traversal from a skill directory is both a security concern and a correctness concern. A skill that can read files outside its own directory could access sensitive project files or other skills' content. Platforms that don't enforce a boundary at the skill directory root expose users to potential prompt injection from malicious skills. Neither the spec nor the guide addresses path traversal validation explicitly. The guide's security guidance focuses on trust gating for project-level skills and assumes the agent's file-read tool enforces its own boundaries.
 
+### `resource-nesting-depth`
+
+- **Category**: Resource Access Patterns
+- **What it checks**: Whether the platform enumerates and allows access to deeply nested resource files vs. only top-level entries in each directory, and how deep access extends. The probe has rungs at one, two, three, and five directory levels (e.g., `references/api/v2/history/deprecated/removed-endpoints.md`), so findings can report an actual depth bound rather than a yes/no.
+- **Why it matters**: The spec's File references section says "Keep file references one level deep from `SKILL.md`. Avoid deeply nested reference chains", wording that reads as guidance about chains of references between files. It provides no guidance for how deep a directory tree platforms must support. Separately, the client guide suggests discovery scans use "reasonable bounds (e.g., max depth of 4-6 levels)." That bound is written for skill *discovery*, but an implementer could plausibly reuse it for resource enumeration or access. Skills that organize reference content hierarchically, such as API documentation with versioned endpoints, may find that nested files are invisible on platforms that bound depth. The skill works on platforms with deep access and loses content on shallower ones, with no error to diagnose. And because the spec is unversioned, platforms implemented against different snapshots may have internalized different depth expectations.
+
+### `bundled-script-execution`
+
+- **Category**: Resource Access Patterns
+- **What it checks**: Whether the agent can actually run a bundled `scripts/` file and receive its output. The probe's script assembles its output phrase at runtime, so reading the source never reveals the phrase; only genuine execution produces it.
+- **Why it matters**: The spec presents `scripts/` as "executable code that agents can run," with supported languages left to the implementation. Whether a platform's permission posture lets a skill's script run determines whether script-shipping skills work there at all: a skill that leans on its scripts degrades to prose-only, with no error anywhere, on a platform that blocks execution. Headless and interactive sessions may also differ, since interactive users can approve a command that headless policy refuses.
+
 ---
 
 ## Category 4: Content Presentation
@@ -126,12 +138,6 @@ These checks evaluate what the model actually sees, at discovery and at activati
 - **Category**: Content Presentation
 - **What it checks**: Whether the platform passes the full SKILL.md file to the model (including YAML frontmatter) or strips the frontmatter and passes only the markdown body.
 - **Why it matters**: The model sees different content on different platforms for the same skill. Frontmatter fields like `allowed-tools` and `compatibility` may influence model behavior on platforms that pass them through, and be invisible on platforms that strip them. A skill author who puts important context in the `compatibility` field, such as "requires Python 3.14+ and network access," may find that information reaches the model on one platform and is dropped on another.
-
-### `metadata-value-edge-cases`
-
-- **Category**: Content Presentation
-- **What it checks**: Whether platforms successfully parse and load a skill whose `metadata` frontmatter contains edge-case YAML values: empty strings (`''`, `""`), explicit nulls (`null`, `~`, `None`), and tagged nulls (`!!null null`).
-- **Why it matters**: The spec defines `metadata` as a string-to-string mapping, but YAML parsers interpret `null`, `~`, and `None` as null values rather than strings. A platform whose loader expects all metadata values to be strings may throw a type error, drop the affected keys, or fail to load the skill entirely. Since the spec doesn't explicitly prohibit null values and YAML makes them easy to produce accidentally (an author who writes `foo:` with no value gets null rather than an empty string), these edge cases will appear in real-world skills. The question is whether each platform handles them gracefully or breaks.
 
 ### `content-wrapping-format`
 
@@ -181,39 +187,15 @@ These checks evaluate how platforms gate skill loading and how control-related f
 - **What it checks**: How the platform handles the `compatibility` frontmatter field. Specifically: whether it parses the field for structured requirements, whether it uses the field to gate loading, and whether it surfaces the field to the model or user.
 - **Why it matters**: The `compatibility` field is free-text with no structured format. The spec's own example (`Designed for Claude Code (or similar products)`) demonstrates platform-specific targeting in a supposedly platform-neutral format. A non-Claude platform encountering this field has no guidance on what to do: skip the skill entirely, warn the user, load it and hope for the best, or pass the text to the model and let it decide. Each choice produces different behavior. Skill authors who use this field to signal real requirements ("Requires Python 3.14+ and network access") can't predict whether that information will be acted on, displayed, or ignored.
 
----
+### `allowed-tools-behavior`
 
-## Category 7: Structural Edge Cases
-
-These checks evaluate platform behavior with skill directory structures that push beyond the spec's core examples.
-
-### `nested-skill-discovery`
-
-- **Category**: Structural Edge Cases
-- **What it checks**: If a SKILL.md exists deeper inside another skill's directory tree (e.g., `my-skill/references/helper-skill/SKILL.md`), whether the platform discovers both the outer and inner skills.
-- **Why it matters**: The guide says to scan for "subdirectories containing a file named exactly `SKILL.md`," which would match both the outer skill and any nested SKILL.md files. A skill author who stores another skill inside their `references/` directory (perhaps as documentation or a dependency) may unintentionally register that inner skill as a separate available skill on the platform. This could lead to unexpected skill activations, name collisions, or confusing listings.
-
-### `resource-nesting-depth`
-
-- **Category**: Structural Edge Cases
-- **What it checks**: Whether the platform enumerates and allows access to deeply nested resource files vs. only top-level entries in each directory, and how deep access extends. The probe has rungs at one, two, three, and five directory levels (e.g., `references/api/v2/history/deprecated/removed-endpoints.md`), so findings can report an actual depth bound rather than a yes/no.
-- **Why it matters**: The spec's File references section says "Keep file references one level deep from `SKILL.md`. Avoid deeply nested reference chains", wording that reads as guidance about chains of references between files. It provides no guidance for how deep a directory tree platforms must support. Separately, the client guide suggests discovery scans use "reasonable bounds (e.g., max depth of 4-6 levels)." That bound is written for skill *discovery*, but an implementer could plausibly reuse it for resource enumeration or access. Skills that organize reference content hierarchically, such as API documentation with versioned endpoints, may find that nested files are invisible on platforms that bound depth. The skill works on platforms with deep access and loses content on shallower ones, with no error to diagnose. And because the spec is unversioned, platforms implemented against different snapshots may have internalized different depth expectations.
-
-### `name-directory-mismatch`
-
-- **Category**: Structural Edge Cases
-- **What it checks**: When a skill's frontmatter `name` differs from the name of the directory it lives in, which identity the platform uses: is the skill listed and invocable under the frontmatter name, under the directory name, or rejected outright?
-- **Why it matters**: The spec requires the skill's directory name to match its frontmatter `name`, but platforms decide independently whether to enforce, ignore, or partially honor the rule. Renaming a skill in frontmatter without renaming its folder (or vice versa, e.g. during development or after a fork) produces a mismatch that platforms have to resolve somehow. If one platform indexes by frontmatter name and another by directory name, the same installed skill answers to different names on different platforms. Instructions in other skills or documentation that reference it by one name would fail on platforms that chose the other. Early probing shows at least one platform (Codex) indexes purely by frontmatter name, so the failure mode is real rather than hypothetical.
-
-### `recursive-root-discovery`
-
-- **Category**: Structural Edge Cases
-- **What it checks**: Whether the platform discovers skills only in direct children of its skills root (`<root>/<skill>/SKILL.md`), or scans the root recursively (finding e.g. `<root>/group/skill/SKILL.md`), and whether a spec-compliant SKILL.md placed entirely outside any recognized skills root is discovered.
-- **Why it matters**: Teams with many skills naturally want to organize them in subfolders, such as by domain, by team, or by lifecycle stage. On a platform that scans recursively, that layout works. On a platform that only reads direct children, every grouped skill vanishes from the catalog with no error. The inverse risk also exists: a recursive scanner turns *every* SKILL.md under the root into an installable-looking, invocable skill (see `nested-skill-discovery`), which surprises authors who ship example or vendored skills as content. And if any platform scans the whole project tree rather than just its root, cloning a repository with documentation examples could register skills the user never installed, a trust-boundary concern the spec doesn't address.
+- **Category**: Access Control
+- **What it checks**: Whether the experimental `allowed-tools` field pre-approves the listed tools, measured against an identical control skill that has no such field. If the instructed command runs in both sessions, the platform's general permission posture, not the field, allowed it; if it runs only for the field-bearing twin, the field did the pre-approving.
+- **Why it matters**: The spec marks `allowed-tools` as "Experimental. Support for this field may vary between agent implementations." Authors who rely on it for frictionless tool use need to know whether it does anything on their platform: where it is ignored, a skill's commands hit the normal permission flow; where it works, a skill can pre-approve tools the user never individually reviewed, which makes this an access-control behavior as much as a convenience.
 
 ---
 
-## Category 8: Skill-to-Skill Invocation
+## Category 7: Skill-to-Skill Invocation
 
 These checks evaluate whether and how a skill can instruct the model to activate another skill.
 
@@ -247,7 +229,7 @@ Some early signals suggest platform behavior may already diverge. Claude Code's 
 
 ---
 
-## Category 9: Skill Dependencies
+## Category 8: Skill Dependencies
 
 These checks evaluate how platforms handle the concept of one skill depending on another, despite no formal dependency mechanism existing in the spec.
 
@@ -279,39 +261,86 @@ The spec defines six frontmatter fields (`name`, `description`, `license`, `comp
 
 ---
 
-## Category 10: Discovery and Validation
+## Category 9: Discovery Scope
 
-These checks evaluate where platforms look for skills and how strictly they validate what they find. The client implementation guide prescribes these behaviors in detail, but platforms may implement differently. Every check in this category results in a skill that works on one platform but is absent or different on another.
+These checks evaluate where platforms look for skills: which directories are scanned, how deep the scan goes, and what happens when two discovered skills claim the same name. Every check in this category results in a skill that is present and listed on one platform but absent, or answering to a different identity, on another.
 
 ### `cross-client-directory-interop`
 
-- **Category**: Discovery and Validation
+- **Category**: Discovery Scope
 - **What it checks**: Whether the platform discovers skills installed at the cross-client `.agents/skills/` convention path when that is not its native skills directory.
 - **Why it matters**: The guide recommends scanning both a client-native directory and the `.agents/skills/` convention, "so skills installed by other compliant clients are automatically visible to yours, and vice versa," and notes some clients also scan `.claude/skills/` pragmatically. The spec itself mandates nothing about where skills live. A platform that only scans its native directory breaks the interop story. A skill installed by one client is invisible to another, with no error anywhere. Users who maintain one shared skills directory need to know which platforms actually honor it.
 
-### `malformed-yaml-tolerance`
+### `recursive-root-discovery`
 
-- **Category**: Discovery and Validation
-- **What it checks**: Whether a skill whose frontmatter is technically invalid YAML, like the common unquoted-colon description (`description: Use when: ...`), is still discovered and loadable.
-- **Why it matters**: The guide acknowledges that "skill files authored for other clients may contain technically invalid YAML that their parsers happen to accept" and recommends a repair fallback. Strict parsers reject the file outright ("mapping values are not allowed here"), so the same skill loads on lenient platforms and vanishes on strict ones. Because the mistake is easy to make and many authors test on only one platform, this is one of the most likely real-world portability breaks.
+- **Category**: Discovery Scope
+- **What it checks**: Whether the platform discovers skills only in direct children of its skills root (`<root>/<skill>/SKILL.md`), or scans the root recursively (finding e.g. `<root>/group/skill/SKILL.md`), and whether a spec-compliant SKILL.md placed entirely outside any recognized skills root is discovered.
+- **Why it matters**: Teams with many skills naturally want to organize them in subfolders, such as by domain, by team, or by lifecycle stage. On a platform that scans recursively, that layout works. On a platform that only reads direct children, every grouped skill vanishes from the catalog with no error. The inverse risk also exists: a recursive scanner turns *every* SKILL.md under the root into an installable-looking, invocable skill (see `nested-skill-discovery`), which surprises authors who ship example or vendored skills as content. And if any platform scans the whole project tree rather than just its root, cloning a repository with documentation examples could register skills the user never installed, a trust-boundary concern the spec doesn't address.
 
-### `missing-description-handling`
+### `nested-skill-discovery`
 
-- **Category**: Discovery and Validation
-- **What it checks**: What happens to a skill with no `description` field: skipped (as the guide prescribes: "a description is essential for disclosure"), loaded with an empty or synthesized description, or handled some other way.
-- **Why it matters**: The guide's lenient-validation table suggests warn-but-load for name violations, but skip entirely for a missing description. Platforms that load such skills anyway create catalogs where the model has a name with no guidance on when to use it. Platforms that skip them mean the skill isn't visible to agents.
+- **Category**: Discovery Scope
+- **What it checks**: If a SKILL.md exists deeper inside another skill's directory tree (e.g., `my-skill/references/helper-skill/SKILL.md`), whether the platform discovers both the outer and inner skills.
+- **Why it matters**: The guide says to scan for "subdirectories containing a file named exactly `SKILL.md`," which would match both the outer skill and any nested SKILL.md files. A skill author who stores another skill inside their `references/` directory (perhaps as documentation or a dependency) may unintentionally register that inner skill as a separate available skill on the platform. This could lead to unexpected skill activations, name collisions, or confusing listings.
 
 ### `name-collision-precedence`
 
-- **Category**: Discovery and Validation
+- **Category**: Discovery Scope
 - **What it checks**: When two installed skills share the same `name` at different scopes (project-level and user-level) with different content, which one activates.
 - **Why it matters**: The guide states the universal convention is that "project-level skills override user-level skills." If a platform resolves the other way, or nondeterministically, the same activation loads *different instructions* depending on platform. In this portability failure scenario, everything appears to work. This also matters for security reasoning: project-wins means a cloned repository can shadow a user's trusted skill of the same name.
 
 ---
 
+## Category 10: Validation Strictness
+
+These checks feed platforms skills that break the spec's format rules (invalid YAML, missing or oversize fields, rule-breaking names, out-of-spec metadata values) and observe the response: rejected, repaired, or loaded anyway. The spec binds skill authors here but says nothing about what platforms should do with a file that breaks the rules, so every platform chose its own posture. A skill that loads on a lenient platform vanishes with no error on a strict one.
+
+### `malformed-yaml-tolerance`
+
+- **Category**: Validation Strictness
+- **What it checks**: Whether a skill whose frontmatter is technically invalid YAML, like the common unquoted-colon description (`description: Use when: ...`), is still discovered and loadable.
+- **Why it matters**: The guide acknowledges that "skill files authored for other clients may contain technically invalid YAML that their parsers happen to accept" and recommends a repair fallback. Strict parsers reject the file outright ("mapping values are not allowed here"), so the same skill loads on lenient platforms and vanishes on strict ones. Because the mistake is easy to make and many authors test on only one platform, this is one of the most likely real-world portability breaks.
+
+### `missing-description-handling`
+
+- **Category**: Validation Strictness
+- **What it checks**: What happens to a skill with no `description` field: skipped (as the guide prescribes: "a description is essential for disclosure"), loaded with an empty or synthesized description, or handled some other way.
+- **Why it matters**: The guide's lenient-validation table suggests warn-but-load for name violations, but skip entirely for a missing description. Platforms that load such skills anyway create catalogs where the model has a name with no guidance on when to use it. Platforms that skip them mean the skill isn't visible to agents.
+
+### `invalid-name-tolerance`
+
+- **Category**: Validation Strictness
+- **What it checks**: Whether skills whose names break the spec's rules (uppercase letters, consecutive hyphens, more than 64 characters) are discovered, normalized, or rejected. Each fixture's frontmatter name matches its directory name exactly, so the character or length rule is the only violation in play.
+- **Why it matters**: The spec states the name rules as hard constraints, but they only bind if platforms enforce them. A rule-breaking name that loads on a lenient platform vanishes without an error on a strict one, and a platform that repairs the name (say, by lowercasing) changes the identity that documentation, users, and other skills refer to. Authors who test on one platform never see the break coming.
+
+### `name-directory-mismatch`
+
+- **Category**: Validation Strictness
+- **What it checks**: When a skill's frontmatter `name` differs from the name of the directory it lives in, which identity the platform uses: is the skill listed and invocable under the frontmatter name, under the directory name, or rejected outright?
+- **Why it matters**: The spec requires the skill's directory name to match its frontmatter `name`, but platforms decide independently whether to enforce, ignore, or partially honor the rule. Renaming a skill in frontmatter without renaming its folder (or vice versa, e.g. during development or after a fork) produces a mismatch that platforms have to resolve somehow. If one platform indexes by frontmatter name and another by directory name, the same installed skill answers to different names on different platforms. Instructions in other skills or documentation that reference it by one name would fail on platforms that chose the other. Early probing shows at least one platform (Codex) indexes purely by frontmatter name, so the failure mode is real rather than hypothetical.
+
+### `metadata-value-edge-cases`
+
+- **Category**: Validation Strictness
+- **What it checks**: Whether platforms successfully parse and load a skill whose `metadata` frontmatter contains edge-case YAML values: empty strings (`''`, `""`), explicit nulls (`null`, `~`, `None`), and tagged nulls (`!!null null`).
+- **Why it matters**: The spec defines `metadata` as a string-to-string mapping, but YAML parsers interpret `null`, `~`, and `None` as null values rather than strings. A platform whose loader expects all metadata values to be strings may throw a type error, drop the affected keys, or fail to load the skill entirely. Since the spec doesn't explicitly prohibit null values and YAML makes them easy to produce accidentally (an author who writes `foo:` with no value gets null rather than an empty string), these edge cases will appear in real-world skills. The question is whether each platform handles them gracefully or breaks.
+
+### `oversize-description-handling`
+
+- **Category**: Validation Strictness
+- **What it checks**: Whether a skill whose description exceeds the spec's 1024-character cap (this fixture's runs to 1116) is discovered, and whether the value survives intact or truncated. The description carries a head marker near its start and a tail marker as its final characters, and the body never repeats either, so what surfaces reveals exactly how much of the value survived.
+- **Why it matters**: Every installed skill's description occupies context at startup, which gives platforms a real incentive to cap or truncate. Rejection makes the skill vanish on strict platforms; silent truncation quietly deletes the end of the description, which is often where the "use when" activation cues live. Either way, an author with a long description gets different discovery behavior per platform without any error.
+
+### `oversize-compatibility-handling`
+
+- **Category**: Validation Strictness
+- **What it checks**: Whether a skill whose `compatibility` value exceeds the spec's 500-character cap (this fixture's runs to 570, with a tail marker) is discovered and loadable.
+- **Why it matters**: `compatibility` is optional and informational, so this check reveals how strictly platforms validate a field most skills omit entirely. A platform that rejects the skill outright turns harmless verbosity into a portability break; one that accepts it demonstrates the cap is documentation rather than enforcement.
+
+---
 ## Benchmark Skills
 
-The [`benchmark-skills/`](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills) directory contains 25 benchmark fixtures (spec-compliant skills plus deliberate structural and validation edge cases) designed to exercise these checks. Each skill contains unique **canary phrases** (e.g., CARDINAL-ZEBRA-7742) embedded in specific files. By asking the model whether it knows a canary phrase, testers can determine exactly what the platform loaded and when, without relying on the model's self-reporting about its own context.
+The [`benchmark-skills/`](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills) directory contains 33 benchmark fixtures (spec-compliant skills plus deliberate structural and validation edge cases) designed to exercise these checks. Each skill contains unique **canary phrases** (e.g., CARDINAL-ZEBRA-7742) embedded in specific files. By asking the model whether it knows a canary phrase, testers can determine exactly what the platform loaded and when, without relying on the model's self-reporting about its own context.
 
 See [`benchmark-skills/README.md`](https://github.com/agent-ecosystem/agent-skill-implementation/blob/main/benchmark-skills/README.md) for:
 
@@ -321,7 +350,7 @@ See [`benchmark-skills/README.md`](https://github.com/agent-ecosystem/agent-skil
 
 ## Contributing
 
-We need empirical data from people testing on real platforms. If you can test any of these checks on a specific platform, please open a PR with your findings using the template at [`platform-loading-implementation/template.md`](https://github.com/agent-ecosystem/agent-skill-implementation/blob/main/platform-loading-implementation/template.md).
+We need empirical data from people testing on real platforms. If you can test any of these checks on a specific platform, please open a PR with your findings using the template at [`platform-findings/template.md`](https://github.com/agent-ecosystem/agent-skill-implementation/blob/main/platform-findings/template.md).
 
 Even partial data is valuable. A single platform tested thoroughly is more useful than speculation about all of them.
 
@@ -336,6 +365,8 @@ Findings submissions record the check list version they were tested against (see
 - Added `discovery-listing-fields` (Category 4: Content Presentation), prompted by the observation that one platform's discovery listing is strictly `name: description` lines while another's includes file locations, which changes what frontmatter can ever reach the model.
 - Reworded `resource-nesting-depth`: the spec's "one level deep" language (now in its File references section) reads as guidance about reference chains rather than directory depth. The probe gained a five-levels-deep rung so findings report a measured depth bound instead of a yes/no.
 - Added a note that spec/guide quotes in this document were verified as of 2026-08-01, since both upstream documents are unversioned and change without a changelog.
+- Added `bundled-script-execution` (Category 3), `allowed-tools-behavior` (Category 6), and `invalid-name-tolerance`, `oversize-description-handling`, and `oversize-compatibility-handling` (Category 10), closing the spec statements a spec-alignment audit of the automated reports found untested: script executability, the experimental `allowed-tools` field, and the name, description, and compatibility limits.
+- Restructured the categories (check IDs unchanged): dissolved Structural Edge Cases (`resource-nesting-depth` joined Resource Access Patterns; `nested-skill-discovery` and `recursive-root-discovery` joined the new Discovery Scope; `name-directory-mismatch` joined the new Validation Strictness), split Discovery and Validation into Discovery Scope (where platforms look) and Validation Strictness (how strictly they judge what they find), and moved `metadata-value-edge-cases` from Content Presentation to Validation Strictness to sit with the other spec-invalid-input checks.
 
 ### 0.1 (2026-03-22)
 

@@ -26,7 +26,7 @@ labels: new-check
 
 ## Which category does this fit?
 
-<!-- Does this fit an existing category in loading-behavior.md, or does it need
+<!-- Does this fit an existing category in checks.md, or does it need
      a new one? Existing categories:
      1. Loading Timing
      2. Directory Recognition
@@ -34,7 +34,8 @@ labels: new-check
      4. Content Presentation
      5. Lifecycle Management
      6. Access Control
-     7. Structural Edge Cases
-     8. Skill-to-Skill Invocation
-     9. Skill Dependencies
+     7. Skill-to-Skill Invocation
+     8. Skill Dependencies
+     9. Discovery Scope
+     10. Validation Strictness
 -->

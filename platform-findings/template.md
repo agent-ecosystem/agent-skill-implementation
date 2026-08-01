@@ -1,4 +1,4 @@
-# Platform Loading Behavior: [Platform Name]
+# Platform Behavior: [Platform Name]
 
 <!--
   Copy this template to a new file named after the platform (e.g., claude-code.md,
@@ -14,7 +14,7 @@
 |-------|-------|
 | **Platform** | <!-- e.g., Claude Code, GitHub Copilot, Cursor, Roo Code --> |
 | **Platform version** | <!-- e.g., 1.0.20, VS Code 1.107 + Copilot Chat 0.24 --> |
-| **Check list version** | <!-- The version from loading-behavior.md (e.g., 0.2). Lets readers know which checks existed when this platform was tested. --> |
+| **Check list version** | <!-- The version from checks.md (e.g., 0.2). Lets readers know which checks existed when this platform was tested. --> |
 | **Date tested** | <!-- YYYY-MM-DD. Implementation details change; this is a snapshot. --> |
 | **Model used** | <!-- e.g., Claude Sonnet 4.6, GPT-4o, Gemini 2.5 Pro. Note the specific model, not just the family. --> |
 | **Tester** | <!-- Your name or GitHub handle --> |
@@ -197,12 +197,30 @@ work on that platform.
 
 #### `path-traversal-boundary`
 
-- **Benchmark skill**: `probe-traversal`. Activate the skill and follow its instructions to attempt reads outside the skill directory (../probe-loading/SKILL.md, ../README.md, ../../loading-behavior.md).
+- **Benchmark skill**: `probe-traversal`. Activate the skill and follow its instructions to attempt reads outside the skill directory (../probe-loading/SKILL.md, ../README.md, ../../checks.md).
 - **Status**: Not tested
 - **Observation**: <!-- Can the model access files outside the skill directory via relative paths? -->
 - **Evidence**: <!--  -->
 - **Platform-level or model-level?**: <!-- Platform-level (a security boundary should be enforced by the harness). -->
 - **Fallback behavior**: <!-- N/A for security checks. If traversal is blocked, that's the desired behavior. Note whether the agent reports the block or silently fails. -->
+
+#### `resource-nesting-depth`
+
+- **Benchmark skill**: `probe-deep-nesting`. Activate the skill and follow its instructions to read files at 1 level (DOVE-GARNET-1029), 2 levels (LARK-RUBY-4483), 3 levels (OWL-EMERALD-7756, FINCH-SAPPHIRE-2098), and 5 levels (PLOVER-JASPER-5590) of nesting. Note the deepest level that succeeds.
+- **Status**: Not tested
+- **Observation**: <!-- Can the model access deeply nested resource files? At what depth does it fail? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (whether the harness enumerates nested files) and model-level (whether the model attempts to traverse deeper). -->
+- **Fallback behavior**: <!-- If deeply nested files aren't enumerated, can the agent access them via explicit path? Does the user need to provide the full path, or can the agent navigate the directory tree? -->
+
+#### `bundled-script-execution`
+
+- **Benchmark skill**: `probe-script-execution`. Activate the skill and let it run `scripts/emit-canary.sh`. GODWIT-BORNITE-5148 printed by a tool = genuine execution (the script assembles the phrase at runtime; its source never contains the joined form). The literal `GODWIT-%s-5148` in a tool result means the source was read instead of run.
+- **Status**: Not tested
+- **Observation**: <!-- Did the script run and return its output? Was execution blocked, and by what (permission prompt, sandbox policy)? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level for permission posture; model-level for whether the model chose to run vs. read the script. -->
+- **Fallback behavior**: <!-- If execution was blocked, did the model recover (read the source, explain the block), and could the user approve the command interactively? -->
 
 ---
 
@@ -225,15 +243,6 @@ work on that platform.
 - **Evidence**: <!--  -->
 - **Platform-level or model-level?**: <!-- Platform-level -->
 - **Fallback behavior**: <!-- If frontmatter is stripped, can the user instruct the agent to re-read the raw SKILL.md file to see the frontmatter? Is there a platform setting to change stripping behavior? -->
-
-#### `metadata-value-edge-cases`
-
-- **Benchmark skill**: `probe-metadata-values`. Activate the skill. If it loads, the platform didn't reject the edge-case metadata values. Check steps 2-3 to see which values the model received and whether any keys were dropped. Look for canary phrase THRUSH-FLINT-8294 to confirm the body loaded.
-- **Status**: Not tested
-- **Observation**: <!-- Did the skill load successfully? Were all seven metadata keys preserved? Were null values coerced to strings, dropped, or passed through as null? -->
-- **Evidence**: <!--  -->
-- **Platform-level or model-level?**: <!-- Platform-level -->
-- **Fallback behavior**: <!-- If the platform rejects the skill, can the metadata values be quoted to force string interpretation? Does removing null-valued keys allow the skill to load? -->
 
 #### `content-wrapping-format`
 
@@ -297,89 +306,18 @@ work on that platform.
 - **Platform-level or model-level?**: <!-- Platform-level (whether the harness acts on it) and model-level (whether the model interprets it if passed through). -->
 - **Fallback behavior**: <!-- If the platform blocks loading based on compatibility, can the user override? If the model self-restricts based on the compatibility text, can the user instruct it to proceed anyway? -->
 
----
+#### `allowed-tools-behavior`
 
-### Category 7: Structural Edge Cases
-
-#### `nested-skill-discovery`
-
-- **Benchmark skill**: `probe-deep-nesting`. Install the skill and check the available skills list. Does `nested-skill` appear as a separate skill? Its SKILL.md is at `probe-deep-nesting/references/nested-skill/SKILL.md`. Canary phrase: HAWK-ONYX-5534.
+- **Benchmark skills**: `probe-allowed-tools` + `probe-allowed-tools-control`. Run each in its OWN session and compare. GROUSE-MICA-9017 in a tool result = the field-bearing skill's printf ran; LAPWING-FLUORITE-2260 = the control's ran. Both running means the platform's permission posture, not the field, allowed it.
 - **Status**: Not tested
-- **Observation**: <!-- If a SKILL.md exists inside another skill's directory tree, does the platform discover both? -->
+- **Observation**: <!-- Did the field change anything: execution allowed, permission prompt skipped, field surfaced to the model? -->
 - **Evidence**: <!--  -->
-- **Platform-level or model-level?**: <!-- Platform-level -->
-- **Fallback behavior**: <!-- If the nested skill is not discovered, can the user manually activate it by path? If it IS discovered as a separate skill, can the user suppress it? -->
-
-#### `resource-nesting-depth`
-
-- **Benchmark skill**: `probe-deep-nesting`. Activate the skill and follow its instructions to read files at 1 level (DOVE-GARNET-1029), 2 levels (LARK-RUBY-4483), 3 levels (OWL-EMERALD-7756, FINCH-SAPPHIRE-2098), and 5 levels (PLOVER-JASPER-5590) of nesting. Note the deepest level that succeeds.
-- **Status**: Not tested
-- **Observation**: <!-- Can the model access deeply nested resource files? At what depth does it fail? -->
-- **Evidence**: <!--  -->
-- **Platform-level or model-level?**: <!-- Platform-level (whether the harness enumerates nested files) and model-level (whether the model attempts to traverse deeper). -->
-- **Fallback behavior**: <!-- If deeply nested files aren't enumerated, can the agent access them via explicit path? Does the user need to provide the full path, or can the agent navigate the directory tree? -->
-
-#### `name-directory-mismatch`
-
-- **Benchmark skill**: `probe-mismatch-dir`. Install the directory as-is (its frontmatter declares `name: probe-name-mismatch`). Check the available skills list, then activate the skill by whichever name appeared. Canary phrase: SWAN-BERYL-3324.
-- **Status**: Not tested
-- **Observation**: <!-- Which identity does the platform use when the directory name and frontmatter name disagree — frontmatter name, directory name, both, or is the skill rejected? Any warning shown? -->
-- **Evidence**: <!--  -->
-- **Platform-level or model-level?**: <!-- Platform-level (the loader decides the index identity before any model involvement). -->
-- **Fallback behavior**: <!-- If the skill is rejected or listed under an unexpected name, can the user still activate it by path or by the other name? -->
-
-#### `recursive-root-discovery`
-
-- **Benchmark skills**: `probe-group` + `probe-stray`. Install `probe-group` (containing `probe-grouped/SKILL.md` one level down) into the skills directory, and copy `probe-stray` into the project OUTSIDE the skills directory. Check the listing for both, then activate whichever appeared. Canary phrases: CROW-AGATE-6105 (grouped), MERLIN-GYPSUM-8852 (stray).
-- **Status**: Not tested
-- **Observation**: <!-- Does the platform scan its skills root recursively (probe-grouped discovered), and does it discover SKILL.md files outside the root entirely (probe-stray discovered)? -->
-- **Evidence**: <!--  -->
-- **Platform-level or model-level?**: <!-- Platform-level for discovery. If the model reads the stray SKILL.md as an ordinary file when asked, that is model-level file access, not discovery. -->
-- **Fallback behavior**: <!-- If grouped skills aren't discovered, does flattening the layout restore them? If the stray skill IS discovered, can the user exclude paths from scanning? -->
+- **Platform-level or model-level?**: <!-- Platform-level (pre-approval is a harness mechanism); note the spec marks the field experimental. -->
+- **Fallback behavior**: <!-- Where the field is ignored, does the command fall into the normal permission flow, and can the user approve it there? -->
 
 ---
 
-### Category 10: Discovery and Validation
-
-#### `cross-client-directory-interop`
-
-- **Benchmark skill**: `overlay-agents-convention`. Copy the wrapper's contents onto the project root so the skill lands at `<project>/.agents/skills/probe-interop/`; do NOT install it in the platform's native skills directory. Canary phrase: SNIPE-OCHRE-2217.
-- **Status**: Not tested
-- **Observation**: <!-- Is probe-interop listed and activatable from the .agents/skills convention path? If the platform's native directory IS .agents/skills, record that. -->
-- **Evidence**: <!--  -->
-- **Platform-level or model-level?**: <!-- Platform-level (scan locations are fixed before any model involvement). -->
-- **Fallback behavior**: <!-- If the convention path isn't scanned, does a symlink from the native directory work? -->
-
-#### `malformed-yaml-tolerance`
-
-- **Benchmark skill**: `probe-malformed-yaml`. Install normally; its description contains an unquoted colon (invalid YAML). Canary phrase: QUAIL-FELDSPAR-7448.
-- **Status**: Not tested
-- **Observation**: <!-- Is the skill discovered despite the invalid YAML? What description text survived (repaired, truncated, or intact)? Does activation work? -->
-- **Evidence**: <!--  -->
-- **Platform-level or model-level?**: <!-- Platform-level (parser behavior). -->
-- **Fallback behavior**: <!-- If skipped, does quoting the description restore the skill? Is any diagnostic surfaced to the user? -->
-
-#### `missing-description-handling`
-
-- **Benchmark skill**: `probe-no-description`. Install normally; it has no description field. Canary phrase: VIREO-PUMICE-3049.
-- **Status**: Not tested
-- **Observation**: <!-- Skipped (guide's prescription), loaded with empty/placeholder description, or something else? -->
-- **Evidence**: <!--  -->
-- **Platform-level or model-level?**: <!-- Platform-level (validation policy). -->
-- **Fallback behavior**: <!-- If skipped, is a diagnostic surfaced anywhere (log, debug command, UI)? -->
-
-#### `name-collision-precedence`
-
-- **Benchmark skills**: `probe-collision` + `probe-collision-user`. Install `probe-collision` at project scope and `probe-collision-user/probe-collision` at USER scope, then activate `probe-collision`. Canary phrases: RAVEN-CITRINE-6634 (project variant), PIPIT-SHALE-1147 (user variant).
-- **Status**: Not tested
-- **Observation**: <!-- Which variant's canary loaded? Project-wins (the guide's "universal convention"), user-wins, both, or an error? Any collision warning logged? -->
-- **Evidence**: <!--  -->
-- **Platform-level or model-level?**: <!-- Platform-level (precedence is resolved at discovery). -->
-- **Fallback behavior**: <!-- Can the user reach the shadowed variant at all (by path, by disambiguated name)? -->
-
----
-
-### Category 8: Skill-to-Skill Invocation
+### Category 7: Skill-to-Skill Invocation
 
 #### `cross-skill-invocation`
 
@@ -419,7 +357,7 @@ work on that platform.
 
 ---
 
-### Category 9: Skill Dependencies
+### Category 8: Skill Dependencies
 
 #### `informal-dependency-resolution`
 
@@ -456,6 +394,113 @@ work on that platform.
 - **Evidence**: <!--  -->
 - **Platform-level or model-level?**: <!-- Both. Scope visibility is platform-level. Whether the model can invoke across scopes depends on what the harness exposes. -->
 - **Fallback behavior**: <!-- If the agent can't see skills at a different scope, can the user manually activate the cross-scope skill? Does moving the dependency to the same scope resolve the issue? -->
+
+---
+
+### Category 9: Discovery Scope
+
+#### `cross-client-directory-interop`
+
+- **Benchmark skill**: `overlay-agents-convention`. Copy the wrapper's contents onto the project root so the skill lands at `<project>/.agents/skills/probe-interop/`; do NOT install it in the platform's native skills directory. Canary phrase: SNIPE-OCHRE-2217.
+- **Status**: Not tested
+- **Observation**: <!-- Is probe-interop listed and activatable from the .agents/skills convention path? If the platform's native directory IS .agents/skills, record that. -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (scan locations are fixed before any model involvement). -->
+- **Fallback behavior**: <!-- If the convention path isn't scanned, does a symlink from the native directory work? -->
+
+#### `recursive-root-discovery`
+
+- **Benchmark skills**: `probe-group` + `probe-stray`. Install `probe-group` (containing `probe-grouped/SKILL.md` one level down) into the skills directory, and copy `probe-stray` into the project OUTSIDE the skills directory. Check the listing for both, then activate whichever appeared. Canary phrases: CROW-AGATE-6105 (grouped), MERLIN-GYPSUM-8852 (stray).
+- **Status**: Not tested
+- **Observation**: <!-- Does the platform scan its skills root recursively (probe-grouped discovered), and does it discover SKILL.md files outside the root entirely (probe-stray discovered)? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level for discovery. If the model reads the stray SKILL.md as an ordinary file when asked, that is model-level file access, not discovery. -->
+- **Fallback behavior**: <!-- If grouped skills aren't discovered, does flattening the layout restore them? If the stray skill IS discovered, can the user exclude paths from scanning? -->
+
+#### `nested-skill-discovery`
+
+- **Benchmark skill**: `probe-deep-nesting`. Install the skill and check the available skills list. Does `nested-skill` appear as a separate skill? Its SKILL.md is at `probe-deep-nesting/references/nested-skill/SKILL.md`. Canary phrase: HAWK-ONYX-5534.
+- **Status**: Not tested
+- **Observation**: <!-- If a SKILL.md exists inside another skill's directory tree, does the platform discover both? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level -->
+- **Fallback behavior**: <!-- If the nested skill is not discovered, can the user manually activate it by path? If it IS discovered as a separate skill, can the user suppress it? -->
+
+#### `name-collision-precedence`
+
+- **Benchmark skills**: `probe-collision` + `probe-collision-user`. Install `probe-collision` at project scope and `probe-collision-user/probe-collision` at USER scope, then activate `probe-collision`. Canary phrases: RAVEN-CITRINE-6634 (project variant), PIPIT-SHALE-1147 (user variant).
+- **Status**: Not tested
+- **Observation**: <!-- Which variant's canary loaded? Project-wins (the guide's "universal convention"), user-wins, both, or an error? Any collision warning logged? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (precedence is resolved at discovery). -->
+- **Fallback behavior**: <!-- Can the user reach the shadowed variant at all (by path, by disambiguated name)? -->
+
+---
+
+### Category 10: Validation Strictness
+
+#### `malformed-yaml-tolerance`
+
+- **Benchmark skill**: `probe-malformed-yaml`. Install normally; its description contains an unquoted colon (invalid YAML). Canary phrase: QUAIL-FELDSPAR-7448.
+- **Status**: Not tested
+- **Observation**: <!-- Is the skill discovered despite the invalid YAML? What description text survived (repaired, truncated, or intact)? Does activation work? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (parser behavior). -->
+- **Fallback behavior**: <!-- If skipped, does quoting the description restore the skill? Is any diagnostic surfaced to the user? -->
+
+#### `missing-description-handling`
+
+- **Benchmark skill**: `probe-no-description`. Install normally; it has no description field. Canary phrase: VIREO-PUMICE-3049.
+- **Status**: Not tested
+- **Observation**: <!-- Skipped (guide's prescription), loaded with empty/placeholder description, or something else? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (validation policy). -->
+- **Fallback behavior**: <!-- If skipped, is a diagnostic surfaced anywhere (log, debug command, UI)? -->
+
+#### `invalid-name-tolerance`
+
+- **Benchmark skills**: `probe-Upper-Case` + `probe--double-hyphen` + `probe-overlong-name-…-limit`. Install all three; each directory name matches its frontmatter name, so only the name rule is violated. Check the listing for each (exact or normalized form), then activate each by name. Canaries: DUNLIN-OLIVINE-7821 (uppercase), PETREL-GALENA-3306 (double hyphen), AVOCET-ZIRCON-5573 (overlong).
+- **Status**: Not tested
+- **Observation**: <!-- Which variants were listed, under what identity (exact, lowercased, truncated), and which loaded? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (validation happens at discovery). -->
+- **Fallback behavior**: <!-- For rejected variants: any error or log line, or do they vanish silently? Is the file still reachable by direct read? -->
+
+#### `name-directory-mismatch`
+
+- **Benchmark skill**: `probe-mismatch-dir`. Install the directory as-is (its frontmatter declares `name: probe-name-mismatch`). Check the available skills list, then activate the skill by whichever name appeared. Canary phrase: SWAN-BERYL-3324.
+- **Status**: Not tested
+- **Observation**: <!-- Which identity does the platform use when the directory name and frontmatter name disagree — frontmatter name, directory name, both, or is the skill rejected? Any warning shown? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (the loader decides the index identity before any model involvement). -->
+- **Fallback behavior**: <!-- If the skill is rejected or listed under an unexpected name, can the user still activate it by path or by the other name? -->
+
+#### `metadata-value-edge-cases`
+
+- **Benchmark skill**: `probe-metadata-values`. Activate the skill. If it loads, the platform didn't reject the edge-case metadata values. Check steps 2-3 to see which values the model received and whether any keys were dropped. Look for canary phrase THRUSH-FLINT-8294 to confirm the body loaded.
+- **Status**: Not tested
+- **Observation**: <!-- Did the skill load successfully? Were all seven metadata keys preserved? Were null values coerced to strings, dropped, or passed through as null? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level -->
+- **Fallback behavior**: <!-- If the platform rejects the skill, can the metadata values be quoted to force string interpretation? Does removing null-valued keys allow the skill to load? -->
+
+#### `oversize-description-handling`
+
+- **Benchmark skill**: `probe-long-description` (description is 1116 characters; the spec caps it at 1024). The description carries the head marker SANDERLING-GNEISS-1010 near its start and the tail marker WHIMBREL-DOLOMITE-2020 as its final characters, and the body never repeats either. Body canary: BITTERN-HALITE-2264.
+- **Status**: Not tested
+- **Observation**: <!-- Listed or skipped? If listed, does the catalog show the head marker, the tail marker, both (untruncated), or neither? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (validation and truncation happen at discovery). -->
+- **Fallback behavior**: <!-- If skipped or truncated: any error or warning anywhere, or silent? -->
+
+#### `oversize-compatibility-handling`
+
+- **Benchmark skill**: `probe-long-compatibility` (compatibility value is 570 characters; the spec caps it at 500, tail marker TURNSTONE-ARAGONITE-3030). Body canary: KESTREL-BAUXITE-6690.
+- **Status**: Not tested
+- **Observation**: <!-- Listed and loadable despite the over-length value? Does the tail marker surface anywhere? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (validation happens at discovery). -->
+- **Fallback behavior**: <!-- If rejected: any error or warning, or silent? -->
 
 ---
 

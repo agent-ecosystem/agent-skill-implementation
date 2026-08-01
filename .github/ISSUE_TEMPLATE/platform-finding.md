@@ -14,7 +14,7 @@ labels: platform-finding
 
 ## Check(s) tested
 
-<!-- Which check ID(s) from loading-behavior.md did you test? -->
+<!-- Which check ID(s) from checks.md did you test? -->
 
 ## What you observed
 
