@@ -5,7 +5,7 @@ date: 2026-08-01
 showTableOfContents: true
 ---
 
-We ran the same 33 automated checks against each platform and compared what actually happened. Each row below asks one question about skill loading behavior; the cells say in plain language what each platform did. Rows marked ⚠️ are where platforms disagree — the cases where a skill that works on one platform behaves differently on another.
+We ran the same 33 automated checks against each platform and compared what actually happened. Each row below asks one question about skill loading behavior; the cells say in plain language what each platform did. Rows marked ⚠️ are where platforms disagree: the cases where a skill that works on one platform behaves differently on another.
 
 Full detail for every finding (the exact verdict, how content reached the model, confidence, and notes) lives on the per-platform pages:
 
@@ -18,16 +18,16 @@ For what these findings mean when writing a skill, see the [cross-platform autho
 ## Where platforms diverge
 
 - Is a resources/ directory (alternative to spec's references/) loaded, enumerated, readable, or invisible?
-- When the model follows a SKILL.md relative path like references/setup-guide.md, what does it resolve against — and does the bare path work as written?
+- When the model follows a SKILL.md relative path like references/setup-guide.md, what does it resolve against, and does the bare path work as written?
 - Which frontmatter fields does the discovery listing surface to the model: name and description only, or also compatibility, metadata values, or file locations?
 - Does the SKILL.md YAML frontmatter reach the model at activation, or only the body?
-- Is injected skill content wrapped in structured tags, or delivered as raw markdown — and what does the model see on pull harnesses?
+- Is injected skill content wrapped in structured tags, or delivered as raw markdown, and what does the model see on pull harnesses?
 - When the same skill is activated twice in one session, is its content loaded again or deduplicated?
 - Is a SKILL.md nested inside another skill's references/ tree discovered as a separate skill?
 - When directory name and frontmatter name disagree, which identity is the skill listed and invocable under?
 - Does the skills root get scanned recursively (a skill under a grouping directory), and is a SKILL.md outside any root discovered?
 - When a skill instructs activating a skill that is not installed, is the failure visible, reported, or silently skipped?
-- Can a project-level skill invoke a dependency that exists only at user level — and what is the failure mode when it is absent?
+- Can a project-level skill invoke a dependency that exists only at user level, and what is the failure mode when it is absent?
 - Is a skill installed only at the cross-client .agents/skills convention path discovered?
 - Is a skill whose description holds an unquoted colon (invalid YAML) still discovered and loadable?
 - Is a skill with no description field skipped (as the guide prescribes), or loaded anyway?
@@ -40,8 +40,8 @@ When skill content enters the model's context, and how much loads at each stage.
 | Question | Antigravity CLI | Claude Code | Codex CLI |
 |---|---|---|---|
 | Does the harness read only SKILL.md metadata at discovery, or the full body? | Metadata only † | Metadata only | Metadata only |
-| On activation, does the harness load only the SKILL.md body, or also bundled resources — and by which vehicle? | Body only | Body only | Body only |
-| Does activation pre-fetch files markdown-linked from the SKILL.md body — and does that extend to a file mentioned only as plain text? | No pre-fetching † | No pre-fetching | No pre-fetching |
+| On activation, does the harness load only the SKILL.md body, or also bundled resources, and by which vehicle? | Body only | Body only | Body only |
+| Does activation pre-fetch files markdown-linked from the SKILL.md body, and does that extend to a file mentioned only as plain text? | No pre-fetching † | No pre-fetching | No pre-fetching |
 
 ## Directory Recognition
 
@@ -51,7 +51,7 @@ Which directories a platform treats as part of a skill, and what happens to ones
 |---|---|---|---|
 | Are the three spec directories (scripts/, references/, assets/) enumerated to the model at activation? | Nothing enumerated † | Nothing enumerated | Nothing enumerated |
 | ⚠️ Is a resources/ directory (alternative to spec's references/) loaded, enumerated, readable, or invisible? | Readable when the model looks | Not surfaced; model never looked | Not surfaced; model never looked |
-| What happens to directories the spec never named (evals/, templates/) — injected, readable on demand, or invisible? | Not surfaced; model never looked † | Not surfaced; model never looked | Not surfaced; model never looked |
+| What happens to directories the spec never named (evals/, templates/): injected, readable on demand, or invisible? | Not surfaced; model never looked † | Not surfaced; model never looked | Not surfaced; model never looked |
 
 ## Resource Access Patterns
 
@@ -60,7 +60,7 @@ How supporting files (scripts, references, assets) become available to the model
 | Question | Antigravity CLI | Claude Code | Codex CLI |
 |---|---|---|---|
 | At activation, are a skill's reference files enumerated to the model (names), loaded outright (contents), or invisible until explored? | Nothing enumerated † | Nothing enumerated | Nothing enumerated |
-| ⚠️ When the model follows a SKILL.md relative path like references/setup-guide.md, what does it resolve against — and does the bare path work as written? | Bare path fails; model recovers | Bare path fails; model recovers | Model used full paths (base untested) † |
+| ⚠️ When the model follows a SKILL.md relative path like references/setup-guide.md, what does it resolve against, and does the bare path work as written? | Bare path fails; model recovers | Bare path fails; model recovers | Model used full paths (base untested) † |
 | With two skills both owning references/API.md, does the activated skill's read get its own file or the sibling's? | Got its own file † | Got its own file † | Got its own file † |
 | Can the model read outside the activated skill's directory (a sibling skill's file), and is anything visibly blocked? | Reads outside the skill allowed | Reads outside the skill allowed | Reads outside the skill allowed |
 
@@ -72,8 +72,8 @@ What the model actually sees, at discovery and at activation, and how it's forma
 |---|---|---|---|
 | ⚠️ Which frontmatter fields does the discovery listing surface to the model: name and description only, or also compatibility, metadata values, or file locations? | Also surfaces location † | Name and description only | Also surfaces location |
 | ⚠️ Does the SKILL.md YAML frontmatter reach the model at activation, or only the body? | Visible (model reads the raw file) | Stripped before injection | Visible (model reads the raw file) |
-| Is a skill whose metadata frontmatter holds nulls and empty strings still discovered and loaded — and do those keys reach the model? | Loaded fine | Loaded fine | Loaded fine |
-| ⚠️ Is injected skill content wrapped in structured tags, or delivered as raw markdown — and what does the model see on pull harnesses? | Raw file via model read | Raw markdown, no wrapper tags | Raw file via model read |
+| Is a skill whose metadata frontmatter holds nulls and empty strings still discovered and loaded, and do those keys reach the model? | Loaded fine | Loaded fine | Loaded fine |
+| ⚠️ Is injected skill content wrapped in structured tags, or delivered as raw markdown, and what does the model see on pull harnesses? | Raw file via model read | Raw markdown, no wrapper tags | Raw file via model read |
 
 ## Lifecycle Management
 
@@ -125,7 +125,7 @@ What happens when one skill depends on another, formally or in prose.
 | Is a dependency expressed only in prose ("now activate the invoke-beta skill") resolved at runtime? | Second skill activated | Second skill activated | Second skill activated |
 | ⚠️ When a skill instructs activating a skill that is not installed, is the failure visible, reported, or silently skipped? | Reported missing without attempting | Failed with a visible error | Reported missing without attempting |
 | Does the platform act on nonstandard dependency frontmatter (requires, depends-on, priority)? | Ignored † | Ignored | Ignored |
-| ⚠️ Can a project-level skill invoke a dependency that exists only at user level — and what is the failure mode when it is absent? | Resolved across scopes; missing dependency reported, not attempted | Resolved across scopes; missing dependency fails visibly | Resolved across scopes; missing dependency reported, not attempted |
+| ⚠️ Can a project-level skill invoke a dependency that exists only at user level, and what is the failure mode when it is absent? | Resolved across scopes; missing dependency reported, not attempted | Resolved across scopes; missing dependency fails visibly | Resolved across scopes; missing dependency reported, not attempted |
 
 ## Discovery and Validation
 
@@ -137,3 +137,4 @@ Where platforms look for skills and how strictly they validate what they find.
 | ⚠️ Is a skill whose description holds an unquoted colon (invalid YAML) still discovered and loadable? | Not cataloged; file still readable † | Tolerated and loaded | Tolerated and loaded |
 | ⚠️ Is a skill with no description field skipped (as the guide prescribes), or loaded anyway? | Loaded anyway † | Loaded anyway | Skipped (as the guide prescribes) |
 | ⚠️ With the same skill name installed at project and user scope, which variant's content activates? | Project scope wins † | User scope wins | Lists both; model chose the project variant † |
+

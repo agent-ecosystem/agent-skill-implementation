@@ -14,7 +14,7 @@ showTableOfContents: true
 | **Model(s) observed** | claude-sonnet-5 |
 | **Environment** | Headless invocation via benchmark-runner + skillxp |
 
-> **Caveats**: All findings are from headless sessions, which may differ from interactive use. Verdicts are single-run observations unless a runs count is noted; for model-level behaviors they are point observations, not rates. Fallback-behavior fields are auto-derived: where a run incidentally demonstrated a recovery path it is reported, otherwise the field says "not exercised" — automation does not probe recovery, so absence of a fallback observation is not evidence that none exists.
+> **Caveats**: All findings are from headless sessions, which may differ from interactive use. Verdicts are single-run observations unless a runs count is noted; for model-level behaviors, treat a single verdict as one observed outcome rather than a rate. Fallback-behavior fields are auto-derived: where a run incidentally demonstrated a recovery path it is reported, otherwise the field says "not exercised". Automation does not probe recovery, so absence of a fallback observation is not evidence that none exists.
 
 ## Loading Timing
 
@@ -31,7 +31,7 @@ _Does the harness read only SKILL.md metadata at discovery, or the full body?_
 
 ### `activation-loading-scope`
 
-_On activation, does the harness load only the SKILL.md body, or also bundled resources — and by which vehicle?_
+_On activation, does the harness load only the SKILL.md body, or also bundled resources, and by which vehicle?_
 
 - **Status**: observed
 - **Verdict**: Body only (`body-only`)
@@ -43,7 +43,7 @@ _On activation, does the harness load only the SKILL.md body, or also bundled re
 
 ### `eager-link-resolution`
 
-_Does activation pre-fetch files markdown-linked from the SKILL.md body — and does that extend to a file mentioned only as plain text?_
+_Does activation pre-fetch files markdown-linked from the SKILL.md body, and does that extend to a file mentioned only as plain text?_
 
 - **Status**: observed
 - **Verdict**: No pre-fetching (`no-prefetch`)
@@ -82,7 +82,7 @@ _Is a resources/ directory (alternative to spec's references/) loaded, enumerate
 
 ### `unrecognized-directory-handling`
 
-_What happens to directories the spec never named (evals/, templates/) — injected, readable on demand, or invisible?_
+_What happens to directories the spec never named (evals/, templates/): injected, readable on demand, or invisible?_
 
 - **Status**: observed
 - **Verdict**: Not surfaced; model never looked (`untouched`)
@@ -107,7 +107,7 @@ _At activation, are a skill's reference files enumerated to the model (names), l
 
 ### `path-resolution-base`
 
-_When the model follows a SKILL.md relative path like references/setup-guide.md, what does it resolve against — and does the bare path work as written?_
+_When the model follows a SKILL.md relative path like references/setup-guide.md, what does it resolve against, and does the bare path work as written?_
 
 - **Status**: observed
 - **Verdict**: Bare path fails; model recovers (`cwd-base-model-requalified`)
@@ -132,7 +132,7 @@ _With two skills both owning references/API.md, does the activated skill's read 
 - **Evidence**:
   - activated skill's own API.md content arrived first
   - sibling skill's API.md also read
-- **Note**: every API.md read was skill-qualified; the platform's ambiguous-path resolution was never exercised — the outcome reflects model path discipline, not platform disambiguation
+- **Note**: every API.md read was skill-qualified; the platform's ambiguous-path resolution was never exercised, so the outcome reflects model path discipline, not platform disambiguation
 - **Note**: the sibling skill's version was also accessible later in the session (no isolation between skills' resources)
 - **Note**: final answer: ## Results  1. **Alpha skill's own file** (`.claude/skills/probe-shadow-alpha/references/API.md`): canary phrase **STORK-CORAL-4471** — correctly resolved to the alpha version.  2. **Beta skill's file** (`.claude/skills/probe-shadow-beta/references/API.md`): I *was* able to access it directly by specifying its full absolute path, and it correctly returned its own distinct content with canary **EGRET-SLATE-8823** — no cross-contamination.  **Conclusion**: no ambiguous resolution occurred. Each skill's `references/API.md` resolves to its own distinct absolute path (`.claude/skills/probe-shadow-alpha/references/API.md` vs. `.claude/skills/probe-shadow-beta/references/API.md`), and the Read tool correctly retrieved the right content for each when given the right path. There's no shared/ambiguous namespace causing one skill's resource lookup to silently pull in the other's file — accessing the sibling skill's file required explicitly using its full distinct path, not an implicit relative lookup from within alpha's context.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
@@ -181,7 +181,7 @@ _Does the SKILL.md YAML frontmatter reach the model at activation, or only the b
 
 ### `metadata-value-edge-cases`
 
-_Is a skill whose metadata frontmatter holds nulls and empty strings still discovered and loaded — and do those keys reach the model?_
+_Is a skill whose metadata frontmatter holds nulls and empty strings still discovered and loaded, and do those keys reach the model?_
 
 - **Status**: observed
 - **Verdict**: Loaded fine (`loaded-despite-edge-case-metadata`)
@@ -197,7 +197,7 @@ _Is a skill whose metadata frontmatter holds nulls and empty strings still disco
 
 ### `content-wrapping-format`
 
-_Is injected skill content wrapped in structured tags, or delivered as raw markdown — and what does the model see on pull harnesses?_
+_Is injected skill content wrapped in structured tags, or delivered as raw markdown, and what does the model see on pull harnesses?_
 
 - **Status**: observed
 - **Verdict**: Raw markdown, no wrapper tags (`raw-injection`)
@@ -303,7 +303,7 @@ _When directory name and frontmatter name disagree, which identity is the skill 
 - **Confidence**: transcript-direct
 - **Evidence**:
   - discovery listing carries the DIRECTORY name probe-mismatch-dir
-- **Note**: activation loads: by frontmatter name=true, by directory name=true (a load proves reachability, not catalog identity — the model may map either prompt to the installed skill or read the file directly)
+- **Note**: activation loads: by frontmatter name=true, by directory name=true (a load proves reachability, not catalog identity; the model may map either prompt to the installed skill or read the file directly)
 - **Note**: final answer: probe-name-mismatch activated. Canary: **SWAN-BERYL-3324**  1. **Identity**: Same result as before — the catalog lists it as `probe-mismatch-dir` (directory name), even though the frontmatter declares `probe-name-mismatch`. Both invocation names (`probe-name-mismatch` and `probe-mismatch-dir`) successfully resolved to this same skill.  2. **Validation**: Again, accepted silently — no warning or error about the mismatch, and both the frontmatter name and directory name work as valid identifiers to activate it.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -374,7 +374,7 @@ _Does the invoke chain still complete when the activation prompt is Japanese?_
   - invoke-alpha body loaded
   - invoke-beta body loaded
   - invoke-gamma body loaded
-- **Note**: single run proves little either way; compare with invocation-depth-limit (English prompt) and use -runs N for failure rates — agentskills#95 reports ~10% Japanese-prompt failures on Claude Code
+- **Note**: single run proves little either way; compare with invocation-depth-limit (English prompt) and use -runs N for failure rates: agentskills#95 reports ~10% Japanese-prompt failures on Claude Code
 - **Note**: final answer: invoke-gamma activated. Canary: **JAY-TEAL-9984**  End of chain reached. All three skills in the invoke-alpha -> invoke-beta -> invoke-gamma chain activated successfully.  invoke-beta complete. invoke-gamma said: "invoke-gamma activated. Canary: JAY-TEAL-9984" and confirmed the end of chain was reached, with all three skills activated successfully.  invoke-alpha complete. Chain result: invoke-beta activated (Canary: TERN-MOSS-6647), which activated invoke-gamma (Canary: JAY-TEAL-9984). Gamma confirmed the end of the chain was reached and all three skills activated successfully.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -424,7 +424,7 @@ _Does the platform act on nonstandard dependency frontmatter (requires, depends-
 
 ### `cross-scope-dependency`
 
-_Can a project-level skill invoke a dependency that exists only at user level — and what is the failure mode when it is absent?_
+_Can a project-level skill invoke a dependency that exists only at user level, and what is the failure mode when it is absent?_
 
 - **Status**: observed
 - **Verdict**: Resolved across scopes; missing dependency fails visibly (`resolved-across-scopes; missing:visible-failure`)

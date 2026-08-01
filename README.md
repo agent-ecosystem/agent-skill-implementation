@@ -9,9 +9,9 @@ support.
 But "some level" is doing a lot of work in that sentence. If you're publishing
 skills for others to use, your users could be on any of those 25+ platforms, and
 each one may load, present, and manage your skill differently. A skill that works
-perfectly on the platform you tested it on may silently lose access to its
-reference files, have its metadata stripped, or find its instructions pruned from
-context on another.
+perfectly on the platform you tested it on may lose access to its reference
+files, have its metadata stripped, or find its instructions pruned from context
+on another, with no error to tell you any of it happened.
 
 This project investigates how skill implementation actually works in practice,
 from two angles: how **platforms** load and manage skills, and how **authors**
@@ -30,17 +30,17 @@ through empirical testing rather than assumptions.
 
 ## What's here
 
-- **[loading-behavior.md](loading-behavior.md)** — 35 checks across 10 categories
+- **[loading-behavior.md](loading-behavior.md)**: 35 checks across 10 categories
   of skill loading behavior that need empirical testing. Each check describes what
   it evaluates and why it matters for skill authors.
 
-- **[benchmark-skills/](benchmark-skills/)** — 25 spec-compliant skills designed
+- **[benchmark-skills/](benchmark-skills/)**: 25 spec-compliant skills designed
   to exercise those checks. Each contains unique canary phrases that reveal what a
   platform loaded and when, without relying on model self-reporting. See the
   [benchmark skills README](benchmark-skills/README.md) for the full inventory,
   check-to-skill mapping, and test procedures.
 
-- **[platform-loading-implementation/](platform-loading-implementation/)** — Per-platform
+- **[platform-loading-implementation/](platform-loading-implementation/)**: Per-platform
   results. The [template](platform-loading-implementation/template.md) captures
   platform details, methodology, and findings for each check, including whether
   observed behavior is platform-level or model-level and whether fallback
@@ -50,8 +50,8 @@ through empirical testing rather than assumptions.
 
 Skill authors currently have no way to know what will happen when their skill is
 activated on a given platform. A skill that works perfectly on one platform may
-silently lose access to its reference files, have its frontmatter stripped, or find
-its instructions pruned from context on another. Without empirical data about how
+lose access to its reference files, have its frontmatter stripped, or find its
+instructions pruned from context on another. Without empirical data about how
 platforms actually behave, skill authors are writing for an idealized loading model
 that may not match reality anywhere.
 
@@ -60,31 +60,31 @@ that may not match reality anywhere.
 Skill loading behavior is the starting point, but not the only area where platform
 behavior is unspecified and likely diverges. We plan to investigate these areas next:
 
-- **Tool provisioning** — The spec defines an `allowed-tools` frontmatter field but
+- **Tool provisioning**: The spec defines an `allowed-tools` frontmatter field but
   says nothing about how platforms should act on it. Does the platform restrict the
   model to declared tools, provision additional tools the skill requests, or ignore
   the field entirely?
-- **Activation mechanisms** — How does a user activate a skill? Slash command,
+- **Activation mechanisms**: How does a user activate a skill? Slash command,
   natural language, automatic activation based on context? A skill designed for one
   activation style may never get discovered on a platform that only supports another.
-- **Multi-skill context management** — When multiple skills are active, how does the
+- **Multi-skill context management**: When multiple skills are active, how does the
   platform manage the context budget? Which skill gets pruned first when context is
   tight?
-- **Instruction authority and conflict resolution** — If two active skills give
+- **Instruction authority and conflict resolution**: If two active skills give
   contradictory instructions, or a skill's instructions conflict with the platform's
   system prompt, what wins?
-- **Security boundaries** — Beyond path traversal, can a skill's instructions cause
+- **Security boundaries**: Beyond path traversal, can a skill's instructions cause
   the agent to run shell commands, make network requests, or modify files outside
   the project? How do platforms sandbox skill-directed actions?
-- **Prompt injection resistance** — Can content in a skill's reference files inject
+- **Prompt injection resistance**: Can content in a skill's reference files inject
   instructions that override the SKILL.md body or the platform's system prompt?
-- **Skill persistence and session behavior** — Does an activated skill stay active
+- **Skill persistence and session behavior**: Does an activated skill stay active
   for the entire session? Can a user deactivate mid-conversation? Are activations
   remembered across sessions?
-- **Internationalization** — Do platforms handle non-English skill content
+- **Internationalization**: Do platforms handle non-English skill content
   differently? Is a SKILL.md written in Japanese discovered and presented the same
   way as one in English?
-- **Output formatting influence** — When a skill specifies output format, how
+- **Output formatting influence**: When a skill specifies output format, how
   reliably does the model comply across platforms, and how much does platform-level
   framing affect compliance?
 
@@ -98,15 +98,15 @@ load, manage, and present skills. There is a separate and complementary line of
 research investigating the author side: how people actually write skills in
 practice, and what effect skill quality has on agent output.
 
-- **[Agent Skill Report](https://agentskillreport.com)** — An analysis of 673
+- **[Agent Skill Report](https://agentskillreport.com)**: An analysis of 673
   skills examining real-world authoring patterns, structural choices, and common
   issues. Published findings are available now.
-- **Broad skill implementation research** (in progress) — A larger-scale study
+- **Broad skill implementation research** (in progress): A larger-scale study
   cataloging 80,000+ skills from 11,000+ repositories to investigate skill quality
   patterns and their effects on agent behavior. Findings will be published as the
   research progresses.
 
-- **[skill-validator](https://github.com/agent-ecosystem/skill-validator)** — A
+- **[skill-validator](https://github.com/agent-ecosystem/skill-validator)**: A
   CLI tool for validating Agent Skills against the spec. Developed alongside the
   initial research and refined through community feedback and production use. If
   you're distributing skills that need to work across platforms, the validator can
@@ -156,14 +156,14 @@ Terms used throughout this project:
   platforms actually follow this model is one of the core questions this project
   investigates.
 - **Pull harness**: A platform where the model fetches skill content itself with
-  its file-read tools — activation *is* a read. The model sees the raw file
+  its file-read tools; activation *is* a read. The model sees the raw file
   (frontmatter included), and behaviors like re-reading on reactivation or
   resolving a dependency are largely model choices rather than platform policy.
   Automated findings record this as the `model-pull` vehicle. Codex CLI and
   Antigravity behave this way in our findings.
 - **Push harness**: A platform whose harness injects skill content into the
   model's context at activation (e.g., via a dedicated skill tool). The platform
-  controls what the model sees — it may strip frontmatter or wrap content — and
+  controls what the model sees (it may strip frontmatter or wrap content), and
   loading behaviors like deduplication are enforceable platform-side. Automated
   findings record this as the `harness-push` vehicle. Claude Code behaves this
   way in our findings. A single platform can mix vehicles: a push harness still

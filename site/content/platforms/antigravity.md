@@ -14,7 +14,7 @@ showTableOfContents: true
 | **Model(s) observed** | Gemini 3.6 Flash (High) |
 | **Environment** | Headless invocation via benchmark-runner + skillxp |
 
-> **Caveats**: All findings are from headless sessions, which may differ from interactive use. Verdicts are single-run observations unless a runs count is noted; for model-level behaviors they are point observations, not rates. Fallback-behavior fields are auto-derived: where a run incidentally demonstrated a recovery path it is reported, otherwise the field says "not exercised" — automation does not probe recovery, so absence of a fallback observation is not evidence that none exists.
+> **Caveats**: All findings are from headless sessions, which may differ from interactive use. Verdicts are single-run observations unless a runs count is noted; for model-level behaviors, treat a single verdict as one observed outcome rather than a rate. Fallback-behavior fields are auto-derived: where a run incidentally demonstrated a recovery path it is reported, otherwise the field says "not exercised". Automation does not probe recovery, so absence of a fallback observation is not evidence that none exists.
 
 ## Loading Timing
 
@@ -30,7 +30,7 @@ _Does the harness read only SKILL.md metadata at discovery, or the full body?_
 
 ### `activation-loading-scope`
 
-_On activation, does the harness load only the SKILL.md body, or also bundled resources — and by which vehicle?_
+_On activation, does the harness load only the SKILL.md body, or also bundled resources, and by which vehicle?_
 
 - **Status**: observed
 - **Verdict**: Body only (`body-only`)
@@ -44,7 +44,7 @@ _On activation, does the harness load only the SKILL.md body, or also bundled re
 
 ### `eager-link-resolution`
 
-_Does activation pre-fetch files markdown-linked from the SKILL.md body — and does that extend to a file mentioned only as plain text?_
+_Does activation pre-fetch files markdown-linked from the SKILL.md body, and does that extend to a file mentioned only as plain text?_
 
 - **Status**: observed
 - **Verdict**: No pre-fetching (`no-prefetch`)
@@ -85,7 +85,7 @@ _Is a resources/ directory (alternative to spec's references/) loaded, enumerate
 
 ### `unrecognized-directory-handling`
 
-_What happens to directories the spec never named (evals/, templates/) — injected, readable on demand, or invisible?_
+_What happens to directories the spec never named (evals/, templates/): injected, readable on demand, or invisible?_
 
 - **Status**: observed
 - **Verdict**: Not surfaced; model never looked (`untouched`)
@@ -110,7 +110,7 @@ _At activation, are a skill's reference files enumerated to the model (names), l
 
 ### `path-resolution-base`
 
-_When the model follows a SKILL.md relative path like references/setup-guide.md, what does it resolve against — and does the bare path work as written?_
+_When the model follows a SKILL.md relative path like references/setup-guide.md, what does it resolve against, and does the bare path work as written?_
 
 - **Status**: observed
 - **Verdict**: Bare path fails; model recovers (`cwd-base-model-requalified`)
@@ -134,7 +134,7 @@ _With two skills both owning references/API.md, does the activated skill's read 
 - **Evidence**:
   - activated skill's own API.md content arrived first
   - sibling skill's API.md also read
-- **Note**: every API.md read was skill-qualified; the platform's ambiguous-path resolution was never exercised — the outcome reflects model path discipline, not platform disambiguation
+- **Note**: every API.md read was skill-qualified; the platform's ambiguous-path resolution was never exercised, so the outcome reflects model path discipline, not platform disambiguation
 - **Note**: the sibling skill's version was also accessible later in the session (no isolation between skills' resources)
 - **Note**: final answer: I have activated the **probe-shadow-alpha** skill and completed its instructions:  ### 1. Contents of `probe-shadow-alpha` API Reference  File: `references/API.md`  ```markdown # API Reference (Alpha)  Shadow-alpha canary phrase: **STORK-CORAL-4471**  This file belongs to the `probe-shadow-alpha` skill. If you see this content when reading from the `probe-shadow-beta` skill's context, the platform is resolving resource paths ambiguously across skills.  ## Alpha Endpoints  - `GET /alpha/status` - Alpha health check - `POST /alpha/process` - Alpha processing ```  ---  ### 2. Canary Phrase Verification  * **Canary Phrase Identified**: **STORK-CORAL-4471** * **Result**: Confirmed as the expected canary phrase for the `probe-shadow-alpha` skill.  ---  ### 3. Cross-Skill Access Test (`probe-shadow-beta`)  Both skills are available in the workspace. Reading the corresponding reference file from the `probe-shadow-beta` skill was successful:  File: [`references/API.md`]
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
@@ -186,7 +186,7 @@ _Does the SKILL.md YAML frontmatter reach the model at activation, or only the b
 
 ### `metadata-value-edge-cases`
 
-_Is a skill whose metadata frontmatter holds nulls and empty strings still discovered and loaded — and do those keys reach the model?_
+_Is a skill whose metadata frontmatter holds nulls and empty strings still discovered and loaded, and do those keys reach the model?_
 
 - **Status**: observed
 - **Verdict**: Loaded fine (`loaded-despite-edge-case-metadata`)
@@ -201,7 +201,7 @@ _Is a skill whose metadata frontmatter holds nulls and empty strings still disco
 
 ### `content-wrapping-format`
 
-_Is injected skill content wrapped in structured tags, or delivered as raw markdown — and what does the model see on pull harnesses?_
+_Is injected skill content wrapped in structured tags, or delivered as raw markdown, and what does the model see on pull harnesses?_
 
 - **Status**: observed
 - **Verdict**: Raw file via model read (`raw-file-via-pull`)
@@ -308,7 +308,7 @@ _When directory name and frontmatter name disagree, which identity is the skill 
 - **Confidence**: behavioral-inference
 - **Evidence**:
   - tool-free listing answer names probe-name-mismatch
-- **Note**: activation loads: by frontmatter name=true, by directory name=true (a load proves reachability, not catalog identity — the model may map either prompt to the installed skill or read the file directly)
+- **Note**: activation loads: by frontmatter name=true, by directory name=true (a load proves reachability, not catalog identity; the model may map either prompt to the installed skill or read the file directly)
 - **Note**: final answer: probe-name-mismatch activated. Canary: **SWAN-BERYL-3324**  2. **Identity**: The skill is listed under the frontmatter name `probe-name-mismatch` in the available skills catalog (not `probe-mismatch-dir` nor both). 3. **Validation**: The platform accepted the name/directory mismatch silently without emitting any warning to the model context.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -322,9 +322,9 @@ _Does the skills root get scanned recursively (a skill under a grouping director
 - **Confidence**: behavioral-inference
 - **Evidence**:
   - body loaded via file access, not catalog activation
-- **Note**: the grouped skill's body still loaded on the activation turn — the model reached it by file access despite the catalog not listing it
+- **Note**: the grouped skill's body still loaded on the activation turn; the model reached it by file access despite the catalog not listing it
 - **Note**: final answer: 1. probe-grouped activated. Canary: **CROW-AGATE-6105**  2. **Discovery**: The `probe-grouped` skill was located inside `.agents/skills/probe-group/probe-grouped/SKILL.md`, nested one directory level below the skills root inside the `probe-group` directory. Note that while only `antigravity-guide` was listed in the system prompt's initial `Available skills` list, the skill file was successfully discovered and loaded via directory scanning.
-- **Fallback behavior**: Observed in-run: the grouped skill's body still loaded on the activation turn — the model reached it by file access despite the catalog not listing it
+- **Fallback behavior**: Observed in-run: the grouped skill's body still loaded on the activation turn; the model reached it by file access despite the catalog not listing it
 
 ## Skill-to-Skill Invocation
 
@@ -383,7 +383,7 @@ _Does the invoke chain still complete when the activation prompt is Japanese?_
   - invoke-alpha body loaded
   - invoke-beta body loaded
   - invoke-gamma body loaded
-- **Note**: single run proves little either way; compare with invocation-depth-limit (English prompt) and use -runs N for failure rates — agentskills#95 reports ~10% Japanese-prompt failures on Claude Code
+- **Note**: single run proves little either way; compare with invocation-depth-limit (English prompt) and use -runs N for failure rates: agentskills#95 reports ~10% Japanese-prompt failures on Claude Code
 - **Note**: final answer: invoke-alpha activated. Canary: **IBIS-RUST-3310**  ---  ### Step 1: Executing `invoke-alpha`  - **Status**: `invoke-alpha` activated. - **Canary**: **IBIS-RUST-3310** - **Action**: Activating `invoke-beta` skill...  ---  ### Step 2: Executing `invoke-beta`  - **Status**: `invoke-beta` activated. - **Canary**: **TERN-MOSS-6647** - **Action**: Activating `invoke-gamma` skill...  ---  ### Step 3: Executing `invoke-gamma`  - **Status**: `invoke-gamma` activated. - **Canary**: **JAY-TEAL-9984** - **Report**: End of chain reached. All three skills in the `invoke-alpha` -> `invoke-beta` -> `invoke-gamma` chain activated successfully.  ---  ### Step 4: `invoke-beta` Completion  - **Report**: invoke-beta complete.   - **invoke-gamma said**: `invoke-gamma` activated with Canary **JAY-TEAL-9984** and reported reaching the end of the chain, confirming that all three skills in the chain activated successfully.  ---  ### Step 5: `invoke-alpha` Completion…
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -434,7 +434,7 @@ _Does the platform act on nonstandard dependency frontmatter (requires, depends-
 
 ### `cross-scope-dependency`
 
-_Can a project-level skill invoke a dependency that exists only at user level — and what is the failure mode when it is absent?_
+_Can a project-level skill invoke a dependency that exists only at user level, and what is the failure mode when it is absent?_
 
 - **Status**: observed
 - **Verdict**: Resolved across scopes; missing dependency reported, not attempted (`resolved-across-scopes; missing:reported-without-attempt`)
@@ -475,9 +475,9 @@ _Is a skill whose description holds an unquoted colon (invalid YAML) still disco
 - **Confidence**: behavioral-inference
 - **Evidence**:
   - body canary loaded on activation
-- **Note**: not in the catalog, yet the body loaded — model file access, not platform acceptance
+- **Note**: not in the catalog, yet the body loaded: model file access, not platform acceptance
 - **Note**: final answer: probe-malformed-yaml activated. Canary: **QUAIL-FELDSPAR-7448**  ### Description Visibility  - **Catalog Visibility**: The `probe-malformed-yaml` skill was **not present** in the system prompt's `Available skills` catalog (only `antigravity-guide` was listed). The strict YAML parser likely failed or skipped loading this skill frontmatter due to the unquoted colon in `description: Use when: asked to probe...`. - **On-Disk Inspection**: When inspecting `SKILL.md` directly, the description line is unquoted and intact: `description: Use when: asked to probe malformed yaml parsing behavior`.
-- **Fallback behavior**: content remained reachable by direct file read even though the catalog omits the skill. Observed in-run: not in the catalog, yet the body loaded — model file access, not platform acceptance
+- **Fallback behavior**: content remained reachable by direct file read even though the catalog omits the skill. Observed in-run: not in the catalog, yet the body loaded: model file access, not platform acceptance
 
 ### `missing-description-handling`
 

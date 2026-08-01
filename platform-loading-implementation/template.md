@@ -108,7 +108,7 @@ work on that platform.
 
 #### `discovery-reading-depth`
 
-- **Benchmark skill**: `probe-loading` — Install the skill, start a new session, and ask the model "Do you know the phrase CARDINAL-ZEBRA-7742?" WITHOUT activating the skill. If the model knows it, the platform loaded the full body at discovery time.
+- **Benchmark skill**: `probe-loading`. Install the skill, start a new session, and ask the model "Do you know the phrase CARDINAL-ZEBRA-7742?" WITHOUT activating the skill. If the model knows it, the platform loaded the full body at discovery time.
 - **Status**: Not tested
 - **Observation**: <!-- Does the platform read only frontmatter at discovery, or the entire SKILL.md? -->
 - **Evidence**: <!-- How did you determine this? (e.g., debug logs, token counter, canary phrase test) -->
@@ -117,7 +117,7 @@ work on that platform.
 
 #### `activation-loading-scope`
 
-- **Benchmark skill**: `probe-loading` — Activate the skill and check steps 3-4 of its instructions. If the model already has contents of files in references/, scripts/, or assets/ without reading them, the platform loaded them at activation. Look for canary phrases: PELICAN-MANGO-3391, FALCON-QUARTZ-8819, OSPREY-COBALT-5567, HERON-AMBER-2204, CRANE-TOPAZ-6638.
+- **Benchmark skill**: `probe-loading`. Activate the skill and check steps 3-4 of its instructions. If the model already has contents of files in references/, scripts/, or assets/ without reading them, the platform loaded them at activation. Look for canary phrases: PELICAN-MANGO-3391, FALCON-QUARTZ-8819, OSPREY-COBALT-5567, HERON-AMBER-2204, CRANE-TOPAZ-6638.
 - **Status**: Not tested
 - **Observation**: <!-- When a skill activates, does the platform load only the SKILL.md body, or also supporting files? -->
 - **Evidence**: <!--  -->
@@ -126,7 +126,7 @@ work on that platform.
 
 #### `eager-link-resolution`
 
-- **Benchmark skill**: `probe-linked-resources` — Activate the skill and check whether the model already has contents of the linked files (PARROT-SILVER-4412, TOUCAN-BRONZE-9931) without reading them. Also check whether the unlinked file (EAGLE-COPPER-1178) was loaded, which distinguishes link-based pre-fetching from bulk directory loading.
+- **Benchmark skill**: `probe-linked-resources`. Activate the skill and check whether the model already has contents of the linked files (PARROT-SILVER-4412, TOUCAN-BRONZE-9931) without reading them. Also check whether the unlinked file (EAGLE-COPPER-1178) was loaded, which distinguishes link-based pre-fetching from bulk directory loading.
 - **Status**: Not tested
 - **Observation**: <!-- Does the platform pre-fetch files linked in the SKILL.md body at activation time? -->
 - **Evidence**: <!--  -->
@@ -139,7 +139,7 @@ work on that platform.
 
 #### `recognized-directory-set`
 
-- **Benchmark skill**: `probe-loading` — Activate the skill and check step 3. The skill has all three spec directories (scripts/, references/, assets/). Does the platform enumerate all of them?
+- **Benchmark skill**: `probe-loading`. Activate the skill and check step 3. The skill has all three spec directories (scripts/, references/, assets/). Does the platform enumerate all of them?
 - **Status**: Not tested
 - **Observation**: <!-- Does the platform enumerate scripts/, references/, assets/ specifically? Does it treat them as a closed or open set? -->
 - **Evidence**: <!--  -->
@@ -148,7 +148,7 @@ work on that platform.
 
 #### `directory-naming-divergence`
 
-- **Benchmark skill**: `probe-nonstandard-dirs` — Activate the skill and check whether `resources/` is treated the same as `references/` would be. Is the canary phrase SWIFT-OPAL-8156 visible or enumerated?
+- **Benchmark skill**: `probe-nonstandard-dirs`. Activate the skill and check whether `resources/` is treated the same as `references/` would be. Is the canary phrase SWIFT-OPAL-8156 visible or enumerated?
 - **Status**: Not tested
 - **Observation**: <!-- Does the platform use the spec's directory names, or different names (e.g., resources/ instead of references/)? -->
 - **Evidence**: <!--  -->
@@ -157,7 +157,7 @@ work on that platform.
 
 #### `unrecognized-directory-handling`
 
-- **Benchmark skill**: `probe-nonstandard-dirs` — Activate the skill and check which of the nonstandard directories (evals/, templates/, resources/) the model is aware of. Look for canary phrases: ROBIN-JADE-3847, WREN-PEARL-6293, SWIFT-OPAL-8156.
+- **Benchmark skill**: `probe-nonstandard-dirs`. Activate the skill and check which of the nonstandard directories (evals/, templates/, resources/) the model is aware of. Look for canary phrases: ROBIN-JADE-3847, WREN-PEARL-6293, SWIFT-OPAL-8156.
 - **Status**: Not tested
 - **Observation**: <!-- What happens with a directory not in the spec (e.g., evals/, templates/)? Ignored? Loaded? Listed? -->
 - **Evidence**: <!--  -->
@@ -170,7 +170,7 @@ work on that platform.
 
 #### `resource-enumeration-behavior`
 
-- **Benchmark skill**: `probe-loading` — Activate the skill. The references/ directory has 3 files (2 linked from SKILL.md, 1 unreferenced). Check whether all 3 are enumerated, only the linked ones, or none. The unreferenced file's canary phrase is OSPREY-COBALT-5567.
+- **Benchmark skill**: `probe-loading`. Activate the skill. The references/ directory has 3 files (2 linked from SKILL.md, 1 unreferenced). Check whether all 3 are enumerated, only the linked ones, or none. The unreferenced file's canary phrase is OSPREY-COBALT-5567.
 - **Status**: Not tested
 - **Observation**: <!-- For a references/ directory with multiple files, does the platform enumerate all files, load all contents, present a listing, or ignore until the model reads one? -->
 - **Evidence**: <!--  -->
@@ -179,7 +179,7 @@ work on that platform.
 
 #### `path-resolution-base`
 
-- **Benchmark skill**: `probe-linked-resources` — Activate the skill and have the model try to read files using the relative paths in the SKILL.md. Note what directory the paths resolve against.
+- **Benchmark skill**: `probe-linked-resources`. Activate the skill and have the model try to read files using the relative paths in the SKILL.md. Note what directory the paths resolve against.
 - **Status**: Not tested
 - **Observation**: <!-- When SKILL.md references a relative path, does the platform resolve against the skill directory, working directory, or project root? -->
 - **Evidence**: <!--  -->
@@ -188,7 +188,7 @@ work on that platform.
 
 #### `cross-skill-resource-shadowing`
 
-- **Benchmark skills**: `probe-shadow-alpha` + `probe-shadow-beta` — Activate both skills. Have each one read `references/API.md`. Check which canary phrase appears: STORK-CORAL-4471 (alpha) or EGRET-SLATE-8823 (beta).
+- **Benchmark skills**: `probe-shadow-alpha` + `probe-shadow-beta`. Activate both skills. Have each one read `references/API.md`. Check which canary phrase appears: STORK-CORAL-4471 (alpha) or EGRET-SLATE-8823 (beta).
 - **Status**: Not tested
 - **Observation**: <!-- If two active skills both have references/API.md, which one does the model get? -->
 - **Evidence**: <!--  -->
@@ -197,7 +197,7 @@ work on that platform.
 
 #### `path-traversal-boundary`
 
-- **Benchmark skill**: `probe-traversal` — Activate the skill and follow its instructions to attempt reads outside the skill directory (../probe-loading/SKILL.md, ../README.md, ../../loading-behavior.md).
+- **Benchmark skill**: `probe-traversal`. Activate the skill and follow its instructions to attempt reads outside the skill directory (../probe-loading/SKILL.md, ../README.md, ../../loading-behavior.md).
 - **Status**: Not tested
 - **Observation**: <!-- Can the model access files outside the skill directory via relative paths? -->
 - **Evidence**: <!--  -->
@@ -210,7 +210,7 @@ work on that platform.
 
 #### `discovery-listing-fields`
 
-- **Benchmark skills**: `probe-loading` + `probe-compatibility` + `probe-metadata-values` — Install all three. WITHOUT activating anything, ask the model to reproduce its available-skills catalog verbatim, including any fields or values beyond name and description.
+- **Benchmark skills**: `probe-loading` + `probe-compatibility` + `probe-metadata-values`. Install all three. WITHOUT activating anything, ask the model to reproduce its available-skills catalog verbatim, including any fields or values beyond name and description.
 - **Status**: Not tested
 - **Observation**: <!-- What does the discovery listing surface: name/description only, or also compatibility values, metadata, file locations, or other fields? -->
 - **Evidence**: <!--  -->
@@ -219,7 +219,7 @@ work on that platform.
 
 #### `frontmatter-handling`
 
-- **Benchmark skills**: `probe-loading`, `probe-compatibility` — Activate the skill and check whether the model can see frontmatter fields (allowed-tools, compatibility, metadata). probe-loading has multiple optional fields; probe-compatibility has a compatibility field with meaningful requirements text.
+- **Benchmark skills**: `probe-loading`, `probe-compatibility`. Activate the skill and check whether the model can see frontmatter fields (allowed-tools, compatibility, metadata). probe-loading has multiple optional fields; probe-compatibility has a compatibility field with meaningful requirements text.
 - **Status**: Not tested
 - **Observation**: <!-- Does the model see the full SKILL.md including frontmatter, or only the body? -->
 - **Evidence**: <!--  -->
@@ -228,7 +228,7 @@ work on that platform.
 
 #### `metadata-value-edge-cases`
 
-- **Benchmark skill**: `probe-metadata-values` — Activate the skill. If it loads, the platform didn't reject the edge-case metadata values. Check steps 2-3 to see which values the model received and whether any keys were dropped. Look for canary phrase THRUSH-FLINT-8294 to confirm the body loaded.
+- **Benchmark skill**: `probe-metadata-values`. Activate the skill. If it loads, the platform didn't reject the edge-case metadata values. Check steps 2-3 to see which values the model received and whether any keys were dropped. Look for canary phrase THRUSH-FLINT-8294 to confirm the body loaded.
 - **Status**: Not tested
 - **Observation**: <!-- Did the skill load successfully? Were all seven metadata keys preserved? Were null values coerced to strings, dropped, or passed through as null? -->
 - **Evidence**: <!--  -->
@@ -237,7 +237,7 @@ work on that platform.
 
 #### `content-wrapping-format`
 
-- **Benchmark skill**: `probe-loading` — Activate the skill and check step 2. Ask the model to describe how the skill content was presented to it (raw markdown, XML tags, JSON, etc.).
+- **Benchmark skill**: `probe-loading`. Activate the skill and check step 2. Ask the model to describe how the skill content was presented to it (raw markdown, XML tags, JSON, etc.).
 - **Status**: Not tested
 - **Observation**: <!-- Is skill content wrapped in structured tags (XML, JSON, etc.) or injected as raw markdown? If wrapped, what format? -->
 - **Evidence**: <!--  -->
@@ -250,7 +250,7 @@ work on that platform.
 
 #### `reactivation-deduplication`
 
-- **Benchmark skill**: `probe-loading` — Activate the skill, have a conversation, then activate it again. Ask the model if it sees the skill instructions twice in its context.
+- **Benchmark skill**: `probe-loading`. Activate the skill, have a conversation, then activate it again. Ask the model if it sees the skill instructions twice in its context.
 - **Status**: Not tested
 - **Observation**: <!-- If the model activates the same skill twice, does the platform deduplicate or inject again? -->
 - **Evidence**: <!--  -->
@@ -259,7 +259,7 @@ work on that platform.
 
 #### `reactivation-freshness`
 
-- **Benchmark skill**: `probe-loading` — Activate the skill, then edit the SKILL.md to change the canary phrase from CARDINAL-ZEBRA-7742 to something else. Activate the skill again in the same session and ask for the canary phrase.
+- **Benchmark skill**: `probe-loading`. Activate the skill, then edit the SKILL.md to change the canary phrase from CARDINAL-ZEBRA-7742 to something else. Activate the skill again in the same session and ask for the canary phrase.
 - **Status**: Not tested
 - **Observation**: <!-- If SKILL.md is edited mid-session and re-activated, does the platform pick up changes? -->
 - **Evidence**: <!--  -->
@@ -268,7 +268,7 @@ work on that platform.
 
 #### `context-compaction-protection`
 
-- **Benchmark skill**: `probe-loading` — Activate the skill, then have a long conversation (enough to trigger context compaction). Ask the model to recall the canary phrase CARDINAL-ZEBRA-7742 and the skill's specific instructions.
+- **Benchmark skill**: `probe-loading`. Activate the skill, then have a long conversation (enough to trigger context compaction). Ask the model to recall the canary phrase CARDINAL-ZEBRA-7742 and the skill's specific instructions.
 - **Status**: Not tested
 - **Observation**: <!-- In a long conversation, does the platform protect skill content from context pruning? -->
 - **Evidence**: <!--  -->
@@ -281,7 +281,7 @@ work on that platform.
 
 #### `trust-gating-behavior`
 
-- **Benchmark skill**: Any benchmark skill — Install at project level in a freshly cloned or untrusted repository. Start a new session and check whether the skill appears in the available skills list, or if the platform prompts for trust approval.
+- **Benchmark skill**: Any benchmark skill. Install at project level in a freshly cloned or untrusted repository. Start a new session and check whether the skill appears in the available skills list, or if the platform prompts for trust approval.
 - **Status**: Not tested
 - **Observation**: <!-- Does the platform require trust approval for project-level skills? What happens if trust is not granted? -->
 - **Evidence**: <!--  -->
@@ -290,7 +290,7 @@ work on that platform.
 
 #### `compatibility-field-behavior`
 
-- **Benchmark skill**: `probe-compatibility` — Activate the skill and follow its instructions. The skill's compatibility field says "Designed for Claude Code (or similar products). Requires Python 3.14+ and network access." Test on a non-Claude platform to see how it handles the Claude-specific text.
+- **Benchmark skill**: `probe-compatibility`. Activate the skill and follow its instructions. The skill's compatibility field says "Designed for Claude Code (or similar products). Requires Python 3.14+ and network access." Test on a non-Claude platform to see how it handles the Claude-specific text.
 - **Status**: Not tested
 - **Observation**: <!-- How does the platform handle the compatibility field? Does it gate loading, surface it to the model, or ignore it? -->
 - **Evidence**: <!--  -->
@@ -303,7 +303,7 @@ work on that platform.
 
 #### `nested-skill-discovery`
 
-- **Benchmark skill**: `probe-deep-nesting` — Install the skill and check the available skills list. Does `nested-skill` appear as a separate skill? Its SKILL.md is at `probe-deep-nesting/references/nested-skill/SKILL.md`. Canary phrase: HAWK-ONYX-5534.
+- **Benchmark skill**: `probe-deep-nesting`. Install the skill and check the available skills list. Does `nested-skill` appear as a separate skill? Its SKILL.md is at `probe-deep-nesting/references/nested-skill/SKILL.md`. Canary phrase: HAWK-ONYX-5534.
 - **Status**: Not tested
 - **Observation**: <!-- If a SKILL.md exists inside another skill's directory tree, does the platform discover both? -->
 - **Evidence**: <!--  -->
@@ -312,7 +312,7 @@ work on that platform.
 
 #### `resource-nesting-depth`
 
-- **Benchmark skill**: `probe-deep-nesting` — Activate the skill and follow its instructions to read files at 1 level (DOVE-GARNET-1029), 2 levels (LARK-RUBY-4483), 3 levels (OWL-EMERALD-7756, FINCH-SAPPHIRE-2098), and 5 levels (PLOVER-JASPER-5590) of nesting. Note the deepest level that succeeds.
+- **Benchmark skill**: `probe-deep-nesting`. Activate the skill and follow its instructions to read files at 1 level (DOVE-GARNET-1029), 2 levels (LARK-RUBY-4483), 3 levels (OWL-EMERALD-7756, FINCH-SAPPHIRE-2098), and 5 levels (PLOVER-JASPER-5590) of nesting. Note the deepest level that succeeds.
 - **Status**: Not tested
 - **Observation**: <!-- Can the model access deeply nested resource files? At what depth does it fail? -->
 - **Evidence**: <!--  -->
@@ -321,7 +321,7 @@ work on that platform.
 
 #### `name-directory-mismatch`
 
-- **Benchmark skill**: `probe-mismatch-dir` — Install the directory as-is (its frontmatter declares `name: probe-name-mismatch`). Check the available skills list, then activate the skill by whichever name appeared. Canary phrase: SWAN-BERYL-3324.
+- **Benchmark skill**: `probe-mismatch-dir`. Install the directory as-is (its frontmatter declares `name: probe-name-mismatch`). Check the available skills list, then activate the skill by whichever name appeared. Canary phrase: SWAN-BERYL-3324.
 - **Status**: Not tested
 - **Observation**: <!-- Which identity does the platform use when the directory name and frontmatter name disagree — frontmatter name, directory name, both, or is the skill rejected? Any warning shown? -->
 - **Evidence**: <!--  -->
@@ -330,7 +330,7 @@ work on that platform.
 
 #### `recursive-root-discovery`
 
-- **Benchmark skills**: `probe-group` + `probe-stray` — Install `probe-group` (containing `probe-grouped/SKILL.md` one level down) into the skills directory, and copy `probe-stray` into the project OUTSIDE the skills directory. Check the listing for both, then activate whichever appeared. Canary phrases: CROW-AGATE-6105 (grouped), MERLIN-GYPSUM-8852 (stray).
+- **Benchmark skills**: `probe-group` + `probe-stray`. Install `probe-group` (containing `probe-grouped/SKILL.md` one level down) into the skills directory, and copy `probe-stray` into the project OUTSIDE the skills directory. Check the listing for both, then activate whichever appeared. Canary phrases: CROW-AGATE-6105 (grouped), MERLIN-GYPSUM-8852 (stray).
 - **Status**: Not tested
 - **Observation**: <!-- Does the platform scan its skills root recursively (probe-grouped discovered), and does it discover SKILL.md files outside the root entirely (probe-stray discovered)? -->
 - **Evidence**: <!--  -->
@@ -343,7 +343,7 @@ work on that platform.
 
 #### `cross-client-directory-interop`
 
-- **Benchmark skill**: `overlay-agents-convention` — Copy the wrapper's contents onto the project root so the skill lands at `<project>/.agents/skills/probe-interop/`; do NOT install it in the platform's native skills directory. Canary phrase: SNIPE-OCHRE-2217.
+- **Benchmark skill**: `overlay-agents-convention`. Copy the wrapper's contents onto the project root so the skill lands at `<project>/.agents/skills/probe-interop/`; do NOT install it in the platform's native skills directory. Canary phrase: SNIPE-OCHRE-2217.
 - **Status**: Not tested
 - **Observation**: <!-- Is probe-interop listed and activatable from the .agents/skills convention path? If the platform's native directory IS .agents/skills, record that. -->
 - **Evidence**: <!--  -->
@@ -352,7 +352,7 @@ work on that platform.
 
 #### `malformed-yaml-tolerance`
 
-- **Benchmark skill**: `probe-malformed-yaml` — Install normally; its description contains an unquoted colon (invalid YAML). Canary phrase: QUAIL-FELDSPAR-7448.
+- **Benchmark skill**: `probe-malformed-yaml`. Install normally; its description contains an unquoted colon (invalid YAML). Canary phrase: QUAIL-FELDSPAR-7448.
 - **Status**: Not tested
 - **Observation**: <!-- Is the skill discovered despite the invalid YAML? What description text survived (repaired, truncated, or intact)? Does activation work? -->
 - **Evidence**: <!--  -->
@@ -361,7 +361,7 @@ work on that platform.
 
 #### `missing-description-handling`
 
-- **Benchmark skill**: `probe-no-description` — Install normally; it has no description field. Canary phrase: VIREO-PUMICE-3049.
+- **Benchmark skill**: `probe-no-description`. Install normally; it has no description field. Canary phrase: VIREO-PUMICE-3049.
 - **Status**: Not tested
 - **Observation**: <!-- Skipped (guide's prescription), loaded with empty/placeholder description, or something else? -->
 - **Evidence**: <!--  -->
@@ -370,7 +370,7 @@ work on that platform.
 
 #### `name-collision-precedence`
 
-- **Benchmark skills**: `probe-collision` + `probe-collision-user` — Install `probe-collision` at project scope and `probe-collision-user/probe-collision` at USER scope, then activate `probe-collision`. Canary phrases: RAVEN-CITRINE-6634 (project variant), PIPIT-SHALE-1147 (user variant).
+- **Benchmark skills**: `probe-collision` + `probe-collision-user`. Install `probe-collision` at project scope and `probe-collision-user/probe-collision` at USER scope, then activate `probe-collision`. Canary phrases: RAVEN-CITRINE-6634 (project variant), PIPIT-SHALE-1147 (user variant).
 - **Status**: Not tested
 - **Observation**: <!-- Which variant's canary loaded? Project-wins (the guide's "universal convention"), user-wins, both, or an error? Any collision warning logged? -->
 - **Evidence**: <!--  -->
@@ -383,7 +383,7 @@ work on that platform.
 
 #### `cross-skill-invocation`
 
-- **Benchmark skills**: `invoke-alpha` + `invoke-beta` — Activate invoke-alpha. Does it successfully activate invoke-beta? Look for canary phrase TERN-MOSS-6647 in the output.
+- **Benchmark skills**: `invoke-alpha` + `invoke-beta`. Activate invoke-alpha. Does it successfully activate invoke-beta? Look for canary phrase TERN-MOSS-6647 in the output.
 - **Status**: Not tested
 - **Observation**: <!-- Can a skill's instructions direct the model to activate a different installed skill? -->
 - **Evidence**: <!--  -->
@@ -392,7 +392,7 @@ work on that platform.
 
 #### `invocation-depth-limit`
 
-- **Benchmark skills**: `invoke-alpha` + `invoke-beta` + `invoke-gamma` — Activate invoke-alpha and let the full chain run. Does it reach invoke-gamma? Look for canary phrase JAY-TEAL-9984. If the chain breaks, note which link failed.
+- **Benchmark skills**: `invoke-alpha` + `invoke-beta` + `invoke-gamma`. Activate invoke-alpha and let the full chain run. Does it reach invoke-gamma? Look for canary phrase JAY-TEAL-9984. If the chain breaks, note which link failed.
 - **Status**: Not tested
 - **Observation**: <!-- Is there a limit on chained skill invocations (A -> B -> C)? -->
 - **Evidence**: <!--  -->
@@ -401,7 +401,7 @@ work on that platform.
 
 #### `circular-invocation-handling`
 
-- **Benchmark skills**: `probe-circular-alpha` + `probe-circular-beta` — Activate probe-circular-alpha. Does the platform detect the circular reference and stop, or does it loop? Count how many times each canary phrase appears (KITE-ONYX-2251, WREN-SLATE-7738).
+- **Benchmark skills**: `probe-circular-alpha` + `probe-circular-beta`. Activate probe-circular-alpha. Does the platform detect the circular reference and stop, or does it loop? Count how many times each canary phrase appears (KITE-ONYX-2251, WREN-SLATE-7738).
 - **Status**: Not tested
 - **Observation**: <!-- What happens with circular skill references (A invokes B, B invokes A)? -->
 - **Evidence**: <!--  -->
@@ -410,7 +410,7 @@ work on that platform.
 
 #### `invocation-language-sensitivity`
 
-- **Benchmark skills**: `invoke-alpha` + `invoke-beta` + `invoke-gamma` — Run the invocation chain test in English, then repeat in another language (e.g., Japanese: "呼び出しチェーンを開始してください"). Compare success rates across multiple runs.
+- **Benchmark skills**: `invoke-alpha` + `invoke-beta` + `invoke-gamma`. Run the invocation chain test in English, then repeat in another language (e.g., Japanese: "呼び出しチェーンを開始してください"). Compare success rates across multiple runs.
 - **Status**: Not tested
 - **Observation**: <!-- Does skill-to-skill invocation reliability vary by prompt language? -->
 - **Evidence**: <!--  -->
@@ -423,7 +423,7 @@ work on that platform.
 
 #### `informal-dependency-resolution`
 
-- **Benchmark skills**: `invoke-alpha` + `invoke-beta` — Same test as cross-skill-invocation. The invoke chain uses prose instructions to express dependencies between skills.
+- **Benchmark skills**: `invoke-alpha` + `invoke-beta`. Same test as cross-skill-invocation. The invoke chain uses prose instructions to express dependencies between skills.
 - **Status**: Not tested
 - **Observation**: <!-- If a skill's body directs the model to activate another skill, does it attempt to do so? -->
 - **Evidence**: <!--  -->
@@ -432,7 +432,7 @@ work on that platform.
 
 #### `missing-dependency-behavior`
 
-- **Benchmark skill**: `probe-missing-dep` — Activate the skill. It references `nonexistent-formatter` which doesn't exist. Observe the failure mode: does the model report the skill doesn't exist, silently skip the step, or attempt to fulfill the task from general knowledge?
+- **Benchmark skill**: `probe-missing-dep`. Activate the skill. It references `nonexistent-formatter` which doesn't exist. Observe the failure mode: does the model report the skill doesn't exist, skip the step without mentioning it, or attempt to fulfill the task from general knowledge?
 - **Status**: Not tested
 - **Observation**: <!-- When a skill references another skill that isn't installed, what happens? -->
 - **Evidence**: <!--  -->
@@ -441,7 +441,7 @@ work on that platform.
 
 #### `nonstandard-dependency-fields`
 
-- **Benchmark skill**: `probe-nonstandard-fields` — Activate the skill. It has `requires: probe-loading` and `depends-on: [probe-shadow-alpha, probe-shadow-beta]` in frontmatter. Check whether the platform acted on these fields or ignored them.
+- **Benchmark skill**: `probe-nonstandard-fields`. Activate the skill. It has `requires: probe-loading` and `depends-on: [probe-shadow-alpha, probe-shadow-beta]` in frontmatter. Check whether the platform acted on these fields or ignored them.
 - **Status**: Not tested
 - **Observation**: <!-- Does the platform recognize any dependency-related frontmatter fields not in the spec? -->
 - **Evidence**: <!--  -->
@@ -450,7 +450,7 @@ work on that platform.
 
 #### `cross-scope-dependency`
 
-- **Benchmark skills**: `probe-cross-scope` + `probe-loading` — Install probe-cross-scope at project level and probe-loading at user level. Activate probe-cross-scope and see if it can invoke probe-loading across scopes. Then remove probe-loading from user level and test again.
+- **Benchmark skills**: `probe-cross-scope` + `probe-loading`. Install probe-cross-scope at project level and probe-loading at user level. Activate probe-cross-scope and see if it can invoke probe-loading across scopes. Then remove probe-loading from user level and test again.
 - **Status**: Not tested
 - **Observation**: <!-- How does the platform handle a project-level skill referencing a user-level skill? -->
 - **Evidence**: <!--  -->

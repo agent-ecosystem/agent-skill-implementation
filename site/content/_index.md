@@ -12,7 +12,7 @@ support.
 But "some level" is doing a lot of work in that sentence. If you're publishing
 skills for others to use, your users could be on any of those 25+ platforms, and
 each one may load, present, and manage your skill differently. A skill that works
-perfectly on the platform you tested it on may silently lose access to its
+perfectly on the platform you tested it on may lose access to its
 reference files, have its metadata stripped, or find its instructions pruned from
 context on another.
 
@@ -67,11 +67,11 @@ for full instructions, the benchmark skills README, and the contributing guide.
 
 ## Related Research
 
-- **[Agent Skill Report](https://agentskillreport.com)** — Analysis of 673+
+- **[Agent Skill Report](https://agentskillreport.com)**: Analysis of 673+
   skills examining how authors actually write skills in practice.
-- **[skill-validator](https://github.com/agent-ecosystem/skill-validator)** — CLI
+- **[skill-validator](https://github.com/agent-ecosystem/skill-validator)**: CLI
   tool for validating Agent Skills against the spec.
-- **[Agent Ecosystem](https://agentecosystem.dev)** — The research program behind
+- **[Agent Ecosystem](https://agentecosystem.dev)**: The research program behind
   this project.
 
 ## License

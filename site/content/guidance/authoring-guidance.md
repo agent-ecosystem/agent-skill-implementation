@@ -16,7 +16,7 @@ This guidance is derived from the automated findings in the [platform comparison
 
 ## Frontmatter
 
-**Always include a description, and quote any value containing a colon.** Codex skips skills with no description entirely, while Claude Code and Antigravity load them anyway; a missing description means your skill silently does not exist for some users (`missing-description-handling`). An unquoted colon in a description is invalid YAML that Codex and Claude Code tolerate but Antigravity's catalog rejects (`malformed-yaml-tolerance`).
+**Always include a description, and quote any value containing a colon.** Codex skips skills with no description entirely, while Claude Code and Antigravity load them anyway; a missing description means your skill does not exist for some users (`missing-description-handling`). An unquoted colon in a description is invalid YAML that Codex and Claude Code tolerate but Antigravity's catalog rejects (`malformed-yaml-tolerance`).
 
 **Do not put load-bearing information only in frontmatter.** Claude Code strips frontmatter before injecting skill content, so `compatibility` notes and `metadata` values never reach the model there unless it happens to read the raw file. On pull harnesses the model sees frontmatter only because it reads the file itself. If the model must know something (requirements, warnings, version constraints), state it in the body (`frontmatter-handling`, `compatibility-field-behavior`).
 
@@ -24,7 +24,7 @@ This guidance is derived from the automated findings in the [platform comparison
 
 ## Layout and installation
 
-**Keep each skill a direct child of the skills directory.** Grouping skills in subfolders (`skills/data-tools/my-skill/`) works on Codex, which scans recursively, but Claude Code and Antigravity only see direct children; grouped skills silently vanish from their catalogs (`recursive-root-discovery`).
+**Keep each skill a direct child of the skills directory.** Grouping skills in subfolders (`skills/data-tools/my-skill/`) works on Codex, which scans recursively, but Claude Code and Antigravity only see direct children; grouped skills vanish from their catalogs (`recursive-root-discovery`).
 
 **Do not ship a SKILL.md inside another skill's directories.** Codex registers any SKILL.md it finds under the skills root as a separate, invocable skill, including one inside your `references/` folder. An example or vendored skill shipped as documentation becomes a live skill on Codex and stays invisible on the other platforms (`nested-skill-discovery`).
 
@@ -44,7 +44,7 @@ This guidance is derived from the automated findings in the [platform comparison
 
 **Skill-to-skill chains work today, but guards are the model's, not the platform's.** Three-skill invocation chains completed on all platforms, in English and Japanese, and prose-expressed dependencies were resolved (`invocation-depth-limit`, `invocation-language-sensitivity`, `informal-dependency-resolution`). Circular references were stopped by the model choosing to stop, not by any platform mechanism, so do not design skills that rely on a platform catching a cycle (`circular-invocation-handling`).
 
-**Missing dependencies fail visibly.** When a skill references an uninstalled skill, every tested platform surfaced the failure (an explicit tool error on Claude Code; the model reporting the absence on Codex and Antigravity). None silently hallucinated compliance in our runs, which is the good outcome, but the failure is still a runtime discovery your user makes, not something any platform checks at install time (`missing-dependency-behavior`, `cross-scope-dependency`).
+**Missing dependencies fail visibly.** When a skill references an uninstalled skill, every tested platform surfaced the failure (an explicit tool error on Claude Code; the model reporting the absence on Codex and Antigravity). None hallucinated compliance in our runs, which is the good outcome, but the failure is still a runtime discovery your user makes, not something any platform checks at install time (`missing-dependency-behavior`, `cross-scope-dependency`).
 
 **Editing a skill mid-session takes effect on reactivation.** All tested platforms served fresh content after SKILL.md was edited during a session (`reactivation-freshness`). Claude Code re-injects the full body on every reactivation, so repeated activations of a large skill have a real token cost there (`reactivation-deduplication`).
 

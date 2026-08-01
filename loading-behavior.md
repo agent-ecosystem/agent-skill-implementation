@@ -18,7 +18,7 @@ The client implementation guide (rewritten Mar 5, 2026 in [PR #200](https://gith
 
 Until these questions are answered empirically across platforms, we cannot assume uniform behavior.
 
-A note on quotes: the spec and the client implementation guide are unversioned and change without a changelog. Quoted language in this document was verified against both as of **2026-08-01**; if a quote no longer appears, check whether it moved, was reworded, or was removed — each of those is itself a data point about the spec's stability.
+A note on quotes: the spec and the client implementation guide are unversioned and change without a changelog. Quoted language in this document was verified against both as of **2026-08-01**. If a quote no longer appears, check whether it moved, was reworded, or was removed; each of those is a data point about the spec's stability.
 
 ## Check Structure
 
@@ -89,25 +89,25 @@ These checks evaluate how platforms make supporting files (scripts, references, 
 
 - **Category**: Resource Access Patterns
 - **What it checks**: When a skill has a `references/` directory containing multiple files, whether the platform enumerates all files to the model, loads all file contents, presents a listing without loading contents, or ignores them until the model explicitly reads one.
-- **Why it matters**: The guide says platforms should enumerate but "not eagerly read" resources. But the spec's progressive disclosure section simply says resources are loaded "as needed," which an implementer could reasonably interpret as "load all resources when the skill needs them" (i.e., at activation). The difference matters: a skill with 15 reference files could add anywhere from zero to tens of thousands of tokens at activation depending on the platform's approach.
+- **Why it matters**: The guide says platforms should enumerate but "not eagerly read" resources. But the spec's progressive disclosure section simply says resources are loaded "as needed," which an implementer could reasonably interpret as "load all resources when the skill needs them" (i.e., at activation). The difference matters because a skill with 15 reference files could add anywhere from zero to tens of thousands of tokens at activation depending on the platform's approach.
 
 ### `path-resolution-base`
 
 - **Category**: Resource Access Patterns
 - **What it checks**: When SKILL.md references a file like `scripts/deploy.sh`, what the platform resolves that path against: the skill directory, the current working directory, or the project root.
-- **Why it matters**: Incorrect path resolution means the model silently fails to find a file that exists, or loads an unrelated file from elsewhere in the project. The spec says to "use relative paths from the skill root," but doesn't define what "skill root" means in the context of platform path resolution. If the platform resolves against the working directory instead of the skill directory, a skill that works when the user is in the project root may break when they're in a subdirectory.
+- **Why it matters**: Incorrect path resolution means the model fails to find a file that exists, or loads an unrelated file from elsewhere in the project. The spec says to "use relative paths from the skill root," but doesn't define what "skill root" means in the context of platform path resolution. If the platform resolves against the working directory instead of the skill directory, a skill that works when the user is in the project root may break when they're in a subdirectory.
 
 ### `cross-skill-resource-shadowing`
 
 - **Category**: Resource Access Patterns
 - **What it checks**: If two active skills both contain a file at the same relative path (e.g., both have `references/API.md`), which one the model receives when it requests that file.
-- **Why it matters**: The spec and guide don't address this scenario. If resource paths are bare relative paths rather than qualified with the skill name, the platform must decide which skill's file to return. Ambiguous resolution means a skill may silently receive another skill's reference content, leading to incorrect behavior that's extremely difficult to diagnose. This becomes more likely as users install more skills.
+- **Why it matters**: The spec and guide don't address this scenario. If resource paths are bare relative paths rather than qualified with the skill name, the platform must decide which skill's file to return. Ambiguous resolution means a skill may receive another skill's reference content, leading to incorrect behavior that's extremely difficult to diagnose. This becomes more likely as users install more skills.
 
 ### `path-traversal-boundary`
 
 - **Category**: Resource Access Patterns
 - **What it checks**: Whether the model can access files outside the skill directory via relative paths (e.g., `../../other-file.md` or `../other-skill/SKILL.md`).
-- **Why it matters**: Path traversal from a skill directory is both a security concern and a correctness concern. A skill that can read files outside its own directory could access sensitive project files or other skills' content. Platforms that don't enforce a boundary at the skill directory root expose users to potential prompt injection from malicious skills. Neither the spec nor the guide addresses path traversal validation explicitly; the guide's security guidance focuses on trust gating for project-level skills and assumes the agent's file-read tool enforces its own boundaries.
+- **Why it matters**: Path traversal from a skill directory is both a security concern and a correctness concern. A skill that can read files outside its own directory could access sensitive project files or other skills' content. Platforms that don't enforce a boundary at the skill directory root expose users to potential prompt injection from malicious skills. Neither the spec nor the guide addresses path traversal validation explicitly. The guide's security guidance focuses on trust gating for project-level skills and assumes the agent's file-read tool enforces its own boundaries.
 
 ---
 
@@ -119,19 +119,19 @@ These checks evaluate what the model actually sees, at discovery and at activati
 
 - **Category**: Content Presentation
 - **What it checks**: Which frontmatter fields the platform's discovery listing surfaces to the model: `name` and `description` only, or also `compatibility`, `metadata` values, file locations, or other fields.
-- **Why it matters**: The guide says the catalog holds name and description (~50-100 tokens per skill), but platforms decide what actually goes in it. This determines what a skill author can rely on the model knowing *before* activation: a `compatibility` warning that only exists in frontmatter is invisible at selection time on a platform that lists name and description alone, so the model may activate a skill it cannot actually run. Combined with `frontmatter-handling` (what survives activation), this check completes the picture of which frontmatter fields ever reach the model through platform channels at all — on a platform that surfaces only name/description at discovery and strips frontmatter at activation, every other field is dead weight unless the model reads the raw file. Listings that include file locations also differ meaningfully from those that do not: a location gives the model a path to read more, on its own initiative.
+- **Why it matters**: The guide says the catalog holds name and description (~50-100 tokens per skill), but platforms decide what actually goes in it. This determines what a skill author can rely on the model knowing *before* activation. A `compatibility` warning that only exists in frontmatter is invisible at selection time on a platform that lists name and description alone, so the model may activate a skill it cannot actually run. Combined with `frontmatter-handling` (what survives activation), this check catalogs which frontmatter fields reach the model through platform channels. On a platform that surfaces only name/description at discovery and strips frontmatter at activation, every other field carries no meaning to the model unless the model reads the raw file. Listings that include file locations give the model a path to read more, on its own initiative.
 
 ### `frontmatter-handling`
 
 - **Category**: Content Presentation
 - **What it checks**: Whether the platform passes the full SKILL.md file to the model (including YAML frontmatter) or strips the frontmatter and passes only the markdown body.
-- **Why it matters**: The model sees different content on different platforms for the same skill. Frontmatter fields like `allowed-tools` and `compatibility` may influence model behavior on platforms that pass them through, and be invisible on platforms that strip them. A skill author who puts important context in the `compatibility` field ("requires Python 3.14+ and network access") may find that information reaches the model on one platform and is silently dropped on another.
+- **Why it matters**: The model sees different content on different platforms for the same skill. Frontmatter fields like `allowed-tools` and `compatibility` may influence model behavior on platforms that pass them through, and be invisible on platforms that strip them. A skill author who puts important context in the `compatibility` field, such as "requires Python 3.14+ and network access," may find that information reaches the model on one platform and is dropped on another.
 
 ### `metadata-value-edge-cases`
 
 - **Category**: Content Presentation
 - **What it checks**: Whether platforms successfully parse and load a skill whose `metadata` frontmatter contains edge-case YAML values: empty strings (`''`, `""`), explicit nulls (`null`, `~`, `None`), and tagged nulls (`!!null null`).
-- **Why it matters**: The spec defines `metadata` as a string-to-string mapping, but YAML parsers interpret `null`, `~`, and `None` as null values rather than strings. A platform whose loader expects all metadata values to be strings may throw a type error, silently drop the affected keys, or fail to load the skill entirely. Since the spec doesn't explicitly prohibit null values and YAML makes them easy to produce accidentally (an author who writes `foo:` with no value gets null, not an empty string), these edge cases will appear in real-world skills. The question is whether each platform handles them gracefully or breaks.
+- **Why it matters**: The spec defines `metadata` as a string-to-string mapping, but YAML parsers interpret `null`, `~`, and `None` as null values rather than strings. A platform whose loader expects all metadata values to be strings may throw a type error, drop the affected keys, or fail to load the skill entirely. Since the spec doesn't explicitly prohibit null values and YAML makes them easy to produce accidentally (an author who writes `foo:` with no value gets null rather than an empty string), these edge cases will appear in real-world skills. The question is whether each platform handles them gracefully or breaks.
 
 ### `content-wrapping-format`
 
@@ -161,7 +161,7 @@ These checks evaluate how platforms manage skill content over the course of a co
 
 - **Category**: Lifecycle Management
 - **What it checks**: Whether the platform protects skill content from being pruned or summarized when the context window fills up.
-- **Why it matters**: The guide says to "exempt skill content from pruning" because losing instructions "silently degrades the agent's performance without any visible error." But this is a recommendation, not a requirement. On platforms that don't protect skill content, a long conversation may silently lose the skill's instructions partway through. The model continues operating but without the specialized guidance, producing subtly worse output. This is one of the hardest failures for a skill author to diagnose because there's no error; the skill just stops working mid-conversation.
+- **Why it matters**: The guide says to "exempt skill content from pruning" because losing instructions "degrades the agent's performance without any visible error." But the guide only recommends this; nothing requires platforms to comply. On platforms that don't protect skill content, a long conversation may lose the skill's instructions partway through. The model continues operating but without the specialized guidance, producing subtly worse output. This is one of the hardest failures for a skill author to diagnose because there's no error; the skill just stops working mid-conversation.
 
 ---
 
@@ -173,13 +173,13 @@ These checks evaluate how platforms gate skill loading and how control-related f
 
 - **Category**: Access Control
 - **What it checks**: Whether the platform requires explicit trust approval for project-level skills (those found in the repository being worked on, which may be untrusted).
-- **Why it matters**: Project-level skills come from the repository, which could be a freshly cloned open-source project. Without trust gating, cloning a repository silently injects skill instructions into the agent's context. Platforms could handle this in various ways: requiring explicit trust approval, gating based on workspace trust settings, or loading all skills with no trust check. If platforms diverge here, the same skill in the same repository may load on one platform and be blocked on another, with no signal to the skill author about what happened.
+- **Why it matters**: Project-level skills come from the repository, which could be a freshly cloned open-source project. Without trust gating, cloning a repository injects skill instructions into the agent's context. Platforms could handle this in various ways: requiring explicit trust approval, gating based on workspace trust settings, or loading all skills with no trust check. If platforms diverge here, the same skill in the same repository may load on one platform and be blocked on another, with no signal to the skill author about what happened.
 
 ### `compatibility-field-behavior`
 
 - **Category**: Access Control
 - **What it checks**: How the platform handles the `compatibility` frontmatter field. Specifically: whether it parses the field for structured requirements, whether it uses the field to gate loading, and whether it surfaces the field to the model or user.
-- **Why it matters**: The `compatibility` field is free-text with no structured format. The spec's own example (`Designed for Claude Code (or similar products)`) demonstrates platform-specific targeting in a supposedly platform-neutral format. A non-Claude platform encountering this field has no guidance on what to do: skip the skill entirely, warn the user, load it and hope for the best, or pass the text to the model and let it decide. Each choice produces different behavior. Skill authors who use this field to signal real requirements ("Requires Python 3.14+ and network access") can't predict whether that information will be acted on, displayed, or silently ignored.
+- **Why it matters**: The `compatibility` field is free-text with no structured format. The spec's own example (`Designed for Claude Code (or similar products)`) demonstrates platform-specific targeting in a supposedly platform-neutral format. A non-Claude platform encountering this field has no guidance on what to do: skip the skill entirely, warn the user, load it and hope for the best, or pass the text to the model and let it decide. Each choice produces different behavior. Skill authors who use this field to signal real requirements ("Requires Python 3.14+ and network access") can't predict whether that information will be acted on, displayed, or ignored.
 
 ---
 
@@ -196,20 +196,20 @@ These checks evaluate platform behavior with skill directory structures that pus
 ### `resource-nesting-depth`
 
 - **Category**: Structural Edge Cases
-- **What it checks**: Whether the platform enumerates and allows access to deeply nested resource files vs. only top-level entries in each directory — and how deep access extends. The probe has rungs at one, two, three, and five directory levels (e.g., `references/api/v2/history/deprecated/removed-endpoints.md`), so findings can report an actual depth bound rather than a yes/no.
-- **Why it matters**: The spec's File references section says "Keep file references one level deep from `SKILL.md`. Avoid deeply nested reference chains" — wording that reads as guidance about chains of references between files, and in any case says nothing about how deep a directory tree platforms must support. Separately, the client guide suggests discovery scans use "reasonable bounds (e.g., max depth of 4-6 levels)"; that bound is written for skill *discovery*, but an implementer could plausibly reuse it for resource enumeration or access. Skills that organize reference content hierarchically (common for API documentation with versioned endpoints) may find that nested files are invisible on platforms that bound depth. The skill works on platforms with deep access and silently loses content on shallower ones, with no error to diagnose — and because the spec is unversioned, platforms implemented against different snapshots may have internalized different depth expectations.
+- **What it checks**: Whether the platform enumerates and allows access to deeply nested resource files vs. only top-level entries in each directory, and how deep access extends. The probe has rungs at one, two, three, and five directory levels (e.g., `references/api/v2/history/deprecated/removed-endpoints.md`), so findings can report an actual depth bound rather than a yes/no.
+- **Why it matters**: The spec's File references section says "Keep file references one level deep from `SKILL.md`. Avoid deeply nested reference chains", wording that reads as guidance about chains of references between files. It provides no guidance for how deep a directory tree platforms must support. Separately, the client guide suggests discovery scans use "reasonable bounds (e.g., max depth of 4-6 levels)." That bound is written for skill *discovery*, but an implementer could plausibly reuse it for resource enumeration or access. Skills that organize reference content hierarchically, such as API documentation with versioned endpoints, may find that nested files are invisible on platforms that bound depth. The skill works on platforms with deep access and loses content on shallower ones, with no error to diagnose. And because the spec is unversioned, platforms implemented against different snapshots may have internalized different depth expectations.
 
 ### `name-directory-mismatch`
 
 - **Category**: Structural Edge Cases
 - **What it checks**: When a skill's frontmatter `name` differs from the name of the directory it lives in, which identity the platform uses: is the skill listed and invocable under the frontmatter name, under the directory name, or rejected outright?
-- **Why it matters**: The spec requires the skill's directory name to match its frontmatter `name` (skill-validator flags a mismatch as an error), but a validator is not a loader: platforms decide independently whether to enforce, ignore, or partially honor the rule. Renaming a skill in frontmatter without renaming its folder (or vice versa, e.g. during development or after a fork) produces a mismatch that platforms have to resolve somehow. If one platform indexes by frontmatter name and another by directory name, the same installed skill answers to different names on different platforms — and instructions in other skills or documentation that reference it by one name silently fail on platforms that chose the other. Early probing shows at least one platform (Codex) indexes purely by frontmatter name, so the failure mode is real rather than hypothetical.
+- **Why it matters**: The spec requires the skill's directory name to match its frontmatter `name`, but platforms decide independently whether to enforce, ignore, or partially honor the rule. Renaming a skill in frontmatter without renaming its folder (or vice versa, e.g. during development or after a fork) produces a mismatch that platforms have to resolve somehow. If one platform indexes by frontmatter name and another by directory name, the same installed skill answers to different names on different platforms. Instructions in other skills or documentation that reference it by one name would fail on platforms that chose the other. Early probing shows at least one platform (Codex) indexes purely by frontmatter name, so the failure mode is real rather than hypothetical.
 
 ### `recursive-root-discovery`
 
 - **Category**: Structural Edge Cases
-- **What it checks**: Whether the platform discovers skills only in direct children of its skills root (`<root>/<skill>/SKILL.md`), or scans the root recursively (finding e.g. `<root>/group/skill/SKILL.md`) — and whether a spec-compliant SKILL.md placed entirely outside any recognized skills root is discovered.
-- **Why it matters**: Teams with many skills naturally want to organize them in subfolders (by domain, by team, by lifecycle stage). On a platform that scans recursively, that layout works; on a platform that only reads direct children, every grouped skill silently vanishes from the catalog with no error. The inverse risk also exists: a recursive scanner turns *every* SKILL.md under the root into an installable-looking, invocable skill (see `nested-skill-discovery`), which surprises authors who ship example or vendored skills as content. And if any platform scans the whole project tree rather than just its root, cloning a repository with documentation examples could silently register skills the user never installed — a trust-boundary concern the spec doesn't address.
+- **What it checks**: Whether the platform discovers skills only in direct children of its skills root (`<root>/<skill>/SKILL.md`), or scans the root recursively (finding e.g. `<root>/group/skill/SKILL.md`), and whether a spec-compliant SKILL.md placed entirely outside any recognized skills root is discovered.
+- **Why it matters**: Teams with many skills naturally want to organize them in subfolders, such as by domain, by team, or by lifecycle stage. On a platform that scans recursively, that layout works. On a platform that only reads direct children, every grouped skill vanishes from the catalog with no error. The inverse risk also exists: a recursive scanner turns *every* SKILL.md under the root into an installable-looking, invocable skill (see `nested-skill-discovery`), which surprises authors who ship example or vendored skills as content. And if any platform scans the whole project tree rather than just its root, cloning a repository with documentation examples could register skills the user never installed, a trust-boundary concern the spec doesn't address.
 
 ---
 
@@ -219,13 +219,13 @@ These checks evaluate whether and how a skill can instruct the model to activate
 
 The spec does not address skill-to-skill invocation at all. The guide describes a "subagent delegation" pattern as an advanced option, but frames it as the harness delegating to a subagent, not one skill invoking another. Three open issues on the spec repo have requested clarification since January 2026 ([#95](https://github.com/agentskills/agentskills/issues/95), [#100](https://github.com/agentskills/agentskills/issues/100), [#137](https://github.com/agentskills/agentskills/issues/137)).
 
-Some early signals suggest platform behavior may already diverge. Claude Code's system prompt includes the phrase "Do not invoke a skill that is already running," which implies some awareness of invocation but leaves open how cross-skill invocation is handled. Issue [#95](https://github.com/agentskills/agentskills/issues/95) reports that GitHub Copilot does not appear to restrict skill-to-skill invocation. These are individual observations, not systematic findings; empirical testing is needed to characterize each platform's actual behavior.
+Some early signals suggest platform behavior may already diverge. Claude Code's system prompt includes the phrase "Do not invoke a skill that is already running," which implies some awareness of invocation but leaves open how cross-skill invocation is handled. Issue [#95](https://github.com/agentskills/agentskills/issues/95) reports that GitHub Copilot does not appear to restrict skill-to-skill invocation. These are only scattered individual observations; empirical testing is needed to characterize each platform's actual behavior.
 
 ### `cross-skill-invocation`
 
 - **Category**: Skill-to-Skill Invocation
 - **What it checks**: Whether a skill's instructions can direct the model to activate a different installed skill by name.
-- **Why it matters**: Skill composition is a common need. A `/review-and-commit` skill that chains `/review` then `/commit` is a natural pattern. But if the platform prevents or doesn't support cross-skill invocation, this pattern silently fails: the model either ignores the instruction, says it can't do it, or hallucinates compliance without actually activating the second skill. Skill authors who build composite skills have no way to know which platforms will support the pattern.
+- **Why it matters**: Skill composition is a common need. A `/review-and-commit` skill that chains `/review` then `/commit` is a natural pattern. But if the platform prevents or doesn't support cross-skill invocation, this pattern doesn't hold; the model either ignores the instruction, says it can't do it, or hallucinates compliance without actually activating the second skill. Skill authors who build composite skills have no way to know which platforms will support the pattern.
 
 ### `invocation-depth-limit`
 
@@ -257,55 +257,55 @@ The spec defines six frontmatter fields (`name`, `description`, `license`, `comp
 
 - **Category**: Skill Dependencies
 - **What it checks**: If a skill's body text says something like "first activate the `code-review` skill" or "this skill requires the `linting` skill to be installed," whether the platform attempts to resolve and load the referenced skill.
-- **Why it matters**: In the absence of a formal dependency mechanism, skill authors use prose instructions to express dependencies. Whether this works depends entirely on the model's willingness and the platform's support for skill-to-skill invocation (see Category 8). On platforms where cross-skill invocation works, the dependency is resolved at runtime by the model. On platforms where it doesn't, the skill's instructions are partially unfulfillable, and the model may silently skip the dependency or produce degraded output.
+- **Why it matters**: In the absence of a formal dependency mechanism, skill authors use prose instructions to express dependencies. Whether this works depends entirely on the model's willingness and the platform's support for skill-to-skill invocation (see Category 8). On platforms where cross-skill invocation works, the dependency is resolved at runtime by the model. On platforms where it doesn't, the skill's instructions are partially unfulfillable, and the model may skip the dependency or produce degraded output.
 
 ### `missing-dependency-behavior`
 
 - **Category**: Skill Dependencies
 - **What it checks**: What happens when a skill references another skill (by name in its body text) that is not installed on the platform.
-- **Why it matters**: There is no mechanism for a skill to declare its dependencies, and no mechanism for a platform to check whether dependencies are satisfied before activation. When a skill says "activate the `code-review` skill" and that skill isn't installed, the model discovers this at runtime. The failure mode is platform-dependent: the model might say it can't find the skill (visible failure), silently skip the step (degraded output), or attempt to fulfill the instruction from its training data without the skill's specialized guidance (incorrect output that looks correct). None of these are good outcomes, and the skill author can't prevent any of them.
+- **Why it matters**: There is no mechanism for a skill to declare its dependencies, and no mechanism for a platform to check whether dependencies are satisfied before activation. When a skill says "activate the `code-review` skill" and that skill isn't installed, the model discovers this at runtime. The failure mode is platform-dependent: the model might say it can't find the skill (visible failure), skip the step (degraded output), or attempt to fulfill the instruction from its training data without the skill's specialized guidance (incorrect output that looks correct). None of these are good outcomes, and the skill author can't prevent any of them.
 
 ### `nonstandard-dependency-fields`
 
 - **Category**: Skill Dependencies
 - **What it checks**: Whether any platform recognizes dependency-related frontmatter fields that aren't in the spec (e.g., `requires`, `depends`, `prerequisites`).
-- **Why it matters**: The spec doesn't define dependency fields, but that doesn't mean no platform has implemented them. If a platform added a `requires` field that other platforms ignore, skills using that field would have dependencies resolved on one platform and silently ignored on all others. Discovering nonstandard fields in active use is important for understanding the real ecosystem behavior and for informing whether the spec should standardize something.
+- **Why it matters**: The spec doesn't define dependency fields, but that doesn't mean no platform has implemented them. If a platform added a `requires` field that other platforms ignore, skills using that field would have dependencies resolved on one platform and ignored on all others. Discovering nonstandard fields in active use is important for understanding the real ecosystem behavior and for informing whether the spec should standardize something.
 
 ### `cross-scope-dependency`
 
 - **Category**: Skill Dependencies
 - **What it checks**: How platforms handle the case where a skill at one scope (e.g., project-level) references a skill that only exists at a different scope (e.g., user-level), or vice versa.
-- **Why it matters**: A project-level skill that depends on a user-level utility skill works for the author (who has both installed) but fails for a collaborator who only has the project-level skills. There's no mechanism to signal that a skill has cross-scope dependencies, no way for a platform to check for them, and no standard behavior for when they're missing. This is a portability trap: the skill works in the author's environment and silently degrades in everyone else's.
+- **Why it matters**: A project-level skill that depends on a user-level utility skill works for the author (who has both installed) but fails for a collaborator who only has the project-level skills. There's no mechanism to signal that a skill has cross-scope dependencies, no way for a platform to check for them, and no standard behavior for when they're missing. This is a portability trap: the skill works in the author's environment and degrades in everyone else's.
 
 ---
 
 ## Category 10: Discovery and Validation
 
-These checks evaluate where platforms look for skills and how strictly they validate what they find — behaviors the client implementation guide prescribes in detail, but which platforms adopted independently and may implement differently. Every check in this category has the same failure shape: a skill that works on one platform is silently absent or silently different on another.
+These checks evaluate where platforms look for skills and how strictly they validate what they find. The client implementation guide prescribes these behaviors in detail, but platforms may implement differently. Every check in this category results in a skill that works on one platform but is absent or different on another.
 
 ### `cross-client-directory-interop`
 
 - **Category**: Discovery and Validation
 - **What it checks**: Whether the platform discovers skills installed at the cross-client `.agents/skills/` convention path when that is not its native skills directory.
-- **Why it matters**: The guide recommends scanning both a client-native directory and the `.agents/skills/` convention, "so skills installed by other compliant clients are automatically visible to yours, and vice versa," and notes some clients also scan `.claude/skills/` pragmatically. The spec itself mandates nothing about where skills live. A platform that only scans its native directory breaks the interop story: a skill installed by one client is invisible to another, with no error anywhere. Users who maintain one shared skills directory need to know which platforms actually honor it.
+- **Why it matters**: The guide recommends scanning both a client-native directory and the `.agents/skills/` convention, "so skills installed by other compliant clients are automatically visible to yours, and vice versa," and notes some clients also scan `.claude/skills/` pragmatically. The spec itself mandates nothing about where skills live. A platform that only scans its native directory breaks the interop story. A skill installed by one client is invisible to another, with no error anywhere. Users who maintain one shared skills directory need to know which platforms actually honor it.
 
 ### `malformed-yaml-tolerance`
 
 - **Category**: Discovery and Validation
-- **What it checks**: Whether a skill whose frontmatter is technically invalid YAML — the common unquoted-colon description (`description: Use when: ...`) — is still discovered and loadable.
-- **Why it matters**: The guide acknowledges that "skill files authored for other clients may contain technically invalid YAML that their parsers happen to accept" and recommends a repair fallback. Strict parsers reject the file outright ("mapping values are not allowed here"), so the same skill loads on lenient platforms and silently vanishes on strict ones. Because the mistake is easy to make and many authors test on only one platform, this is one of the most likely real-world portability breaks.
+- **What it checks**: Whether a skill whose frontmatter is technically invalid YAML, like the common unquoted-colon description (`description: Use when: ...`), is still discovered and loadable.
+- **Why it matters**: The guide acknowledges that "skill files authored for other clients may contain technically invalid YAML that their parsers happen to accept" and recommends a repair fallback. Strict parsers reject the file outright ("mapping values are not allowed here"), so the same skill loads on lenient platforms and vanishes on strict ones. Because the mistake is easy to make and many authors test on only one platform, this is one of the most likely real-world portability breaks.
 
 ### `missing-description-handling`
 
 - **Category**: Discovery and Validation
-- **What it checks**: What happens to a skill with no `description` field: skipped (as the guide prescribes — "a description is essential for disclosure"), loaded with an empty or synthesized description, or handled some other way.
-- **Why it matters**: The guide's lenient-validation table draws a sharp line: warn-but-load for name violations, but skip entirely for a missing description. Platforms that load such skills anyway create catalogs where the model has a name with no guidance on when to use it; platforms that skip them make the skill silently absent. Either behavior is defensible — diverging behavior is the trap.
+- **What it checks**: What happens to a skill with no `description` field: skipped (as the guide prescribes: "a description is essential for disclosure"), loaded with an empty or synthesized description, or handled some other way.
+- **Why it matters**: The guide's lenient-validation table suggests warn-but-load for name violations, but skip entirely for a missing description. Platforms that load such skills anyway create catalogs where the model has a name with no guidance on when to use it. Platforms that skip them mean the skill isn't visible to agents.
 
 ### `name-collision-precedence`
 
 - **Category**: Discovery and Validation
 - **What it checks**: When two installed skills share the same `name` at different scopes (project-level and user-level) with different content, which one activates.
-- **Why it matters**: The guide states the universal convention is that "project-level skills override user-level skills." If a platform resolves the other way, or nondeterministically, the same activation loads *different instructions* depending on platform — the worst kind of portability break because everything appears to work. This also matters for security reasoning: project-wins means a cloned repository can shadow a user's trusted skill of the same name.
+- **Why it matters**: The guide states the universal convention is that "project-level skills override user-level skills." If a platform resolves the other way, or nondeterministically, the same activation loads *different instructions* depending on platform. In this portability failure scenario, everything appears to work. This also matters for security reasoning: project-wins means a cloned repository can shadow a user's trusted skill of the same name.
 
 ---
 
@@ -332,8 +332,8 @@ Findings submissions record the check list version they were tested against (see
 ### 0.2 (2026-08-01)
 
 - Added `name-directory-mismatch` and `recursive-root-discovery` (Category 7: Structural Edge Cases), prompted by observed platform divergence in nested-skill discovery: one platform registers and invokes any SKILL.md found recursively under its skills root, indexed by frontmatter name alone.
-- Added Category 10: Discovery and Validation — `cross-client-directory-interop`, `malformed-yaml-tolerance`, `missing-description-handling`, and `name-collision-precedence` — derived from portability-sensitive behaviors the client implementation guide prescribes but platforms adopted independently.
-- Added `discovery-listing-fields` (Category 4: Content Presentation), prompted by the observation that one platform's discovery listing is strictly `name: description` lines while another's includes file locations — which changes what frontmatter can ever reach the model.
+- Added Category 10: Discovery and Validation (`cross-client-directory-interop`, `malformed-yaml-tolerance`, `missing-description-handling`, and `name-collision-precedence`), derived from portability-sensitive behaviors the client implementation guide prescribes but platforms adopted independently.
+- Added `discovery-listing-fields` (Category 4: Content Presentation), prompted by the observation that one platform's discovery listing is strictly `name: description` lines while another's includes file locations, which changes what frontmatter can ever reach the model.
 - Reworded `resource-nesting-depth`: the spec's "one level deep" language (now in its File references section) reads as guidance about reference chains rather than directory depth. The probe gained a five-levels-deep rung so findings report a measured depth bound instead of a yes/no.
 - Added a note that spec/guide quotes in this document were verified as of 2026-08-01, since both upstream documents are unversioned and change without a changelog.
 

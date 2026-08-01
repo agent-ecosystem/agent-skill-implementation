@@ -14,7 +14,7 @@ showTableOfContents: true
 | **Model(s) observed** | gpt-5.6-sol |
 | **Environment** | Headless invocation via benchmark-runner + skillxp |
 
-> **Caveats**: All findings are from headless sessions, which may differ from interactive use. Verdicts are single-run observations unless a runs count is noted; for model-level behaviors they are point observations, not rates. Fallback-behavior fields are auto-derived: where a run incidentally demonstrated a recovery path it is reported, otherwise the field says "not exercised" — automation does not probe recovery, so absence of a fallback observation is not evidence that none exists.
+> **Caveats**: All findings are from headless sessions, which may differ from interactive use. Verdicts are single-run observations unless a runs count is noted; for model-level behaviors, treat a single verdict as one observed outcome rather than a rate. Fallback-behavior fields are auto-derived: where a run incidentally demonstrated a recovery path it is reported, otherwise the field says "not exercised". Automation does not probe recovery, so absence of a fallback observation is not evidence that none exists.
 
 ## Loading Timing
 
@@ -31,7 +31,7 @@ _Does the harness read only SKILL.md metadata at discovery, or the full body?_
 
 ### `activation-loading-scope`
 
-_On activation, does the harness load only the SKILL.md body, or also bundled resources — and by which vehicle?_
+_On activation, does the harness load only the SKILL.md body, or also bundled resources, and by which vehicle?_
 
 - **Status**: observed
 - **Verdict**: Body only (`body-only`)
@@ -44,7 +44,7 @@ _On activation, does the harness load only the SKILL.md body, or also bundled re
 
 ### `eager-link-resolution`
 
-_Does activation pre-fetch files markdown-linked from the SKILL.md body — and does that extend to a file mentioned only as plain text?_
+_Does activation pre-fetch files markdown-linked from the SKILL.md body, and does that extend to a file mentioned only as plain text?_
 
 - **Status**: observed
 - **Verdict**: No pre-fetching (`no-prefetch`)
@@ -82,7 +82,7 @@ _Is a resources/ directory (alternative to spec's references/) loaded, enumerate
 
 ### `unrecognized-directory-handling`
 
-_What happens to directories the spec never named (evals/, templates/) — injected, readable on demand, or invisible?_
+_What happens to directories the spec never named (evals/, templates/): injected, readable on demand, or invisible?_
 
 - **Status**: observed
 - **Verdict**: Not surfaced; model never looked (`untouched`)
@@ -107,7 +107,7 @@ _At activation, are a skill's reference files enumerated to the model (names), l
 
 ### `path-resolution-base`
 
-_When the model follows a SKILL.md relative path like references/setup-guide.md, what does it resolve against — and does the bare path work as written?_
+_When the model follows a SKILL.md relative path like references/setup-guide.md, what does it resolve against, and does the bare path work as written?_
 
 - **Status**: observed
 - **Verdict**: Model used full paths (base untested) (`model-preemptively-qualified`)
@@ -128,7 +128,7 @@ _With two skills both owning references/API.md, does the activated skill's read 
 - **Confidence**: behavioral-inference
 - **Evidence**:
   - activated skill's own API.md content arrived first
-- **Note**: every API.md read was skill-qualified; the platform's ambiguous-path resolution was never exercised — the outcome reflects model path discipline, not platform disambiguation
+- **Note**: every API.md read was skill-qualified; the platform's ambiguous-path resolution was never exercised, so the outcome reflects model path discipline, not platform disambiguation
 - **Note**: final answer: `probe-shadow-alpha/references/API.md` contains:  - Canary: **STORK-CORAL-4471** — confirms the alpha version. - Endpoints:   - `GET /alpha/status`   - `POST /alpha/process`  Only alpha was activated, so no beta access test was required.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -178,7 +178,7 @@ _Does the SKILL.md YAML frontmatter reach the model at activation, or only the b
 
 ### `metadata-value-edge-cases`
 
-_Is a skill whose metadata frontmatter holds nulls and empty strings still discovered and loaded — and do those keys reach the model?_
+_Is a skill whose metadata frontmatter holds nulls and empty strings still discovered and loaded, and do those keys reach the model?_
 
 - **Status**: observed
 - **Verdict**: Loaded fine (`loaded-despite-edge-case-metadata`)
@@ -194,7 +194,7 @@ _Is a skill whose metadata frontmatter holds nulls and empty strings still disco
 
 ### `content-wrapping-format`
 
-_Is injected skill content wrapped in structured tags, or delivered as raw markdown — and what does the model see on pull harnesses?_
+_Is injected skill content wrapped in structured tags, or delivered as raw markdown, and what does the model see on pull harnesses?_
 
 - **Status**: observed
 - **Verdict**: Raw file via model read (`raw-file-via-pull`)
@@ -302,7 +302,7 @@ _When directory name and frontmatter name disagree, which identity is the skill 
 - **Evidence**:
   - discovery listing carries the FRONTMATTER name probe-name-mismatch
   - discovery listing carries the DIRECTORY name probe-mismatch-dir
-- **Note**: activation loads: by frontmatter name=true, by directory name=false (a load proves reachability, not catalog identity — the model may map either prompt to the installed skill or read the file directly)
+- **Note**: activation loads: by frontmatter name=true, by directory name=false (a load proves reachability, not catalog identity; the model may map either prompt to the installed skill or read the file directly)
 - **Note**: caveat: listings that carry file paths always contain the directory name; frontmatter-name presence is the load-bearing signal
 - **Note**: final answer: `probe-mismatch-dir` is not an available skill; the catalog lists only `probe-name-mismatch`. I can’t activate it under the directory name.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
@@ -378,7 +378,7 @@ _Does the invoke chain still complete when the activation prompt is Japanese?_
   - invoke-alpha body loaded
   - invoke-beta body loaded
   - invoke-gamma body loaded
-- **Note**: single run proves little either way; compare with invocation-depth-limit (English prompt) and use -runs N for failure rates — agentskills#95 reports ~10% Japanese-prompt failures on Claude Code
+- **Note**: single run proves little either way; compare with invocation-depth-limit (English prompt) and use -runs N for failure rates: agentskills#95 reports ~10% Japanese-prompt failures on Claude Code
 - **Note**: final answer: invoke-alpha complete.   Chain result: invoke-beta（**TERN-MOSS-6647**）と invoke-gamma（**JAY-TEAL-9984**）が起動し、3スキルの連鎖が正常に完了しました。
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -429,7 +429,7 @@ _Does the platform act on nonstandard dependency frontmatter (requires, depends-
 
 ### `cross-scope-dependency`
 
-_Can a project-level skill invoke a dependency that exists only at user level — and what is the failure mode when it is absent?_
+_Can a project-level skill invoke a dependency that exists only at user level, and what is the failure mode when it is absent?_
 
 - **Status**: observed
 - **Verdict**: Resolved across scopes; missing dependency reported, not attempted (`resolved-across-scopes; missing:reported-without-attempt`)
@@ -493,7 +493,7 @@ _With the same skill name installed at project and user scope, which variant's c
 - **Confidence**: behavioral-inference
 - **Evidence**:
   - project variant's canary loaded; user variant's never appeared
-- **Note**: the discovery listing exposed BOTH variants (both descriptions present); the model's file choice determined the winner — model-level selection, not platform precedence
+- **Note**: the discovery listing exposed BOTH variants (both descriptions present); the model's file choice determined the winner: model-level selection, not platform precedence
 - **Note**: final answer: probe-collision activated. Canary: **RAVEN-CITRINE-6634** (project variant)  **Precedence:** Project scope won.
 - **Fallback behavior**: the shadowed variant stays reachable: the catalog exposes both entries, so a user (or the model) can address either by path.
 
