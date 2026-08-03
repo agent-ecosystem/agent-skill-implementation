@@ -101,8 +101,12 @@ The [benchmark skills](https://github.com/agent-ecosystem/agent-skill-implementa
 are 33 fixtures (spec-compliant skills plus deliberate rule-breakers) seeded
 with unique **canary phrases**. By asking the model whether it knows a canary
 phrase, we can tell exactly what a platform loaded and when, without trusting
-the model's self-reporting about its own context. An automated runner drives
-the checks headlessly and cites every finding to an archived transcript.
+the model's self-reporting about its own context. The
+[benchmark runner](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-runner)
+drives the checks headlessly, using
+[skillxp](https://github.com/agent-ecosystem/skillxp) to install the fixtures,
+invoke each harness, and parse the resulting transcripts, and cites every
+finding to an archived transcript.
 
 ## Contributing
 

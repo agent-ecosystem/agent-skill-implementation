@@ -41,6 +41,13 @@ through empirical testing rather than assumptions.
   [benchmark skills README](benchmark-skills/README.md) for the full inventory,
   check-to-skill mapping, and test procedures.
 
+- **[benchmark-runner/](benchmark-runner/)**: A Go program that automates the
+  checks against installed harnesses, using
+  [skillxp](https://github.com/agent-ecosystem/skillxp) to install the benchmark
+  skills, invoke each harness headlessly, and parse the resulting transcripts.
+  It grades what it observes into verdicts and generates the per-platform
+  reports. See the [runner README](benchmark-runner/README.md) for usage.
+
 - **[platform-findings/](platform-findings/)**: Per-platform
   results. The [template](platform-findings/template.md) captures
   platform details, methodology, and findings for each check, including whether

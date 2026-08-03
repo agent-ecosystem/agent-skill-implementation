@@ -13,7 +13,7 @@ Full detail for every finding (the exact verdict, how content reached the model,
 - [Claude Code (headless)](/platforms/claude-code/)
 - [Codex CLI (headless)](/platforms/codex/)
 
-For what these findings mean when writing a skill, see the [cross-platform authoring guidance](/guidance/authoring-guidance/). The [check list](/checks/) has the full rationale behind every question. All findings come from headless sessions, which can differ from interactive use; outcomes marked † rest on behavioral inference rather than direct transcript evidence. Two checks (context compaction protection, trust gating) need interactive sessions and are marked manual.
+For what these findings mean when writing a skill, see the [cross-platform authoring guidance](/guidance/). The [check list](/checks/) has the full rationale behind every question. All findings come from headless sessions, which can differ from interactive use; outcomes marked † rest on behavioral inference rather than direct transcript evidence. Two checks (context compaction protection, trust gating) need interactive sessions and are marked manual.
 
 ## Loading Timing
 
