@@ -234,6 +234,19 @@ var specJudges = []struct {
 		}
 		return unclassifiedSpec(f)
 	}},
+	{"description-length-unit", func(f checks.Finding) specJudgement {
+		switch f.Verdict {
+		case "no-length-enforcement":
+			return specJudgement{specConsistent, "The spec caps description at 1024 characters without defining the unit. This platform does not enforce the limit at all, so every fixture under 1024 code points loaded intact and the counting unit is moot."}
+		case "counts-code-points":
+			return specJudgement{specConsistent, "The spec caps description at 1024 characters without defining the unit. This platform counts Unicode code points, the same unit as the spec's skills-ref reference validator, so descriptions the reference validator accepts load here too."}
+		case "counts-utf16-units":
+			return specJudgement{specContradicts, "The spec caps description at 1024 characters without defining the unit; its skills-ref reference validator counts code points. This platform counts UTF-16 code units, so a description with emoji or other supplementary-plane characters that the reference validator accepts is rejected or truncated here."}
+		case "counts-bytes":
+			return specJudgement{specContradicts, "The spec caps description at 1024 characters without defining the unit; its skills-ref reference validator counts code points. This platform counts UTF-8 bytes, so a description in a CJK script that the reference validator accepts is rejected or truncated here."}
+		}
+		return unclassifiedSpec(f)
+	}},
 	{"oversize-compatibility-handling", func(f checks.Finding) specJudgement {
 		switch f.Verdict {
 		case "loaded-despite-oversize-compatibility":

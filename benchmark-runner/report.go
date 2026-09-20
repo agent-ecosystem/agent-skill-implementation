@@ -52,7 +52,7 @@ var reportCategories = []struct {
 	{"Skill-to-Skill Invocation", []string{"cross-skill-invocation", "invocation-depth-limit", "circular-invocation-handling", "invocation-language-sensitivity"}},
 	{"Skill Dependencies", []string{"informal-dependency-resolution", "missing-dependency-behavior", "nonstandard-dependency-fields", "cross-scope-dependency"}},
 	{"Discovery Scope", []string{"cross-client-directory-interop", "recursive-root-discovery", "nested-skill-discovery", "name-collision-precedence"}},
-	{"Validation Strictness", []string{"malformed-yaml-tolerance", "missing-description-handling", "invalid-name-tolerance", "name-directory-mismatch", "metadata-value-edge-cases", "oversize-description-handling", "oversize-compatibility-handling"}},
+	{"Validation Strictness", []string{"malformed-yaml-tolerance", "missing-description-handling", "invalid-name-tolerance", "name-directory-mismatch", "metadata-value-edge-cases", "oversize-description-handling", "description-length-unit", "oversize-compatibility-handling"}},
 }
 
 // manualChecks require interactive sessions the runner cannot drive.
@@ -222,6 +222,12 @@ var verdictPhrases = map[string]string{
 	"all-invalid-names-rejected":         "All three invalid names rejected",
 	"loaded-despite-oversize-description":   "Loaded anyway",
 	"skipped-oversize-description":          "Skipped",
+	"no-length-enforcement":                 "No enforcement (unit is moot)",
+	"counts-code-points":                    "Counts Unicode code points",
+	"counts-utf16-units":                    "Counts UTF-16 code units",
+	"counts-bytes":                          "Counts UTF-8 bytes",
+	"inconsistent-length-unit":              "Fits no single unit",
+	"length-unit-unobservable":              "Unit not observable",
 	"loaded-despite-oversize-compatibility": "Loaded anyway",
 	"skipped-oversize-compatibility":        "Skipped",
 }

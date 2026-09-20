@@ -1,7 +1,7 @@
 ---
 title: "Codex CLI (headless)"
-description: "Automated skill loading findings for Codex CLI (headless) (check list 0.2)."
-date: 2026-08-01
+description: "Automated skill loading findings for Codex CLI (headless) (check list 0.3)."
+date: 2026-09-19
 showTableOfContents: true
 ---
 
@@ -9,16 +9,16 @@ showTableOfContents: true
 |---|---|
 | **Platform** | Codex CLI (headless) |
 | **Platform version** | 0.146.0 |
-| **Check list version** | 0.2 |
-| **Test date** | 2026-08-01 |
-| **Model(s) observed** | gpt-5.6-sol |
+| **Check list version** | 0.3 |
+| **Test date** | 2026-09-19 |
+| **Model(s) observed** | gpt-5.6-sol, gpt-6-astra |
 | **Environment** | Headless invocation via [benchmark-runner](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-runner) + [skillxp](https://github.com/agent-ecosystem/skillxp) |
 
 > **Caveats**: All findings are from headless sessions, which may differ from interactive use. Verdicts are single-run observations unless a runs count is noted; for model-level behaviors, treat a single verdict as one observed outcome rather than a rate. Fallback-behavior fields are auto-derived: where a run incidentally demonstrated a recovery path it is reported, otherwise the field says "not exercised". Automation does not probe recovery, so absence of a fallback observation is not evidence that none exists.
 
 ## Spec alignment
 
-Most of this report measures behavior the [Agent Skills specification](https://agentskills.io/specification) leaves to each implementation, where differences between platforms are design choices rather than violations. 18 of the 40 checks do test something the specification prescribes; this section summarizes how observed behavior compares. Each entry links to the full finding below.
+Most of this report measures behavior the [Agent Skills specification](https://agentskills.io/specification) leaves to each implementation, where differences between platforms are design choices rather than violations. 19 of the 41 checks do test something the specification prescribes; this section summarizes how observed behavior compares. Each entry links to the full finding below.
 
 ### Where behavior contradicts the spec
 
@@ -35,6 +35,7 @@ No observed behavior contradicted a spec statement in this run.
 - [`discovery-listing-fields`](#discovery-listing-fields): The listing surfaces location in addition to name and description. The spec describes only those two fields loading at startup, but it does not forbid extras.
 - [`frontmatter-handling`](#frontmatter-handling): The whole file, frontmatter included, reaches the model at activation because the model reads the raw file, matching the spec's description of loading the entire file.
 - [`compatibility-field-behavior`](#compatibility-field-behavior): The spec makes compatibility informational (it indicates environment requirements) and assigns it no loading semantics. Consistent with that, a skill declaring a different product still loads here; authors should not expect the field to gate anything.
+- [`description-length-unit`](#description-length-unit): The spec caps description at 1024 characters without defining the unit. This platform counts Unicode code points, the same unit as the spec's skills-ref reference validator, so descriptions the reference validator accepts load here too.
 
 ### How spec-invalid skills are handled
 
@@ -599,6 +600,30 @@ _Is a skill whose description exceeds the spec's 1024-character limit still disc
 - **Note**: final answer: probe-long-description activated. Canary: **BITTERN-HALITE-2264**  Description visibility: Head marker only: `SANDERLING-GNEISS-1010`. The catalog truncates at `including the final...`; the WHIMBREL tail marker is not visible.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
+#### `description-length-unit`
+
+_When a platform enforces the 1024-character description limit, does it count Unicode code points, UTF-16 code units, or UTF-8 bytes?_
+
+- **Status**: observed
+- **Verdict**: Counts Unicode code points (`counts-code-points`)
+- **Confidence**: transcript-direct
+- **Evidence**:
+  - discovery listing names probe-long-description
+  - body canary loaded on activation
+  - description head marker in injected content; tail absent
+  - discovery listing names probe-multibyte-description
+  - body canary loaded on activation
+  - description tail marker in injected content
+  - discovery listing names probe-astral-description
+  - body canary loaded on activation
+  - description tail marker in injected content
+- **Note**: description fates: ascii:truncated, multibyte:intact, astral:intact
+- **Note**: ascii final answer: probe-long-description activated. Canary: **BITTERN-HALITE-2264**  **Description visibility:** Only the head marker is visible in the catalog: “SANDERLING-GNEISS-1010”. The WHIMBREL tail marker is absent. The catalog description ends with: “If you can read every sentence of this description including the final...”
+- **Note**: multibyte final answer: probe-multibyte-description activated. Canary: **PUFFIN-BASALT-4471**  **Description visibility:** Both markers are visible in the catalog: - “The head marker GANNET-PYRITE-1130 sits near the start of this description” - “The tail marker is SHRIKE-TALC-2210”
+- **Note**: astral final answer: probe-astral-description activated. Canary: **ORIOLE-GRANITE-5583**  **Description visibility:** Both markers are visible in the catalog: “MAGPIE-OBSIDIAN-1240” and “The tail marker is LINNET-MALACHITE-2420”.
+- **Note**: the ASCII overrun was enforced while both fixtures under 1024 code points survived intact: the platform counts code points, the reference validator's unit
+- **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
+
 #### `oversize-compatibility-handling`
 
 _Is a skill whose compatibility value exceeds the spec's 500-character limit still discovered and loadable?_
@@ -616,4 +641,4 @@ _Is a skill whose compatibility value exceeds the spec's 500-character limit sti
 
 ---
 
-Generated by [benchmark-runner](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-runner) from transcript-cited findings; see [the check list](/checks/) (version 0.2) for what each check evaluates.
+Generated by [benchmark-runner](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-runner) from transcript-cited findings; see [the check list](/checks/) (version 0.3) for what each check evaluates.

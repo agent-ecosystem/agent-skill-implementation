@@ -30,12 +30,12 @@ through empirical testing rather than assumptions.
 
 ## What's here
 
-- **[checks.md](checks.md)**: 40 checks across 10 categories
+- **[checks.md](checks.md)**: 41 checks across 10 categories
   of platform behavior (loading, validation, execution, and access control) that
   need empirical testing. Each check describes what it evaluates and why it
   matters for skill authors.
 
-- **[benchmark-skills/](benchmark-skills/)**: 33 spec-compliant skills designed
+- **[benchmark-skills/](benchmark-skills/)**: 35 spec-compliant skills designed
   to exercise those checks. Each contains unique canary phrases that reveal what a
   platform loaded and when, without relying on model self-reporting. See the
   [benchmark skills README](benchmark-skills/README.md) for the full inventory,
