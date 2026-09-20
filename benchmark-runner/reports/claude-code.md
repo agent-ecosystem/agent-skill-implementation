@@ -4,16 +4,16 @@
 |---|---|
 | **Platform** | Claude Code (headless) |
 | **Platform version** | 2.1.212 |
-| **Check list version** | 0.2 |
-| **Test date** | 2026-08-01 |
-| **Model(s) observed** | claude-fable-5, claude-sonnet-5 |
+| **Check list version** | 0.3 |
+| **Test date** | 2026-09-19 |
+| **Model(s) observed** | claude-fable-5, claude-fable-5-1, claude-sonnet-5 |
 | **Environment** | Headless invocation via [benchmark-runner](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-runner) + [skillxp](https://github.com/agent-ecosystem/skillxp) |
 
 > **Caveats**: All findings are from headless sessions, which may differ from interactive use. Verdicts are single-run observations unless a runs count is noted; for model-level behaviors, treat a single verdict as one observed outcome rather than a rate. Evidence line numbers cite the archived transcripts in the results directories. Fallback-behavior fields are auto-derived: where a run incidentally demonstrated a recovery path it is reported, otherwise the field says "not exercised". Automation does not probe recovery, so absence of a fallback observation is not evidence that none exists.
 
 ## Spec alignment
 
-Most of this report measures behavior the [Agent Skills specification](https://agentskills.io/specification) leaves to each implementation, where differences between platforms are design choices rather than violations. 18 of the 40 checks do test something the specification prescribes; this section summarizes how observed behavior compares. Each entry links to the full finding below.
+Most of this report measures behavior the [Agent Skills specification](https://agentskills.io/specification) leaves to each implementation, where differences between platforms are design choices rather than violations. 19 of the 41 checks do test something the specification prescribes; this section summarizes how observed behavior compares. Each entry links to the full finding below.
 
 ### Where behavior contradicts the spec
 
@@ -30,6 +30,7 @@ Most of this report measures behavior the [Agent Skills specification](https://a
 - [`resource-nesting-depth`](#resource-nesting-depth): The spec advises authors to keep file references one level deep but sets no platform limit, and none was observed: reference files stayed reachable at every tested depth through five levels.
 - [`discovery-listing-fields`](#discovery-listing-fields): The discovery listing carries name and description and nothing else, exactly the fields the spec says load at startup.
 - [`compatibility-field-behavior`](#compatibility-field-behavior): The spec makes compatibility informational (it indicates environment requirements) and assigns it no loading semantics. Consistent with that, a skill declaring a different product still loads here; authors should not expect the field to gate anything.
+- [`description-length-unit`](#description-length-unit): The spec caps description at 1024 characters without defining the unit. This platform does not enforce the limit at all, so every fixture under 1024 code points loaded intact and the counting unit is moot.
 
 ### How spec-invalid skills are handled
 
@@ -589,6 +590,30 @@ _Is a skill whose description exceeds the spec's 1024-character limit still disc
 - **Note**: final answer: probe-long-description activated. Canary: **BITTERN-HALITE-2264**  **Description visibility**: Both markers are visible in my catalog entry, meaning the over-limit description survived intact end to end (no rejection, no truncation).  - Head marker, quoted from the catalog: "The head marker SANDERLING-GNEISS-1010 sits near the start of this description and a matching tail marker sits at the very end..." - Tail marker, quoted from the catalog (the entry's final characters): "...If you can read every sentence of this description including the final marker phrase, the field survived intact end to end. The tail marker is WHIMBREL-DOLOMITE-2020"  The full padding prose between the markers is also present in the catalog entry, so the platform accepted the ~1100+ character description without enforcing the spec's 1024-character limit.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
+#### `description-length-unit`
+
+_When a platform enforces the 1024-character description limit, does it count Unicode code points, UTF-16 code units, or UTF-8 bytes?_
+
+- **Status**: observed
+- **Verdict**: `no-length-enforcement`
+- **Confidence**: transcript-direct
+- **Evidence** (transcript: `results/length-unit-2026-09-19/claude-code/description-length-unit/session-3/3d9169f9-a12d-4ffc-985b-c9767d1dad38.jsonl`; session e668db73-8bea-4818-a255-5aaaf38f644e,a7facdbe-44b8-45b4-b760-95b8629ff8be,3d9169f9-a12d-4ffc-985b-c9767d1dad38):
+  - discovery listing names probe-long-description (session 1, event 6, line 8)
+  - body canary loaded on activation (session 1, event 21, line 33)
+  - description tail marker in injected content (session 1, event 6, line 8)
+  - discovery listing names probe-multibyte-description (session 2, event 7, line 9)
+  - body canary loaded on activation (session 2, event 21, line 33)
+  - description tail marker in injected content (session 2, event 7, line 9)
+  - discovery listing names probe-astral-description (session 3, event 6, line 8)
+  - body canary loaded on activation (session 3, event 21, line 32)
+  - description tail marker in injected content (session 3, event 6, line 8)
+- **Note**: description fates: ascii:intact, multibyte:intact, astral:intact
+- **Note**: ascii final answer: probe-long-description activated. Canary: **BITTERN-HALITE-2264**  **Description visibility**: Both markers are visible in my catalog entry. The description was accepted intact, with no truncation.  The catalog shows the head marker near the start:  ``` The head marker SANDERLING-GNEISS-1010 sits near the start of this description and a matching tail marker sits at the very end ```  And the tail marker as the final words of the description:  ``` If you can read every sentence of this description including the final marker phrase, the field survived intact end to end. The tail marker is WHIMBREL-DOLOMITE-2020 ```  The full description in the catalog reads end to end as complete prose, from "Benchmark skill whose description deliberately runs past the spec's 1024-character limit" through to the tail marker, so the platform tolerated the overrun rather than rejecting or truncating the field.
+- **Note**: multibyte final answer: probe-multibyte-description activated. Canary: **PUFFIN-BASALT-4471**  **Description visibility**: Both markers are visible in my catalog entry. The description was not truncated.  - **Head marker**, quoted from the catalog: "The head marker GANNET-PYRITE-1130 sits near the start of this description and a tail marker sits at the very end." - **Tail marker**, quoted from the catalog, which is the final text of the entry: "The tail marker is SHRIKE-TALC-2210"  The full Japanese paragraph between them also appears intact, ending with "数え方の違いを実際に観測して記録する必要があります。" immediately before the tail marker sentence. This indicates the platform either counts description length in code points or UTF-16 units, or does not enforce the 1024 limit at all. It does not count UTF-8 bytes, since that would have made the description oversize.
+- **Note**: astral final answer: probe-astral-description activated. Canary: **ORIOLE-GRANITE-5583**  **Description visibility:** Both markers are visible in my catalog entry. The description was not truncated.  The head marker in the catalog reads:  ``` The head marker MAGPIE-OBSIDIAN-1240 sits near the start and a tail marker sits at the very end ```  The tail marker in the catalog reads, as the final text of the entry:  ``` The tail marker is LINNET-MALACHITE-2420 ```  Between them, the full emoji padding appears intact, so this platform accepted the description at its Unicode code point length rather than rejecting or truncating it based on UTF-16 units or UTF-8 bytes.
+- **Note**: all three descriptions reached the model intact, including the ASCII one that exceeds 1024 in every unit: the platform does not enforce the limit, so its counting unit is moot
+- **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
+
 #### `oversize-compatibility-handling`
 
 _Is a skill whose compatibility value exceeds the spec's 500-character limit still discovered and loadable?_
@@ -606,4 +631,4 @@ _Is a skill whose compatibility value exceeds the spec's 500-character limit sti
 
 ---
 
-Generated by benchmark-runner from finding.json files; see [checks.md](../checks.md) (check list 0.2) for check definitions and [benchmark-skills/README.md](../benchmark-skills/README.md) for fixtures and canaries.
+Generated by benchmark-runner from finding.json files; see [checks.md](../checks.md) (check list 0.3) for check definitions and [benchmark-skills/README.md](../benchmark-skills/README.md) for fixtures and canaries.

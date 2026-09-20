@@ -1,11 +1,11 @@
 ---
 title: "Platform Reports"
-description: "Where agent platforms agree and diverge on skill loading, from automated transcript-cited checks (check list 0.2)."
-date: 2026-08-01
+description: "Where agent platforms agree and diverge on skill loading, from automated transcript-cited checks (check list 0.3)."
+date: 2026-09-19
 showTableOfContents: true
 ---
 
-We ran the same 38 automated checks against each platform and compared what actually happened. Each row below asks one question about platform behavior; the cells say in plain language what each platform did. Rows marked 📌 are where platforms disagree: the cases where a skill that works on one platform behaves differently on another.
+We ran the same 39 automated checks against each platform and compared what actually happened. Each row below asks one question about platform behavior; the cells say in plain language what each platform did. Rows marked 📌 are where platforms disagree: the cases where a skill that works on one platform behaves differently on another.
 
 Full detail for every finding (the exact verdict, how content reached the model, confidence, and notes) lives on the per-platform pages. Each page opens with a spec alignment summary: where that platform's observed behavior contradicts or matches what the [Agent Skills specification](https://agentskills.io/specification) prescribes, and how it handles skills that violate the spec's format rules.
 
@@ -123,5 +123,6 @@ How strictly platforms judge skills that break the spec's format rules: rejected
 | 📌 When directory name and frontmatter name disagree, which identity is the skill listed and invocable under? | Frontmatter name wins † | Directory name wins | Listed under both names |
 | Is a skill whose metadata frontmatter holds nulls and empty strings still discovered and loaded, and do those keys reach the model? | Loaded fine | Loaded fine | Loaded fine |
 | Is a skill whose description exceeds the spec's 1024-character limit still discovered, and does the full value survive untruncated? | Loaded anyway † | Loaded anyway | Loaded anyway |
+| 📌 When a platform enforces the 1024-character description limit, does it count Unicode code points, UTF-16 code units, or UTF-8 bytes? | No enforcement (unit is moot) † | No enforcement (unit is moot) | Counts Unicode code points |
 | Is a skill whose compatibility value exceeds the spec's 500-character limit still discovered and loadable? | Loaded anyway † | Loaded anyway | Loaded anyway |
 

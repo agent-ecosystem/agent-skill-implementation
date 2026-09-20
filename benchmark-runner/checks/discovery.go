@@ -455,6 +455,9 @@ func descriptionLengthUnit() Spec {
 					f.Confidence = ConfidenceInferred
 				}
 				f.Notes = append(f.Notes, fx.label+" final answer: "+finalAnswer(sos[i]))
+				if inj, pull := loadsOf(sos[i], fx.body); f.Vehicle == "" && len(inj)+len(pull) > 0 {
+					f.Vehicle = vehicleOf(inj, pull)
+				}
 			}
 			f.Notes = append([]string{"description fates: " + strings.Join(summary, ", ")}, f.Notes...)
 			ascii, multibyte, astral := fates[0], fates[1], fates[2]
