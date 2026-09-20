@@ -41,6 +41,8 @@ determine what content the platform loaded and when.
 | `probe--double-hyphen` | Invalid name: consecutive hyphens (name matches directory) | SKILL.md only |
 | `probe-overlong-name-…-limit` | Invalid name: 72 characters, past the 64-char limit (name matches directory) | SKILL.md only |
 | `probe-long-description` | Oversize description (1116 chars, head + tail markers) | SKILL.md only |
+| `probe-multibyte-description` | Description under 1024 code points but over 1024 UTF-8 bytes (Japanese prose; 848 chars, 1822 bytes; head + tail markers) | SKILL.md only |
+| `probe-astral-description` | Description under 1024 code points but over 1024 UTF-16 units and bytes (emoji; 869 chars, 1319 UTF-16 units, 2219 bytes; head + tail markers) | SKILL.md only |
 | `probe-long-compatibility` | Oversize compatibility value (570 chars, tail marker) | SKILL.md only |
 
 ## Check-to-Skill Mapping
@@ -137,6 +139,7 @@ skills** provide additional signal or are needed as part of the test setup.
 | `name-directory-mismatch` | `probe-mismatch-dir` | Install the directory as-is. Check the available skills list: does the skill appear as `probe-name-mismatch` (frontmatter), `probe-mismatch-dir` (directory), or not at all? Then activate it by whichever name appeared and look for SWAN-BERYL-3324. |
 | `metadata-value-edge-cases` | `probe-metadata-values` | Activate the skill. If it loads successfully, the platform didn't reject the edge-case metadata. Check step 2-3 to see which values the model received and whether any keys were dropped. Look for canary phrase THRUSH-FLINT-8294 to confirm the body loaded. |
 | `oversize-description-handling` | `probe-long-description` | Install normally. Is the skill listed despite the 1116-char description? Does the listing show the head marker SANDERLING-GNEISS-1010 but not the tail marker WHIMBREL-DOLOMITE-2020 (truncation)? Activate and look for BITTERN-HALITE-2264. |
+| `description-length-unit` | `probe-long-description` + `probe-multibyte-description` + `probe-astral-description` | Install all three. For each, is it listed, and does the listing show its head marker, its tail marker, both, or neither? ASCII fixture rejected or truncated while both others survive intact = code points; multibyte survives but astral does not = UTF-16 units; none survive = bytes; all three survive = no enforcement. Markers: GANNET-PYRITE-1130 / SHRIKE-TALC-2210 (multibyte), MAGPIE-OBSIDIAN-1240 / LINNET-MALACHITE-2420 (astral). Body canaries: PUFFIN-BASALT-4471 (multibyte), ORIOLE-GRANITE-5583 (astral). |
 | `oversize-compatibility-handling` | `probe-long-compatibility` | Install normally. Is the skill listed despite the 570-char compatibility value? Activate and look for KESTREL-BAUXITE-6690; note whether the tail marker TURNSTONE-ARAGONITE-3030 surfaces anywhere. |
 ## Structural Validation
 
@@ -162,6 +165,8 @@ nonstandard structures to test platform loading behavior:
 | `probe--double-hyphen` | **Error**: consecutive hyphens in name | Tests invalid-name tolerance — the hyphen violation is the fixture |
 | `probe-overlong-name-…-limit` | **Error**: name exceeds 64 characters | Tests invalid-name tolerance — the length violation is the fixture |
 | `probe-long-description` | **Error**: description exceeds 1024 characters | Tests oversize-field handling — the overrun is the fixture |
+| `probe-multibyte-description` | **Error** on skill-validator 1.6.1 and earlier only: description exceeds 1024 characters | Those versions counted UTF-8 bytes ([issue #94](https://github.com/agent-ecosystem/skill-validator/issues/94)); the description is 848 characters and passes once the validator counts characters |
+| `probe-astral-description` | **Error** on skill-validator 1.6.1 and earlier only: description exceeds 1024 characters | Same byte-counting bug; the description is 869 characters |
 | `probe-long-compatibility` | **Error**: compatibility exceeds 500 characters | Tests oversize-field handling — the overrun is the fixture |
 | `probe-allowed-tools` | Experimental `allowed-tools` field | Tests whether the field pre-approves tools — pair with its control twin |
 
@@ -225,5 +230,11 @@ it reveals what the platform loaded automatically.
 | BITTERN-HALITE-2264 | SKILL.md body | probe-long-description |
 | SANDERLING-GNEISS-1010 | SKILL.md description ONLY (head marker; the body never spells it out) | probe-long-description |
 | WHIMBREL-DOLOMITE-2020 | SKILL.md description ONLY (tail marker; the body never spells it out) | probe-long-description |
+| PUFFIN-BASALT-4471 | SKILL.md body | probe-multibyte-description |
+| GANNET-PYRITE-1130 | SKILL.md description ONLY (head marker; the body never spells it out) | probe-multibyte-description |
+| SHRIKE-TALC-2210 | SKILL.md description ONLY (tail marker; the body never spells it out) | probe-multibyte-description |
+| ORIOLE-GRANITE-5583 | SKILL.md body | probe-astral-description |
+| MAGPIE-OBSIDIAN-1240 | SKILL.md description ONLY (head marker; the body never spells it out) | probe-astral-description |
+| LINNET-MALACHITE-2420 | SKILL.md description ONLY (tail marker; the body never spells it out) | probe-astral-description |
 | KESTREL-BAUXITE-6690 | SKILL.md body | probe-long-compatibility |
 | TURNSTONE-ARAGONITE-3030 | SKILL.md compatibility ONLY (tail marker; the body never spells it out) | probe-long-compatibility |

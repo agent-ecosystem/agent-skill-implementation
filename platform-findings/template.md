@@ -493,6 +493,15 @@ work on that platform.
 - **Platform-level or model-level?**: <!-- Platform-level (validation and truncation happen at discovery). -->
 - **Fallback behavior**: <!-- If skipped or truncated: any error or warning anywhere, or silent? -->
 
+#### `description-length-unit`
+
+- **Benchmark skill**: `probe-long-description` (ASCII, 1116 characters) plus `probe-multibyte-description` (848 code points, 1822 UTF-8 bytes; head marker GANNET-PYRITE-1130, tail marker SHRIKE-TALC-2210, body canary PUFFIN-BASALT-4471) and `probe-astral-description` (869 code points, 1319 UTF-16 units, 2219 bytes; head marker MAGPIE-OBSIDIAN-1240, tail marker LINNET-MALACHITE-2420, body canary ORIOLE-GRANITE-5583).
+- **Status**: Not tested
+- **Observation**: <!-- Per fixture: listed or skipped, and head marker, tail marker, both, or neither in the catalog. Which unit fits: no enforcement (all three intact), code points (ASCII enforced, both others intact), UTF-16 units (multibyte intact, astral enforced), or bytes (all three enforced)? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (counting happens at discovery). -->
+- **Fallback behavior**: <!-- If enforced in bytes or UTF-16 units: any error or warning, or silent? Does shortening the description restore the skill? -->
+
 #### `oversize-compatibility-handling`
 
 - **Benchmark skill**: `probe-long-compatibility` (compatibility value is 570 characters; the spec caps it at 500, tail marker TURNSTONE-ARAGONITE-3030). Body canary: KESTREL-BAUXITE-6690.

@@ -1,6 +1,6 @@
 # Platform Behavior Checks
 
-**Check list version: 0.2** ([changelog](#changelog))
+**Check list version: 0.3** ([changelog](#changelog))
 
 How do agent platforms actually load skill content? The [Agent Skills specification](https://agentskills.io/specification) defines a file format and recommends a three-tier "progressive disclosure" model, but gives platforms wide latitude in implementation. The [client implementation guide](https://agentskills.io/client-implementation/adding-skills-support) provides more detailed guidance, but claims it was derived from analysis of 7 of 25+ adopting platforms and published months after most platforms had already shipped their implementations.
 
@@ -331,6 +331,12 @@ These checks feed platforms skills that break the spec's format rules (invalid Y
 - **What it checks**: Whether a skill whose description exceeds the spec's 1024-character cap (this fixture's runs to 1116) is discovered, and whether the value survives intact or truncated. The description carries a head marker near its start and a tail marker as its final characters, and the body never repeats either, so what surfaces reveals exactly how much of the value survived.
 - **Why it matters**: Every installed skill's description occupies context at startup, which gives platforms a real incentive to cap or truncate. Rejection makes the skill vanish on strict platforms; silent truncation quietly deletes the end of the description, which is often where the "use when" activation cues live. Either way, an author with a long description gets different discovery behavior per platform without any error.
 
+### `description-length-unit`
+
+- **Category**: Validation Strictness
+- **What it checks**: When a platform enforces the description limit, which unit it counts: Unicode code points, UTF-16 code units, or UTF-8 bytes. Two fixtures stay under 1024 code points but pass the limit in other units. `probe-multibyte-description` is mostly Japanese prose (848 code points, 848 UTF-16 units, 1822 bytes), so only a byte counter sees it as oversize. `probe-astral-description` is mostly emoji (869 code points, 1319 UTF-16 units, 2219 bytes), so a UTF-16 counter and a byte counter both see it as oversize. Each carries ASCII head and tail markers, like `probe-long-description`. Read together with that ASCII fixture (over the limit in every unit), the three outcomes separate four postures: no enforcement, code points, UTF-16 units, or bytes.
+- **Why it matters**: The spec says the description "must be 1-1024 characters" and never defines a character. Implementations that enforce the limit disagree on the unit. Reading the public loaders as of 2026-09-19: the spec's `skills-ref` reference validator counts code points (Python `len`), Codex CLI truncates its catalog entry at 1024 code points, Cline rejects by JavaScript `.length` (UTF-16 code units), and Crush rejects by Go `len` (UTF-8 bytes). skill-validator itself counted bytes until [issue #94](https://github.com/agent-ecosystem/skill-validator/issues/94), where a 984-character Japanese description (2952 bytes) was flagged as over the limit. Such a description is compliant to the reference validator and loads on a code-point platform, yet vanishes or loses its tail on a byte-counting one, with no error. Authors writing descriptions in CJK scripts, or with emoji, get different discovery behavior per platform without changing a thing.
+
 ### `oversize-compatibility-handling`
 
 - **Category**: Validation Strictness
@@ -340,7 +346,7 @@ These checks feed platforms skills that break the spec's format rules (invalid Y
 ---
 ## Benchmark Skills
 
-The [`benchmark-skills/`](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills) directory contains 33 benchmark fixtures (spec-compliant skills plus deliberate structural and validation edge cases) designed to exercise these checks. Each skill contains unique **canary phrases** (e.g., CARDINAL-ZEBRA-7742) embedded in specific files. By asking the model whether it knows a canary phrase, testers can determine exactly what the platform loaded and when, without relying on the model's self-reporting about its own context.
+The [`benchmark-skills/`](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills) directory contains 35 benchmark fixtures (spec-compliant skills plus deliberate structural and validation edge cases) designed to exercise these checks. Each skill contains unique **canary phrases** (e.g., CARDINAL-ZEBRA-7742) embedded in specific files. By asking the model whether it knows a canary phrase, testers can determine exactly what the platform loaded and when, without relying on the model's self-reporting about its own context.
 
 See [`benchmark-skills/README.md`](https://github.com/agent-ecosystem/agent-skill-implementation/blob/main/benchmark-skills/README.md) for:
 
@@ -357,6 +363,10 @@ Even partial data is valuable. A single platform tested thoroughly is more usefu
 ## Changelog
 
 Findings submissions record the check list version they were tested against (see the template's "Check list version" field), so readers can tell which checks existed when a platform was tested.
+
+### 0.3 (2026-09-19)
+
+- Added `description-length-unit` (Category 10: Validation Strictness) with two fixtures, `probe-multibyte-description` and `probe-astral-description`, prompted by a skill-validator bug report ([issue #94](https://github.com/agent-ecosystem/skill-validator/issues/94)) where a 984-character CJK description was rejected because the limit was counted in UTF-8 bytes. Reading public harness loaders showed enforcing implementations split three ways on the unit (code points, UTF-16 code units, bytes), which the existing ASCII oversize fixture cannot tell apart.
 
 ### 0.2 (2026-08-01)
 

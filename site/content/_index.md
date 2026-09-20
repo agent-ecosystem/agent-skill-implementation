@@ -45,13 +45,13 @@ Can the agent run a bundled scripts/ file?
   Claude Code      <span class="t-bad">✗ blocked with an error</span>
   Codex CLI        <span class="t-ok">✓ script ran; output returned</span>
 <span> </span>
-<span class="t-dim">40 checks · 3 platforms · every claim transcript-cited</span></div>
+<span class="t-dim">41 checks · 3 platforms · every claim transcript-cited</span></div>
 </div>
 
 <div class="not-prose home-cards">
   <div class="home-card">
     <h3>The Checks</h3>
-    <p>40 checks across 10 categories, from loading timing to validation strictness. Each asks one testable question about platform behavior and explains why the answer matters to skill authors.</p>
+    <p>41 checks across 10 categories, from loading timing to validation strictness. Each asks one testable question about platform behavior and explains why the answer matters to skill authors.</p>
     <a class="home-card-link" href="/checks/">Browse the catalog &rarr;</a>
   </div>
   <div class="home-card">
@@ -98,7 +98,7 @@ a transcript-cited finding.
 ## How the testing works
 
 The [benchmark skills](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills)
-are 33 fixtures (spec-compliant skills plus deliberate rule-breakers) seeded
+are 35 fixtures (spec-compliant skills plus deliberate rule-breakers) seeded
 with unique **canary phrases**. By asking the model whether it knows a canary
 phrase, we can tell exactly what a platform loaded and when, without trusting
 the model's self-reporting about its own context. The
@@ -113,7 +113,7 @@ finding to an archived transcript.
 We need empirical data from real platforms, and even partial data from a single
 platform beats speculation about all of them. Install the
 [benchmark skills](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills),
-run any of the 40 checks, and submit findings with the
+run any of the 41 checks, and submit findings with the
 [platform template](https://github.com/agent-ecosystem/agent-skill-implementation/blob/main/platform-findings/template.md).
 The [GitHub repository](https://github.com/agent-ecosystem/agent-skill-implementation)
 has full instructions.

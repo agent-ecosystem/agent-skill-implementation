@@ -1,6 +1,6 @@
 // Package checks defines the automated platform-behavior checks and their
 // verdict logic. Check IDs match ../checks.md (check list
-// version 0.2) and canary phrases match ../benchmark-skills/README.md's
+// version 0.3) and canary phrases match ../benchmark-skills/README.md's
 // canary index. The invocation and observation machinery lives in
 // skillxp; this package owns only what makes these observations a
 // benchmark: which skills, which prompts, and how facts map to verdicts.
@@ -23,7 +23,7 @@ import (
 // ChecklistVersion is the checks.md check list version these
 // specs implement; reports stamp it so readers know which checks existed
 // when a platform was tested.
-const ChecklistVersion = "0.2"
+const ChecklistVersion = "0.3"
 
 // Statuses, matching the results template vocabulary.
 const (
@@ -186,6 +186,7 @@ func Registry() []Spec {
 		nameDirectoryMismatch(),
 		metadataValueEdgeCases(),
 		oversizeDescriptionHandling(),
+		descriptionLengthUnit(),
 		oversizeCompatibilityHandling(),
 	}
 }

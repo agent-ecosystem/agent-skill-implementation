@@ -361,3 +361,125 @@ func oversizeCompatibilityHandling() Spec {
 			}
 		})
 }
+
+// Fixtures and markers for the description-length-unit check. Read
+// alongside probe-long-description (ASCII, over 1024 in every unit), the
+// two fixtures below separate what an enforcing platform counts: the
+// multibyte one is under 1024 code points and UTF-16 units but over in
+// UTF-8 bytes; the astral one is under 1024 code points but over in both
+// UTF-16 units and bytes.
+const (
+	multibyteDescBodyCanary = "PUFFIN-BASALT-4471"
+	multibyteDescHeadMarker = "GANNET-PYRITE-1130"
+	multibyteDescTailMarker = "SHRIKE-TALC-2210"
+	astralDescBodyCanary    = "ORIOLE-GRANITE-5583"
+	astralDescHeadMarker    = "MAGPIE-OBSIDIAN-1240"
+	astralDescTailMarker    = "LINNET-MALACHITE-2420"
+)
+
+// descriptionFate is what became of one fixture's description value on
+// its way to the model.
+type descriptionFate string
+
+const (
+	descIntact     descriptionFate = "intact"     // tail marker reached the model
+	descTruncated  descriptionFate = "truncated"  // head marker reached the model, tail did not
+	descRejected   descriptionFate = "rejected"   // skill absent from the catalog
+	descUnobserved descriptionFate = "unobserved" // listed, but marker delivery is not recorded
+)
+
+// descriptionFateOf grades one fixture session. Marker delivery in
+// harness-injected content is the direct signal; where the harness does
+// not record what it injected, the model's own quoting of the markers in
+// its listing answer stands in.
+func descriptionFateOf(so *observe.SessionObservation, sessionNum int, skillName, bodyCanary, head, tail string) (descriptionFate, []Evidence) {
+	obs := so.Final()
+	listed, _, ev := catalogPresence(so, skillName)
+	for i := range ev {
+		ev[i].Session = sessionNum
+	}
+	if inj, pull := loadsOf(so, bodyCanary); len(inj)+len(pull) > 0 {
+		ev = append(ev, evSession(so, sessionNum, loadsInOrder(inj, pull)[0].EventIndex, "body canary loaded on activation"))
+	}
+	headInj := trace.At(trace.Phrase(obs.Session, head, obs.Profile.EchoSubtypes), trace.LocHarnessInjected)
+	tailInj := trace.At(trace.Phrase(obs.Session, tail, obs.Profile.EchoSubtypes), trace.LocHarnessInjected)
+	switch {
+	case len(tailInj) > 0:
+		return descIntact, append(ev, evSession(so, sessionNum, tailInj[0].EventIndex, "description tail marker in injected content"))
+	case len(headInj) > 0:
+		return descTruncated, append(ev, evSession(so, sessionNum, headInj[0].EventIndex, "description head marker in injected content; tail absent"))
+	case !listed:
+		return descRejected, ev
+	}
+	if m := assistantMentions(so, tail); len(m) > 0 {
+		return descIntact, append(ev, evSession(so, sessionNum, m[0].EventIndex, "model quoted the tail marker from its catalog entry (inferred)"))
+	}
+	if m := assistantMentions(so, head); len(m) > 0 {
+		return descTruncated, append(ev, evSession(so, sessionNum, m[0].EventIndex, "model quoted the head marker but never the tail (inferred)"))
+	}
+	return descUnobserved, ev
+}
+
+func descriptionLengthUnit() Spec {
+	fixtures := []struct{ label, dir, body, head, tail string }{
+		{"ascii", "probe-long-description", longDescBodyCanary, longDescHeadMarker, longDescTailMarker},
+		{"multibyte", "probe-multibyte-description", multibyteDescBodyCanary, multibyteDescHeadMarker, multibyteDescTailMarker},
+		{"astral", "probe-astral-description", astralDescBodyCanary, astralDescHeadMarker, astralDescTailMarker},
+	}
+	sessions := make([]Session, 0, len(fixtures))
+	for _, fx := range fixtures {
+		dir := fx.dir
+		sessions = append(sessions, Session{
+			Skills: []string{dir},
+			Turns: []Turn{
+				{Prompt: listingPrompt},
+				{Prompt: func(p profile.Profile) string { return p.ActivationPrompt(dir) }, Activation: true},
+			},
+		})
+	}
+	enforced := func(d descriptionFate) bool { return d == descTruncated || d == descRejected }
+	return Spec{
+		ID:          "description-length-unit",
+		Description: "When a platform enforces the 1024-character description limit, does it count Unicode code points, UTF-16 code units, or UTF-8 bytes?",
+		Sessions:    sessions,
+		Evaluate: func(sos []*observe.SessionObservation) Finding {
+			f := Finding{CheckID: "description-length-unit", Status: StatusObserved, Confidence: ConfidenceDirect}
+			fates := make([]descriptionFate, len(fixtures))
+			summary := make([]string, 0, len(fixtures))
+			for i, fx := range fixtures {
+				fate, ev := descriptionFateOf(sos[i], i+1, fx.dir, fx.body, fx.head, fx.tail)
+				fates[i] = fate
+				f.Evidence = append(f.Evidence, ev...)
+				summary = append(summary, fx.label+":"+string(fate))
+				if !sos[i].Final().Profile.RecordsInjectedContext {
+					f.Confidence = ConfidenceInferred
+				}
+				f.Notes = append(f.Notes, fx.label+" final answer: "+finalAnswer(sos[i]))
+			}
+			f.Notes = append([]string{"description fates: " + strings.Join(summary, ", ")}, f.Notes...)
+			ascii, multibyte, astral := fates[0], fates[1], fates[2]
+			switch {
+			case ascii == descUnobserved || multibyte == descUnobserved || astral == descUnobserved:
+				f.Status = StatusInconclusive
+				f.Verdict = "length-unit-unobservable"
+				f.Notes = append(f.Notes, "at least one fixture's description delivery could not be observed, so the counting unit cannot be inferred")
+			case ascii == descIntact && multibyte == descIntact && astral == descIntact:
+				f.Verdict = "no-length-enforcement"
+				f.Notes = append(f.Notes, "all three descriptions reached the model intact, including the ASCII one that exceeds 1024 in every unit: the platform does not enforce the limit, so its counting unit is moot")
+			case enforced(ascii) && multibyte == descIntact && astral == descIntact:
+				f.Verdict = "counts-code-points"
+				f.Notes = append(f.Notes, "the ASCII overrun was enforced while both fixtures under 1024 code points survived intact: the platform counts code points, the reference validator's unit")
+			case enforced(ascii) && multibyte == descIntact && enforced(astral):
+				f.Verdict = "counts-utf16-units"
+				f.Notes = append(f.Notes, "the ASCII and astral overruns were enforced while the multibyte fixture survived: the platform counts UTF-16 code units (JavaScript's .length)")
+			case enforced(ascii) && enforced(multibyte) && enforced(astral):
+				f.Verdict = "counts-bytes"
+				f.Notes = append(f.Notes, "all three fixtures were enforced, including the two under 1024 code points: the platform counts UTF-8 bytes")
+			default:
+				f.Verdict = "inconsistent-length-unit"
+				f.Notes = append(f.Notes, "the three outcomes fit no single counting unit; see the per-fixture fates")
+			}
+			return f
+		},
+	}
+}
