@@ -1,6 +1,6 @@
-github.com/agent-ecosystem/agentminutes v0.5.0 h1:v87ZamvxAmNb17WnnA426tQxJvnMEdDTBgN3AeqLV/k=
-github.com/agent-ecosystem/agentminutes v0.5.0/go.mod h1:J+e9H7DI94cBWTXQ6aG3BeJKNRhzjT1SEgL/klYWk8Q=
-github.com/agent-ecosystem/agentsummons v0.3.3 h1:AD3bCIllD24nJ1oBUP8UwyVUSOZD08cot8N0wa82yaw=
-github.com/agent-ecosystem/agentsummons v0.3.3/go.mod h1:fLKz+G0kl1lojOQUHZt8Yno/NF+f0FsRiMm4yJ11sJQ=
-github.com/agent-ecosystem/skillxp v0.1.3 h1:qWgl+3PG0B7koVdztOn0NGbP6INVTIoVwoYh88sA6ck=
-github.com/agent-ecosystem/skillxp v0.1.3/go.mod h1:+H05AjVnPQIUhh2+cWlbIFoO3lZHUIlyAw+TQFVDh5g=
+github.com/agent-ecosystem/agentminutes v0.8.0 h1:bkOt7yaPBQ2yT37rTeqKUIHZWSznByi9hiLX8yr9W7g=
+github.com/agent-ecosystem/agentminutes v0.8.0/go.mod h1:jtD7SY+JQWxiTkFDu7In0yvVMZDuMGJX9g7xdbizC3k=
+github.com/agent-ecosystem/agentsummons v0.4.0 h1:EEPBABW3wlXFrVG5sjxdt9O952y7ZZwPWx5Iyl5L/C8=
+github.com/agent-ecosystem/agentsummons v0.4.0/go.mod h1:fLKz+G0kl1lojOQUHZt8Yno/NF+f0FsRiMm4yJ11sJQ=
+github.com/agent-ecosystem/skillxp v0.4.0 h1:xBw3jJSAkbsHOI6IUElsuN0fTYrBrPb/4DZV/vUhAU8=
+github.com/agent-ecosystem/skillxp v0.4.0/go.mod h1:gDYK+vBT+k5ZScQ2c9sJDCDzQAMEYDrx3J17Qw3vifo=

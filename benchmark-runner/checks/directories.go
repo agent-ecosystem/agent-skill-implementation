@@ -119,9 +119,14 @@ func directoryNamingDivergence() Spec {
 
 func unrecognizedDirectoryHandling() Spec {
 	activate := func(p profile.Profile) string { return p.ActivationPrompt("probe-nonstandard-dirs") }
-	dirs := []struct{ dir, canary string }{
-		{"evals/", "ROBIN-JADE-3847"},
-		{"templates/", "WREN-PEARL-6293"},
+	// canary is a sentence inside the directory's file (content reached
+	// the model); marker is the file's name, mentioned nowhere in the
+	// SKILL.md body, so its arrival in injected text proves enumeration
+	// without loading (observed on copilot, whose activation wrapper lists
+	// every bundled file).
+	dirs := []struct{ dir, canary, marker string }{
+		{"evals/", "ROBIN-JADE-3847", "evals.json"},
+		{"templates/", "WREN-PEARL-6293", "output-template.md"},
 	}
 	return Spec{
 		ID:          "unrecognized-directory-handling",
@@ -139,13 +144,17 @@ func unrecognizedDirectoryHandling() Spec {
 				return f
 			}
 			f.Vehicle = vehicleOf(bInj, bPull)
-			var injected, readable []string
+			var injected, enumerated, readable []string
 			for _, d := range dirs {
 				inj, pull := loadsOf(sos[0], d.canary)
+				nInj, _ := loadsOf(sos[0], d.marker)
 				switch {
 				case len(inj) > 0:
 					injected = append(injected, d.dir)
 					f.Evidence = append(f.Evidence, evAt(sos[0], inj[0].EventIndex, d.dir+" content injected at activation"))
+				case len(nInj) > 0:
+					enumerated = append(enumerated, d.dir)
+					f.Evidence = append(f.Evidence, evAt(sos[0], nInj[0].EventIndex, d.dir+" file name injected without its content"))
 				case len(pull) > 0:
 					readable = append(readable, d.dir)
 					f.Evidence = append(f.Evidence, evAt(sos[0], pull[0].EventIndex, d.dir+" content arrived via the model's own read"))
@@ -156,6 +165,10 @@ func unrecognizedDirectoryHandling() Spec {
 			case len(injected) > 0:
 				f.Verdict = fmt.Sprintf("injected-at-activation:%v", injected)
 				f.Confidence = ConfidenceDirect
+			case len(enumerated) > 0:
+				f.Verdict = fmt.Sprintf("enumerated-not-loaded:%v", enumerated)
+				f.Confidence = ConfidenceDirect
+				f.Notes = append(f.Notes, "the platform lists the nonstandard directories' files at activation but loads nothing from them; the model can read them on demand like any other listed file")
 			case len(readable) > 0:
 				f.Verdict = fmt.Sprintf("readable-on-demand:%v", readable)
 				f.Confidence = ConfidenceDirect

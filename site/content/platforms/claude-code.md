@@ -8,7 +8,7 @@ showTableOfContents: true
 | | |
 |---|---|
 | **Platform** | Claude Code (headless) |
-| **Platform version** | 2.1.212 |
+| **Platform version** | 2.1.212, 2.1.267 |
 | **Check list version** | 0.3 |
 | **Test date** | 2026-09-19 |
 | **Model(s) observed** | claude-fable-5, claude-fable-5-1, claude-sonnet-5 |

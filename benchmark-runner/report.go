@@ -65,6 +65,7 @@ var platformNames = map[string]string{
 	"antigravity": "Antigravity CLI (headless)",
 	"claude-code": "Claude Code (headless)",
 	"codex":       "Codex CLI (headless)",
+	"copilot":     "GitHub Copilot CLI (headless)",
 }
 
 // fallbackFor derives the template's fallback-behavior line from what the
@@ -147,6 +148,7 @@ var verdictPhrases = map[string]string{
 	"resources-readable-on-demand":       "Readable when the model looks",
 	"resources-content-injected":         "Contents injected at activation",
 	"resources-enumerated-not-loaded":    "Names listed, contents not loaded",
+	"all-three-dirs-enumerated":          "All three listed, contents not loaded",
 	"untouched":                          "Not surfaced; model never looked",
 	"cwd-base-model-requalified":         "Bare path fails; model recovers",
 	"model-preemptively-qualified":       "Model used full paths (base untested)",
@@ -245,6 +247,10 @@ var missingTierPhrases = map[string]string{
 // composite ("a; b") and parameterized ("prefix:detail") forms. Unmapped
 // slugs fall back to code format so new verdicts degrade readably.
 func humanVerdict(v string) string {
+	// Composite verdicts whose halves agree read better as one phrase.
+	if v == "with-field:blocked-visibly; control:blocked-visibly" {
+		return "Blocked with and without the field"
+	}
 	parts := strings.Split(v, "; ")
 	for i, part := range parts {
 		parts[i] = humanVerdictPart(part)
@@ -286,6 +292,8 @@ func humanVerdictPart(part string) string {
 		return "Readable when the model looks"
 	case strings.HasPrefix(part, "injected-at-activation:"):
 		return "Injected at activation"
+	case strings.HasPrefix(part, "enumerated-not-loaded:"):
+		return "Names listed, contents not loaded"
 	case strings.HasPrefix(part, "partial-enumeration:"):
 		return "Partially enumerated"
 	case strings.HasPrefix(part, "fields-acted-on:"):
@@ -377,6 +385,7 @@ var shortNames = map[string]string{
 	"antigravity": "Antigravity CLI",
 	"claude-code": "Claude Code",
 	"codex":       "Codex CLI",
+	"copilot":     "Copilot CLI",
 }
 
 // writeSite emits the site's platforms section: a comparison index plus
@@ -511,11 +520,11 @@ func renderReport(harness string, fs map[string]checks.Finding, site bool) strin
 	if name == "" {
 		name = harness
 	}
-	version, testDate := "", ""
-	models := map[string]bool{}
+	testDate := ""
+	models, versions := map[string]bool{}, map[string]bool{}
 	for _, f := range fs {
 		if f.HarnessVersion != "" {
-			version = f.HarnessVersion
+			versions[f.HarnessVersion] = true
 		}
 		if f.Model != "" {
 			models[f.Model] = true
@@ -524,11 +533,18 @@ func renderReport(harness string, fs map[string]checks.Finding, site bool) strin
 			testDate = d
 		}
 	}
-	var modelList []string
+	var modelList, versionList []string
 	for m := range models {
 		modelList = append(modelList, m)
 	}
 	sort.Strings(modelList)
+	// Findings merged across result directories can span harness releases;
+	// list every release observed (sorted) so the header is deterministic.
+	for v := range versions {
+		versionList = append(versionList, v)
+	}
+	sort.Strings(versionList)
+	version := strings.Join(versionList, ", ")
 
 	if site {
 		w("---")

@@ -8,7 +8,7 @@ showTableOfContents: true
 | | |
 |---|---|
 | **Platform** | Antigravity CLI (headless) |
-| **Platform version** | 1.1.9 |
+| **Platform version** | 1.1.9, 1.2.7 |
 | **Check list version** | 0.3 |
 | **Test date** | 2026-09-19 |
 | **Model(s) observed** | Gemini 3.6 Flash (High), Gemini 3.8 Flash (High) |

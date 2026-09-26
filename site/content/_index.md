@@ -44,8 +44,9 @@ Can the agent run a bundled scripts/ file?
   Antigravity CLI  <span class="t-ok">✓ script ran; output returned</span>
   Claude Code      <span class="t-bad">✗ blocked with an error</span>
   Codex CLI        <span class="t-ok">✓ script ran; output returned</span>
+  Copilot CLI      <span class="t-bad">✗ blocked with an error</span>
 <span> </span>
-<span class="t-dim">41 checks · 3 platforms · every claim transcript-cited</span></div>
+<span class="t-dim">41 checks · 4 platforms · every claim transcript-cited</span></div>
 </div>
 
 <div class="not-prose home-cards">
@@ -76,17 +77,17 @@ with headless modes, come back with different answers:
 <div class="not-prose home-cards">
   <div class="home-card">
     <h3>Frontmatter can vanish</h3>
-    <p>Claude Code strips YAML frontmatter before injecting a skill. On Codex CLI and Antigravity, the model sees it only if it reads the raw file. Load-bearing information that lives only in frontmatter may never reach the model.</p>
+    <p>Claude Code and Copilot CLI strip YAML frontmatter before injecting a skill. On Codex CLI and Antigravity, the model sees it only if it reads the raw file. Load-bearing information that lives only in frontmatter may never reach the model.</p>
     <a class="home-card-link" href="/platforms/claude-code/#frontmatter-handling">See the finding &rarr;</a>
   </div>
   <div class="home-card">
     <h3>Grouped skills disappear</h3>
-    <p>Organize skills in subfolders and Codex CLI still finds them; Claude Code and Antigravity list direct children only. The grouped skills vanish from their catalogs with no error anywhere.</p>
+    <p>Organize skills in subfolders and Codex CLI and Copilot CLI still find them; Claude Code and Antigravity list direct children only. The grouped skills vanish from their catalogs with no error anywhere.</p>
     <a class="home-card-link" href="/platforms/#discovery-scope">See the comparison &rarr;</a>
   </div>
   <div class="home-card">
     <h3>Names resolve differently</h3>
-    <p>Install the same skill name at project and user scope and Codex CLI and Antigravity load the project variant. Claude Code loads the user variant, against the implementation guide's "universal convention."</p>
+    <p>Install the same skill name at project and user scope and Codex CLI, Antigravity, and Copilot CLI load the project variant. Claude Code loads the user variant, against the implementation guide's "universal convention."</p>
     <a class="home-card-link" href="/platforms/#discovery-scope">See the comparison &rarr;</a>
   </div>
 </div>

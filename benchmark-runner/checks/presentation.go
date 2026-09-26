@@ -196,6 +196,31 @@ func tagsNear(text, phrase string) []string {
 	return out
 }
 
+// enclosingTags returns the names of tags that open within the first few
+// hundred characters of text and close within the last few hundred: an
+// element wrapping the whole delivery. A wrapper whose opening tag sits far
+// from the body (copilot's <skill-context> precedes a base-directory line
+// and a list of every bundled file's full path) escapes tagsNear's window
+// around the canary; this catches it without loosening the window.
+func enclosingTags(text string) []string {
+	const edge = 400
+	head := text[:min(edge, len(text))]
+	tail := text[max(len(text)-edge, 0):]
+	seen := map[string]bool{}
+	var out []string
+	for _, m := range tagPattern.FindAllStringSubmatch(head, -1) {
+		name := m[1]
+		if strings.HasPrefix(name, "/") || seen[name] {
+			continue
+		}
+		if strings.Contains(tail, "</"+name+">") {
+			seen[name] = true
+			out = append(out, name)
+		}
+	}
+	return out
+}
+
 func contentWrappingFormat() Spec {
 	activate := func(p profile.Profile) string { return p.ActivationPrompt("probe-loading") }
 	return Spec{
@@ -215,10 +240,15 @@ func contentWrappingFormat() Spec {
 				f.Confidence = ConfidenceDirect
 				text := eventVisibleText(sos[0], inj[0].EventIndex)
 				tags := tagsNear(text, probeLoadingBodyCanary)
-				if len(tags) > 0 {
+				enclosing := enclosingTags(text)
+				switch {
+				case len(tags) > 0:
 					f.Verdict = "wrapped-structured"
 					f.Notes = append(f.Notes, "tag-like tokens near the injected body: "+strings.Join(tags, ", "))
-				} else {
+				case len(enclosing) > 0:
+					f.Verdict = "wrapped-structured"
+					f.Notes = append(f.Notes, "the whole delivery is enclosed in: "+strings.Join(enclosing, ", "))
+				default:
 					f.Verdict = "raw-injection"
 				}
 				f.Evidence = append(f.Evidence, evAt(sos[0], inj[0].EventIndex, "injection event carrying the body canary"))

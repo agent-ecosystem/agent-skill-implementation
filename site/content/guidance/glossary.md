@@ -42,6 +42,6 @@ weight: 2
   model's context at activation (e.g., via a dedicated skill tool). The platform
   controls what the model sees (it may strip frontmatter or wrap content), and
   loading behaviors like deduplication are enforceable platform-side. Automated
-  findings record this as the `harness-push` vehicle. Claude Code behaves this
-  way in our findings. A single platform can mix vehicles: a push harness still
-  relies on model pulls for bundled resources.
+  findings record this as the `harness-push` vehicle. Claude Code and GitHub
+  Copilot CLI behave this way in our findings. A single platform can mix vehicles:
+  a push harness still relies on model pulls for bundled resources.

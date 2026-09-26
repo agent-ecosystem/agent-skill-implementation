@@ -13,9 +13,9 @@ version 0.2); canary phrases match the
 [canary index](../benchmark-skills/README.md#canary-phrase-index).
 Automated findings complement, not replace, the manual results in
 [platform-findings/](../platform-findings/):
-the runner covers the three harnesses with headless modes (Antigravity
-CLI, Claude Code, Codex CLI), and **headless behavior may differ from
-interactive use**. Manual testing remains the only path for the other
+the runner covers the four harnesses with headless modes (Antigravity
+CLI, Claude Code, Codex CLI, GitHub Copilot CLI), and **headless behavior
+may differ from interactive use**. Manual testing remains the only path for the other
 20+ platforms.
 
 ## Usage
@@ -117,7 +117,7 @@ prompt).
 
 This directory is a Go module so the repository stays a content-first
 project; the module depends on the published
-[skillxp](https://github.com/agent-ecosystem/skillxp) release (v0.1.1 as
-of this writing). Unlike the repository's CC-BY-4.0 content, code
+[skillxp](https://github.com/agent-ecosystem/skillxp) release (v0.3.0 as
+of this writing, the first with Copilot CLI support). Unlike the repository's CC-BY-4.0 content, code
 under this directory is intended to be MIT-licensed to match the rest of
 the tooling; see the repository maintainers if that matters to your use.

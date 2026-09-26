@@ -8,7 +8,7 @@ showTableOfContents: true
 | | |
 |---|---|
 | **Platform** | Codex CLI (headless) |
-| **Platform version** | 0.146.0 |
+| **Platform version** | 0.146.0, 0.154.0 |
 | **Check list version** | 0.3 |
 | **Test date** | 2026-09-19 |
 | **Model(s) observed** | gpt-5.6-sol, gpt-6-astra |
