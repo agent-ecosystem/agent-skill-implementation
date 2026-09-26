@@ -1,6 +1,6 @@
 # Platform Behavior Checks
 
-**Check list version: 0.3** ([changelog](#changelog))
+**Check list version: 0.4** ([changelog](#changelog))
 
 How do agent platforms actually load skill content? The [Agent Skills specification](https://agentskills.io/specification) defines a file format and recommends a three-tier "progressive disclosure" model, but gives platforms wide latitude in implementation. The [client implementation guide](https://agentskills.io/client-implementation/adding-skills-support) provides more detailed guidance, but claims it was derived from analysis of 7 of 25+ adopting platforms and published months after most platforms had already shipped their implementations.
 
@@ -123,6 +123,14 @@ These checks evaluate how platforms make supporting files (scripts, references, 
 
 ---
 
+### `bundled-file-enumeration-scale`
+
+- **Category**: Resource Access Patterns
+- **What it checks**: On a platform that lists a skill's bundled files at activation, whether the list is complete for a skill with many files (forty numbered references), and whether it includes a hidden dotfile, a binary asset, and a vendored code tree, or stops at a cap or leaves some kinds out. On platforms that list nothing, the check records that instead.
+- **Why it matters**: One tested platform injects the full path of every file under the skill directory into context each time the skill activates. For that platform, every scratch file, fixture, or vendored dependency an author leaves in the skill directory is a per-activation token cost, and a capped or filtered list means some files are invisible to the model unless it explores. Platforms that list nothing have neither the cost nor the awareness. Authors deciding what to ship need to know which files a listing will carry.
+
+---
+
 ## Category 4: Content Presentation
 
 These checks evaluate what the model actually sees, at discovery and at activation, and how it's formatted.
@@ -144,6 +152,14 @@ These checks evaluate what the model actually sees, at discovery and at activati
 - **Category**: Content Presentation
 - **What it checks**: Whether the platform wraps skill content in structured tags (e.g., `<skill_content name="...">`) or injects it as raw markdown into the conversation context.
 - **Why it matters**: Wrapping affects the model's ability to distinguish skill instructions from conversation history and other context. It also affects whether the platform can identify and protect skill content during context compaction. A skill that relies on the model treating its instructions as authoritative may find that instructions are confused with or overridden by conversation content on platforms that don't wrap. This is particularly relevant when multiple skills are active simultaneously.
+
+---
+
+### `activation-location-disclosure`
+
+- **Category**: Content Presentation
+- **What it checks**: Whether the content a platform injects at activation tells the model where the skill lives on disk (its directory path), separately from whether the discovery listing does (`discovery-listing-fields`).
+- **Why it matters**: Guidance like "read `references/setup-guide.md` relative to this skill's directory" is only actionable if the model knows the directory. One tested platform states the skill's base directory in its activation wrapper; another injects the raw body with no path at all, leaving the model to guess conventional locations or search for the file. Authors writing path guidance need to know whether the platform supplies the anchor or the skill must.
 
 ---
 
@@ -192,6 +208,14 @@ These checks evaluate how platforms gate skill loading and how control-related f
 - **Category**: Access Control
 - **What it checks**: Whether the experimental `allowed-tools` field pre-approves the listed tools, measured against an identical control skill that has no such field. If the instructed command runs in both sessions, the platform's general permission posture, not the field, allowed it; if it runs only for the field-bearing twin, the field did the pre-approving.
 - **Why it matters**: The spec marks `allowed-tools` as "Experimental. Support for this field may vary between agent implementations." Authors who rely on it for frictionless tool use need to know whether it does anything on their platform: where it is ignored, a skill's commands hit the normal permission flow; where it works, a skill can pre-approve tools the user never individually reviewed, which makes this an access-control behavior as much as a convenience.
+
+---
+
+### `allowed-tools-name-matching`
+
+- **Category**: Access Control
+- **What it checks**: Whether the effect of `allowed-tools` depends on spelling the tool the way the platform names it. Twins of the field-bearing probe declare the same intent with different spellings, the spec-style `Bash(printf:*)`, a bare lowercase `bash`, and a bare `shell`, and each instructs the same printf.
+- **Why it matters**: The spec leaves tool names to each platform, and platforms name their shell tool differently. One tested platform parses the field into its activation record and still blocks the command, which could mean the field is ignored or that its value never matched a tool the platform knows. If a platform-native spelling unblocks the command where the spec-style one does not, the field works but is platform-specific, and a portable skill cannot serve every platform with one value.
 
 ---
 
@@ -291,6 +315,22 @@ These checks evaluate where platforms look for skills: which directories are sca
 
 ---
 
+### `multi-root-collision-precedence`
+
+- **Category**: Discovery Scope
+- **What it checks**: When the same skill `name` is installed under two project-level roots the platform scans, such as its native skills directory and the cross-client `.agents/skills/` or `.claude/skills/` convention paths, with different content in each, which variant is listed and which activates. A non-colliding beacon skill beside each convention-root variant separates "root not scanned" from "variant dropped by name".
+- **Why it matters**: Platforms increasingly scan several roots (one tested platform reads `.github/skills`, `.agents/skills`, and `.claude/skills` in one project), and authors who install a skill for several tools in one repository will have the same name under two of them. Unlike the project-versus-user collision, no guide prescribes an order. Whether the platform picks the native copy, the convention copy, lists both and leaves it to the model, or ignores the foreign root determines which instructions run, and nothing tells the author which.
+
+---
+
+### `name-length-unit`
+
+- **Category**: Validation Strictness
+- **What it checks**: When a platform enforces the 64-character name limit, which unit it counts, and whether it accepts non-ASCII names at all. Four fixtures whose frontmatter name matches the directory name: an ASCII name of exactly 64 characters (the boundary control), a 16-code-point name of lowercase Greek letters (under the cap in every unit, so its absence means non-ASCII names are rejected outright), a 60-code-point Greek name (60 UTF-16 units, 114 UTF-8 bytes, so only a byte counter rejects it), and a 40-code-point name of lowercase mathematical bold letters from the astral plane (74 UTF-16 units, 142 bytes, so UTF-16 and byte counters both reject it). Read together with the 72-character ASCII fixture from `invalid-name-tolerance`, the outcomes separate no enforcement, rejection of non-ASCII names, code points, UTF-16 units, and bytes.
+- **Why it matters**: The spec says a name "must be 1-64 characters" and "may only contain unicode lowercase alphanumeric characters (`a-z`, `0-9`) and hyphens". Neither the unit nor the character set is settled by that wording: "unicode lowercase" admits Greek, Cyrillic, or accented letters, while the parenthetical admits only ASCII. The two validators in circulation agree on the unit but not the character set, as of 2026-09-26: the spec's own `skills-ref` accepts any Unicode alphanumeric (Python `isalnum`) and counts code points (`len`), and the agent-ecosystem skill-validator counts code points too since 1.6.2 (earlier releases counted UTF-8 bytes) but rejects non-ASCII names on the character rule, reading the parenthetical as the rule. `description-length-unit` showed that platforms enforcing a character limit disagree on the unit too, and every tested platform tolerates uppercase names, so a non-ASCII name may load on lenient platforms and then survive or vanish on enforcing ones depending on the unit. A name that is 40 characters to its author and to the reference validator can be over the cap to a platform, with no error.
+
+---
+
 ## Category 10: Validation Strictness
 
 These checks feed platforms skills that break the spec's format rules (invalid YAML, missing or oversize fields, rule-breaking names, out-of-spec metadata values) and observe the response: rejected, repaired, or loaded anyway. The spec binds skill authors here but says nothing about what platforms should do with a file that breaks the rules, so every platform chose its own posture. A skill that loads on a lenient platform vanishes with no error on a strict one.
@@ -346,7 +386,7 @@ These checks feed platforms skills that break the spec's format rules (invalid Y
 ---
 ## Benchmark Skills
 
-The [`benchmark-skills/`](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills) directory contains 35 benchmark fixtures (spec-compliant skills plus deliberate structural and validation edge cases) designed to exercise these checks. Each skill contains unique **canary phrases** (e.g., CARDINAL-ZEBRA-7742) embedded in specific files. By asking the model whether it knows a canary phrase, testers can determine exactly what the platform loaded and when, without relying on the model's self-reporting about its own context.
+The [`benchmark-skills/`](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills) directory contains 45 benchmark fixtures (spec-compliant skills plus deliberate structural and validation edge cases) designed to exercise these checks. Each skill contains unique **canary phrases** (e.g., CARDINAL-ZEBRA-7742) embedded in specific files. By asking the model whether it knows a canary phrase, testers can determine exactly what the platform loaded and when, without relying on the model's self-reporting about its own context.
 
 See [`benchmark-skills/README.md`](https://github.com/agent-ecosystem/agent-skill-implementation/blob/main/benchmark-skills/README.md) for:
 
@@ -363,6 +403,11 @@ Even partial data is valuable. A single platform tested thoroughly is more usefu
 ## Changelog
 
 Findings submissions record the check list version they were tested against (see the template's "Check list version" field), so readers can tell which checks existed when a platform was tested.
+
+### 0.4 (2026-09-25)
+
+- Added `bundled-file-enumeration-scale` (Category 3: Resource Access Patterns), `activation-location-disclosure` (Category 4: Content Presentation), `allowed-tools-name-matching` (Category 6: Access Control), and `multi-root-collision-precedence` (Category 9: Discovery Scope), prompted by adding GitHub Copilot CLI as the fourth automated harness. Its activation wrapper lists every bundled file and states the skill's base directory, it parses `allowed-tools` into its activation record without honoring it, and it scans three project roots. The existing checks could not distinguish any of that from the other platforms' behavior. New fixtures: `probe-bulk-files`, `probe-allowed-tools-lowercase`, `probe-allowed-tools-shell`, and `probe-multiroot` with the `overlay-multiroot-agents` and `overlay-multiroot-claude` wrappers.
+- Added `name-length-unit` (Category 10: Validation Strictness), the name-field counterpart of `description-length-unit`, prompted by noticing that the 64-character name cap had only ever been tested with ASCII, where every unit agrees, while the spec's wording ("unicode lowercase alphanumeric characters (`a-z`, `0-9`)") leaves both the unit and the character set open and the two validators in circulation read the character set differently. Four fixtures: an exact-64 ASCII control, a short Greek name, a 60-code-point Greek name, and a 40-code-point astral-plane name.
 
 ### 0.3 (2026-09-19)
 

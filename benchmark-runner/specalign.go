@@ -170,6 +170,20 @@ var specJudges = []struct {
 		}
 		return unclassifiedSpec(f)
 	}},
+	{"allowed-tools-name-matching", func(f checks.Finding) specJudgement {
+		const rule = "The spec marks allowed-tools experimental, leaves tool names to each platform, and says support may vary, so no outcome contradicts it."
+		switch {
+		case strings.HasPrefix(f.Verdict, "spelling-dependent:"):
+			return specJudgement{specConsistent, rule + " This platform honors the field only when the value matches its own tool name, so a portable skill cannot serve every platform with one value."}
+		case f.Verdict == "executed-regardless-of-spelling":
+			return specJudgement{specNotExercised, rule + " Every spelling's command ran under the platform's general permission posture, so the field's matching rule went unobserved."}
+		case f.Verdict == "blocked-regardless-of-spelling":
+			return specJudgement{specNotExercised, rule + " No spelling unblocked the command, so either the field is ignored or none of the three spellings names a tool this platform pre-approves; the matching rule is unresolved here."}
+		case f.Verdict == "activation-not-observed":
+			return specJudgement{specNotExercised, "The naming sessions produced no activation to judge."}
+		}
+		return unclassifiedSpec(f)
+	}},
 	{"malformed-yaml-tolerance", func(f checks.Finding) specJudgement {
 		switch f.Verdict {
 		case "tolerated-and-loaded":
@@ -244,6 +258,24 @@ var specJudges = []struct {
 			return specJudgement{specContradicts, "The spec caps description at 1024 characters without defining the unit; its skills-ref reference validator counts code points. This platform counts UTF-16 code units, so a description with emoji or other supplementary-plane characters that the reference validator accepts is rejected or truncated here."}
 		case "counts-bytes":
 			return specJudgement{specContradicts, "The spec caps description at 1024 characters without defining the unit; its skills-ref reference validator counts code points. This platform counts UTF-8 bytes, so a description in a CJK script that the reference validator accepts is rejected or truncated here."}
+		}
+		return unclassifiedSpec(f)
+	}},
+	{"name-length-unit", func(f checks.Finding) specJudgement {
+		const rule = "The spec caps name at 64 characters without defining the unit and allows unicode lowercase alphanumeric characters with an ASCII parenthetical, which reads two ways; its skills-ref reference validator accepts any Unicode alphanumeric and counts code points."
+		switch {
+		case f.Verdict == "no-length-enforcement":
+			return specJudgement{specConsistent, rule + " This platform does not enforce the cap at all, so the counting unit is moot."}
+		case strings.HasPrefix(f.Verdict, "no-length-enforcement;"):
+			return specJudgement{specInvalidInput, rule + " This platform does not enforce the cap but rejects non-ASCII names, taking the parenthetical ASCII reading that the reference validator does not."}
+		case f.Verdict == "rejects-non-ascii-names":
+			return specJudgement{specContradicts, rule + " This platform rejects non-ASCII names on the character rule before any counting, so names the reference validator accepts never enter its catalog and its counting unit cannot be observed."}
+		case f.Verdict == "counts-code-points":
+			return specJudgement{specConsistent, rule + " This platform accepts non-ASCII lowercase names and counts code points, matching the reference validator, so a name under 64 code points loads here whatever script it uses."}
+		case f.Verdict == "counts-utf16-units":
+			return specJudgement{specContradicts, rule + " This platform accepts non-ASCII lowercase names but counts UTF-16 code units, so a name under 64 code points that uses supplementary-plane letters, which the reference validator accepts, is rejected here."}
+		case f.Verdict == "counts-bytes":
+			return specJudgement{specContradicts, rule + " This platform accepts non-ASCII lowercase names but counts UTF-8 bytes, so a name under 64 code points in a non-Latin script, which the reference validator accepts, is rejected here."}
 		}
 		return unclassifiedSpec(f)
 	}},

@@ -525,3 +525,94 @@ func bundledScriptExecution() Spec {
 		},
 	}
 }
+
+const bulkFilesBodyCanary = "SKUA-DIORITE-2917"
+
+func bundledFileEnumerationScale() Spec {
+	activate := func(p profile.Profile) string { return p.ActivationPrompt("probe-bulk-files") }
+	kinds := []struct{ label, name string }{
+		{"dotfile", ".hidden-dotfile-marker.md"},
+		{"binary", "binary-pixel-marker.png"},
+		{"vendored", "vendored-lib-marker.js"},
+	}
+	const numbered = 40
+	return Spec{
+		ID:          "bundled-file-enumeration-scale",
+		Description: "When a skill ships forty numbered references, a hidden dotfile, a binary asset, and a vendored code tree, does the platform's activation listing carry all of them, stop at a cap, or leave some kinds out?",
+		Sessions: []Session{{
+			Skills: []string{"probe-bulk-files"},
+			Turns:  []Turn{{Prompt: activate, Activation: true}},
+		}},
+		Evaluate: func(sos []*observe.SessionObservation) Finding {
+			so := sos[0]
+			f := Finding{CheckID: "bundled-file-enumeration-scale"}
+			bInj, bPull := loadsOf(so, bulkFilesBodyCanary)
+			if len(bInj)+len(bPull) == 0 {
+				f.Status = StatusInconclusive
+				f.Verdict = "activation-not-observed"
+				return f
+			}
+			f.Vehicle = vehicleOf(bInj, bPull)
+			f.Status = StatusObserved
+
+			// Numbered files: how many of the forty names reached the model
+			// in harness-injected text, and how many only via its own reads.
+			listedN, exploredN := 0, 0
+			var firstInj, firstPull *trace.Occurrence
+			for i := 1; i <= numbered; i++ {
+				inj, pull := loadsOf(so, fmt.Sprintf("bulk-file-%02d.md", i))
+				switch {
+				case len(inj) > 0:
+					listedN++
+					if firstInj == nil {
+						firstInj = &inj[0]
+					}
+				case len(pull) > 0:
+					exploredN++
+					if firstPull == nil {
+						firstPull = &pull[0]
+					}
+				}
+			}
+			var omitted, kindsListed []string
+			for _, k := range kinds {
+				inj, _ := loadsOf(so, k.name)
+				if len(inj) > 0 {
+					kindsListed = append(kindsListed, k.label)
+				} else {
+					omitted = append(omitted, k.label)
+				}
+			}
+			switch {
+			case listedN == 0 && len(kindsListed) == 0:
+				f.Verdict = "no-enumeration"
+				f.Confidence = negConfidence(so)
+				if exploredN > 0 {
+					f.Evidence = append(f.Evidence, evAt(so, firstPull.EventIndex, "file names arrived only via the model's own exploration"))
+					f.Notes = append(f.Notes, fmt.Sprintf("the model explored the directory itself and saw %d numbered files; nothing was listed by the platform", exploredN))
+				}
+			case listedN == numbered && len(omitted) == 0:
+				f.Verdict = "all-files-listed"
+				f.Confidence = ConfidenceDirect
+				f.Evidence = append(f.Evidence, evAt(so, firstInj.EventIndex, "every bundled file name injected at activation"))
+				f.Notes = append(f.Notes, fmt.Sprintf("%d numbered references plus the dotfile, binary, and vendored file all listed (%d files); each activation carries the whole list", numbered, numbered+len(kinds)))
+			default:
+				f.Confidence = ConfidenceDirect
+				var parts []string
+				if listedN < numbered {
+					parts = append(parts, fmt.Sprintf("capped-listing:%d-of-%d", listedN, numbered))
+				}
+				if len(omitted) > 0 {
+					parts = append(parts, fmt.Sprintf("filtered:%v", omitted))
+				}
+				f.Verdict = strings.Join(parts, "; ")
+				if firstInj != nil {
+					f.Evidence = append(f.Evidence, evAt(so, firstInj.EventIndex, "first numbered file name injected at activation"))
+				}
+				f.Notes = append(f.Notes, fmt.Sprintf("listed %d of %d numbered files; kinds listed: %v; kinds omitted: %v", listedN, numbered, kindsListed, omitted))
+			}
+			f.Notes = append(f.Notes, "final answer: "+finalAnswer(so))
+			return f
+		},
+	}
+}

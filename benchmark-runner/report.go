@@ -45,14 +45,14 @@ var reportCategories = []struct {
 }{
 	{"Loading Timing", []string{"discovery-reading-depth", "activation-loading-scope", "eager-link-resolution"}},
 	{"Directory Recognition", []string{"recognized-directory-set", "directory-naming-divergence", "unrecognized-directory-handling"}},
-	{"Resource Access Patterns", []string{"resource-enumeration-behavior", "path-resolution-base", "cross-skill-resource-shadowing", "path-traversal-boundary", "resource-nesting-depth", "bundled-script-execution"}},
-	{"Content Presentation", []string{"discovery-listing-fields", "frontmatter-handling", "content-wrapping-format"}},
+	{"Resource Access Patterns", []string{"resource-enumeration-behavior", "path-resolution-base", "cross-skill-resource-shadowing", "path-traversal-boundary", "resource-nesting-depth", "bundled-script-execution", "bundled-file-enumeration-scale"}},
+	{"Content Presentation", []string{"discovery-listing-fields", "frontmatter-handling", "content-wrapping-format", "activation-location-disclosure"}},
 	{"Lifecycle Management", []string{"reactivation-deduplication", "reactivation-freshness", "context-compaction-protection"}},
-	{"Access Control", []string{"trust-gating-behavior", "compatibility-field-behavior", "allowed-tools-behavior"}},
+	{"Access Control", []string{"trust-gating-behavior", "compatibility-field-behavior", "allowed-tools-behavior", "allowed-tools-name-matching"}},
 	{"Skill-to-Skill Invocation", []string{"cross-skill-invocation", "invocation-depth-limit", "circular-invocation-handling", "invocation-language-sensitivity"}},
 	{"Skill Dependencies", []string{"informal-dependency-resolution", "missing-dependency-behavior", "nonstandard-dependency-fields", "cross-scope-dependency"}},
-	{"Discovery Scope", []string{"cross-client-directory-interop", "recursive-root-discovery", "nested-skill-discovery", "name-collision-precedence"}},
-	{"Validation Strictness", []string{"malformed-yaml-tolerance", "missing-description-handling", "invalid-name-tolerance", "name-directory-mismatch", "metadata-value-edge-cases", "oversize-description-handling", "description-length-unit", "oversize-compatibility-handling"}},
+	{"Discovery Scope", []string{"cross-client-directory-interop", "recursive-root-discovery", "nested-skill-discovery", "name-collision-precedence", "multi-root-collision-precedence"}},
+	{"Validation Strictness", []string{"malformed-yaml-tolerance", "missing-description-handling", "invalid-name-tolerance", "name-directory-mismatch", "metadata-value-edge-cases", "oversize-description-handling", "description-length-unit", "name-length-unit", "oversize-compatibility-handling"}},
 }
 
 // manualChecks require interactive sessions the runner cannot drive.
@@ -149,6 +149,18 @@ var verdictPhrases = map[string]string{
 	"resources-content-injected":         "Contents injected at activation",
 	"resources-enumerated-not-loaded":    "Names listed, contents not loaded",
 	"all-three-dirs-enumerated":          "All three listed, contents not loaded",
+	"all-files-listed":                   "Every bundled file listed",
+	"edit-missed-no-reload":              "Edit missed; nothing re-read the file",
+	"reload-not-observed":                "No reload observed (inconclusive)",
+	"executed-regardless-of-spelling":    "Ran under every spelling",
+	"blocked-regardless-of-spelling":     "Blocked under every spelling",
+	"path-stated-at-activation":          "Skill path stated at activation",
+	"path-only-in-discovery-listing":     "Path only in the discovery listing",
+	"path-not-stated":                    "No path stated anywhere",
+	"injection-not-recorded":             "Injection not recorded",
+	"native-root-wins":                   "Native root wins",
+	"foreign-roots-not-scanned":          "Only the native root is read",
+	"catalog-lists-all":                  "Every variant listed",
 	"untouched":                          "Not surfaced; model never looked",
 	"cwd-base-model-requalified":         "Bare path fails; model recovers",
 	"model-preemptively-qualified":       "Model used full paths (base untested)",
@@ -227,6 +239,7 @@ var verdictPhrases = map[string]string{
 	"no-length-enforcement":                 "No enforcement (unit is moot)",
 	"counts-code-points":                    "Counts Unicode code points",
 	"counts-utf16-units":                    "Counts UTF-16 code units",
+	"rejects-non-ascii-names":               "Rejects non-ASCII names (unit unobservable)",
 	"counts-bytes":                          "Counts UTF-8 bytes",
 	"inconsistent-length-unit":              "Fits no single unit",
 	"length-unit-unobservable":              "Unit not observable",
@@ -292,6 +305,18 @@ func humanVerdictPart(part string) string {
 		return "Readable when the model looks"
 	case strings.HasPrefix(part, "injected-at-activation:"):
 		return "Injected at activation"
+	case strings.HasPrefix(part, "capped-listing:"):
+		return "Listing capped at " + strings.TrimPrefix(part, "capped-listing:") + " numbered files"
+	case strings.HasPrefix(part, "filtered:"):
+		return "Omitted: " + strings.ReplaceAll(strings.Trim(strings.TrimPrefix(part, "filtered:"), "[]"), " ", ", ")
+	case strings.HasPrefix(part, "spelling-dependent:"):
+		return "Ran only when spelled: " + strings.ReplaceAll(strings.Trim(strings.TrimPrefix(part, "spelling-dependent:"), "[]"), " ", ", ")
+	case strings.HasPrefix(part, "foreign-root-wins:"):
+		return "Convention root wins (" + strings.TrimPrefix(part, "foreign-root-wins:") + ")"
+	case strings.HasPrefix(part, "activated:"):
+		return "model activated " + strings.ReplaceAll(strings.TrimPrefix(part, "activated:"), "+", " and ")
+	case strings.HasPrefix(part, "multiple-variants-loaded:"):
+		return "Several variants loaded: " + strings.ReplaceAll(strings.TrimPrefix(part, "multiple-variants-loaded:"), "+", ", ")
 	case strings.HasPrefix(part, "enumerated-not-loaded:"):
 		return "Names listed, contents not loaded"
 	case strings.HasPrefix(part, "partial-enumeration:"):
@@ -467,7 +492,7 @@ func renderComparison(all map[string]map[string]checks.Finding, harnesses []stri
 		w("- [%s](/platforms/%s/)", platformNames[h], h)
 	}
 	w("")
-	w("For what these findings mean when writing a skill, see the [cross-platform authoring guidance](/guidance/). The [check list](/checks/) has the full rationale behind every question. All findings come from headless sessions, which can differ from interactive use; outcomes marked † rest on behavioral inference rather than direct transcript evidence. Two checks (context compaction protection, trust gating) need interactive sessions and are marked manual.")
+	w("For what these findings mean in practice, see the [guidance](/guidance/) for authors, installers, distributors, and harness implementers. The [check list](/checks/) has the full rationale behind every question. All findings come from headless sessions, which can differ from interactive use; outcomes marked † rest on behavioral inference rather than direct transcript evidence. Two checks (context compaction protection, trust gating) need interactive sessions and are marked manual.")
 	w("")
 
 	for _, cat := range reportCategories {

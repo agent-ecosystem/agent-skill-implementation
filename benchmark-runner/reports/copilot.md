@@ -4,8 +4,8 @@
 |---|---|
 | **Platform** | GitHub Copilot CLI (headless) |
 | **Platform version** | 1.0.88 |
-| **Check list version** | 0.3 |
-| **Test date** | 2026-09-25 |
+| **Check list version** | 0.4 |
+| **Test date** | 2026-09-26 |
 | **Model(s) observed** | claude-sonnet-5 |
 | **Environment** | Headless invocation via [benchmark-runner](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-runner) + [skillxp](https://github.com/agent-ecosystem/skillxp) |
 
@@ -13,7 +13,7 @@
 
 ## Spec alignment
 
-Most of this report measures behavior the [Agent Skills specification](https://agentskills.io/specification) leaves to each implementation, where differences between platforms are design choices rather than violations. 19 of the 41 checks do test something the specification prescribes; this section summarizes how observed behavior compares. Each entry links to the full finding below.
+Most of this report measures behavior the [Agent Skills specification](https://agentskills.io/specification) leaves to each implementation, where differences between platforms are design choices rather than violations. 21 of the 46 checks do test something the specification prescribes; this section summarizes how observed behavior compares. Each entry links to the full finding below.
 
 ### Where behavior contradicts the spec
 
@@ -21,6 +21,7 @@ Most of this report measures behavior the [Agent Skills specification](https://a
 - [`bundled-script-execution`](#bundled-script-execution): The spec presents scripts/ as executable code agents can run, but execution was blocked in this headless run. Interactive sessions, where a user can approve the command, may behave differently.
 - [`frontmatter-handling`](#frontmatter-handling): The spec says the agent loads the entire SKILL.md file at activation. This platform strips the YAML frontmatter and injects only the body, so frontmatter fields beyond name and description never reach the model.
 - [`description-length-unit`](#description-length-unit): The spec caps description at 1024 characters without defining the unit; its skills-ref reference validator counts code points. This platform counts UTF-16 code units, so a description with emoji or other supplementary-plane characters that the reference validator accepts is rejected or truncated here.
+- [`name-length-unit`](#name-length-unit): The spec caps name at 64 characters without defining the unit and allows unicode lowercase alphanumeric characters with an ASCII parenthetical, which reads two ways; its skills-ref reference validator accepts any Unicode alphanumeric and counts code points. This platform rejects non-ASCII names on the character rule before any counting, so names the reference validator accepts never enter its catalog and its counting unit cannot be observed.
 
 ### Where behavior matches the spec
 
@@ -47,6 +48,7 @@ The spec's format rules bind skill authors; it does not say what a platform shou
 ### Not exercised in this run
 
 - [`allowed-tools-behavior`](#allowed-tools-behavior): The spec marks allowed-tools experimental, with varying support. Neither twin session produced a clean execution, so the field's effect is unresolved here; see the finding for per-session tiers.
+- [`allowed-tools-name-matching`](#allowed-tools-name-matching): The spec marks allowed-tools experimental, leaves tool names to each platform, and says support may vary, so no outcome contradicts it. No spelling unblocked the command, so either the field is ignored or none of the three spellings names a tool this platform pre-approves; the matching rule is unresolved here.
 
 
 ## All checks
@@ -226,6 +228,20 @@ _Can the agent run a bundled scripts/ file and receive its output?_
 - **Note**: final answer: Execution failed with the exact error: **"Permission denied and could not request permission from user"**
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
+#### `bundled-file-enumeration-scale`
+
+_When a skill ships forty numbered references, a hidden dotfile, a binary asset, and a vendored code tree, does the platform's activation listing carry all of them, stop at a cap, or leave some kinds out?_
+
+- **Status**: observed
+- **Verdict**: `filtered:[vendored]`
+- **Vehicle**: harness-push
+- **Confidence**: transcript-direct
+- **Evidence** (transcript: `results/checks-0.4-2026-09-25/copilot/bundled-file-enumeration-scale/events.jsonl`; session 6c32931b-516e-48a9-af1a-d8425e467e88):
+  - first numbered file name injected at activation (event 10, line 9)
+- **Note**: listed 40 of 40 numbered files; kinds listed: [dotfile binary]; kinds omitted: [vendored]
+- **Note**: final answer: **probe-bulk-files activated. Canary: SKUA-DIORITE-2917**  **File awareness** — I was told about these files at activation:  - `.hidden-dotfile-marker.md` - `assets/binary-pixel-marker.png` - `references/bulk-file-01.md` through `references/bulk-file-40.md` (all 40, numbered 01–40)  **Count**: 42 files total (40 numbered reference files + 1 hidden dotfile + 1 binary image). No vendored code tree files were named to me.
+- **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
+
 ### Content Presentation
 
 #### `discovery-listing-fields`
@@ -264,6 +280,19 @@ _Is injected skill content wrapped in structured tags, or delivered as raw markd
 - **Evidence** (transcript: `results/copilot-2026-09-25/copilot/content-wrapping-format/events.jsonl`; session d036491f-0cbe-49d1-951f-2c8b03ea9c52):
   - injection event carrying the body canary (event 10, line 9)
 - **Note**: the whole delivery is enclosed in: skill-context
+- **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
+
+#### `activation-location-disclosure`
+
+_Does the content injected at activation tell the model where the skill lives on disk (its directory path), apart from any discovery listing?_
+
+- **Status**: observed
+- **Verdict**: `path-stated-at-activation`
+- **Vehicle**: harness-push
+- **Confidence**: transcript-direct
+- **Evidence** (transcript: `results/checks-0.4-2026-09-25/copilot/activation-location-disclosure/events.jsonl`; session 9b410381-a8aa-4c35-b8bc-9f0a1af768d3):
+  - skill path in harness-injected activation content (event 9, line 9)
+- **Note**: final answer: **Probe Report**  1. **Frontmatter visibility**: Not visible — only rendered instructions were passed to me; no YAML frontmatter (name, description, allowed-tools, compatibility, metadata) appears in what I received.  2. **Content wrapping**: Yes — the content is wrapped in a `<skill-context name="probe-loading">...</skill-context>` tag.  3. **Resource awareness**: I was told (in the tool result preceding this content, not the content itself) about these files: `references/api-overview.md`, `references/unreferenced-detail.md`, `references/error-codes.md`, `scripts/check-status.sh`, `assets/config-template.yaml`. So resources were enumerated at activation time, but via the tool metadata, not the skill body itself.  4. **Resource content**: No — I don't have the contents of any of those files in context yet; only file paths were listed. I have not read any of them.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ### Lifecycle Management
@@ -337,6 +366,23 @@ _Does the experimental allowed-tools field pre-approve anything, compared agains
 - **Note**: with-field final answer: **probe-allowed-tools activated. Canary: CURLEW-SCHIST-4419**  **allowed-tools value:** Visible in frontmatter: `Bash(printf:*) Read`  **Command result:** Ran `printf 'GROUSE-%s-9017\n' 'MICA'` — it was **blocked**, returning: `Permission denied and could not request permission from user`  **Permission observation:** The command did *not* run without a prompt/approval step — it was outright denied. This indicates the `allowed-tools` field's declared `Bash(printf:*)` pattern was **not honored** as pre-approval in this environment; the printf invocation was rejected rather than auto-approved or interactively prompted.
 - **Note**: control final answer: probe-allowed-tools-control activated. Canary: **STINT-MARBLE-9912**  Command run: `printf 'LAPWING-%s-2260\n' 'FLUORITE'`  Output: **"Permission denied and could not request permission from user"** — the command was blocked, not executed.  Observation: No permission prompt was surfaced to me; it was rejected outright at the platform level, with no `allowed-tools` field to pre-approve it.
 - **Fallback behavior**: Observed in-run: allowed-tools value visible only via the model's own raw file read
+
+#### `allowed-tools-name-matching`
+
+_Does the effect of allowed-tools depend on spelling the tool the platform's way? Three twins declare the same intent as Bash(printf:*), bash, and shell._
+
+- **Status**: observed
+- **Verdict**: `blocked-regardless-of-spelling`
+- **Confidence**: transcript-direct
+- **Evidence** (transcript: `results/checks-0.4-2026-09-25/copilot/allowed-tools-name-matching/session-3/events.jsonl`; session 52fd15ee-d1c5-4f68-b37c-6919dc22ae4d,4102fd66-9808-400a-aca3-37ea3863833c,e4816789-3fb1-4e57-a4fa-e754e70733ae):
+  - spec-style twin: instructed command's tool call returned an error result (session 1, event 21, line 18)
+  - lowercase twin: instructed command's tool call returned an error result (session 2, event 34, line 28)
+  - shell twin: instructed command's tool call returned an error result (session 3, event 15, line 13)
+- **Note**: spec-style twin final answer: **probe-allowed-tools activated. Canary: CURLEW-SCHIST-4419**  1. **allowed-tools value visible:** Yes — the frontmatter declares: `allowed-tools: Bash(printf:*) Read`  2. **Command run:** `printf 'GROUSE-%s-9017\n' 'MICA'` Result: **blocked** — output was: `Permission denied and could not request permission from user`  3. **Permission prompt observed:** The command did *not* execute; it was denied outright (no prompt, no approval path available, no output produced). So the `allowed-tools` frontmatter field did **not** pre-approve the printf call in this CLI implementation — the general permission posture blocked it despite the declared scope.
+- **Note**: lowercase twin final answer: 1. **probe-allowed-tools-lowercase activated. Canary: STILT-SCORIA-5526**  2. Yes — the skill's frontmatter shows `allowed-tools: bash`.  3. Command output: **blocked** — error returned was: `Permission denied and could not request permission from user`.  4. It did *not* run without a permission step — it was denied outright, with no prompt shown to me and no way to request approval. So the bare lowercase `bash` value in `allowed-tools` did not pre-approve the command in this environment.
+- **Note**: shell twin final answer: probe-allowed-tools-shell activated. Canary: **AUKLET-CHERT-3364**  1. I do not see any `allowed-tools` metadata/value exposed for this skill — no such field is visible to me in the skill context.  2. Command run: `printf 'ROOK-%s-8841\n' 'GABBRO'` Result: **Permission denied and could not request permission from user** (it was blocked, not executed — no output produced).  3. It did not run without a gate — it was blocked outright ("Permission denied and could not request permission from user"), so there was no successful execution and no observable prompt/approval step completed; it simply failed closed.
+- **Note**: no spelling of the field unblocked the command; either the field is ignored or none of the spellings matched a tool this platform pre-approves
+- **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ### Skill-to-Skill Invocation
 
@@ -513,6 +559,26 @@ _With the same skill name installed at project and user scope, which variant's c
 - **Note**: final answer: probe-collision activated. Canary: **RAVEN-CITRINE-6634** (project variant)  **Precedence**: The project scope won — only the project-level variant's canary appeared, confirming project-scope skills take precedence over user-scope skills of the same name.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
+#### `multi-root-collision-precedence`
+
+_With the same skill name installed under two project roots the platform scans (its native directory plus .agents/skills or .claude/skills), which variant is listed and which activates?_
+
+- **Status**: observed
+- **Verdict**: `native-root-wins`
+- **Vehicle**: harness-push
+- **Confidence**: transcript-direct
+- **Evidence** (transcript: `results/checks-0.4-2026-09-25/copilot/multi-root-collision-precedence/events.jsonl`; session 25df59c4-6170-4e5a-9f83-1b531c7b64d1):
+  - discovery listing names probe-multiroot-beacon-agents (event 3, line 4)
+  - discovery listing names probe-multiroot-beacon-claude (event 3, line 4)
+  - discovery listing carries the native variant's description (event 3, line 4)
+  - native variant's body canary loaded on activation (event 16, line 16)
+- **Note**: foreign roots installed alongside the native copy: .agents/skills, .claude/skills
+- **Note**: platform-level: the beacon skills from .agents/skills, .claude/skills were listed, so those roots were scanned and the colliding variant was dropped by name in favor of the native copy
+- **Note**: listed variants: native
+- **Note**: roots proven scanned by their beacon: .agents/skills, .claude/skills
+- **Note**: final answer: probe-multiroot activated. Canary: **GREBE-AZURITE-7301** (native-root variant)  **Precedence**: The loaded content is the native-root variant (base directory `.github/skills/probe-multiroot`), so the platform resolved/loaded from the native skills root (`.github/skills/`) rather than `.agents/skills/` or `.claude/skills/`.  **Catalog**: My available-skills list showed `probe-multiroot` only once (no duplicate entries), even though multiple root copies exist on disk — the platform appears to de-duplicate by name, with the native root taking precedence.
+- **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
+
 ### Validation Strictness
 
 #### `malformed-yaml-tolerance`
@@ -615,6 +681,20 @@ _When a platform enforces the 1024-character description limit, does it count Un
 - **Note**: the ASCII and astral overruns were enforced while the multibyte fixture survived: the platform counts UTF-16 code units (JavaScript's .length)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
+#### `name-length-unit`
+
+_When a platform enforces the 64-character name limit, does it count Unicode code points, UTF-16 code units, or UTF-8 bytes, or does it reject non-ASCII names regardless of length?_
+
+- **Status**: observed
+- **Verdict**: `rejects-non-ascii-names`
+- **Confidence**: transcript-direct
+- **Evidence** (transcript: `results/checks-0.4-2026-09-25/copilot/name-length-unit/events.jsonl`; session 855b934e-489e-464f-a860-a9b3f5043355):
+  - discovery listing names probe-name-at-exactly-sixty-four-characters-to-mark-the-cap-abcd (event 3, line 4)
+- **Note**: name fates: ascii64:listed, ascii72:skipped, greek16:skipped, greek60:skipped, math40:skipped
+- **Note**: the platform enforces the cap (72 ASCII rejected) but also dropped the 16-code-point Greek name, which is under 64 in every unit: non-ASCII names are rejected on the character rule, so the counting unit cannot be observed
+- **Note**: final answer: probe-name-at-exactly-sixty-four-characters-to-mark-the-cap-abcd customize-cloud-agent github-pr-media
+- **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
+
 #### `oversize-compatibility-handling`
 
 _Is a skill whose compatibility value exceeds the spec's 500-character limit still discovered and loadable?_
@@ -632,4 +712,4 @@ _Is a skill whose compatibility value exceeds the spec's 500-character limit sti
 
 ---
 
-Generated by benchmark-runner from finding.json files; see [checks.md](../checks.md) (check list 0.3) for check definitions and [benchmark-skills/README.md](../benchmark-skills/README.md) for fixtures and canaries.
+Generated by benchmark-runner from finding.json files; see [checks.md](../checks.md) (check list 0.4) for check definitions and [benchmark-skills/README.md](../benchmark-skills/README.md) for fixtures and canaries.

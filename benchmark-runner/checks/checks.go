@@ -23,7 +23,7 @@ import (
 // ChecklistVersion is the checks.md check list version these
 // specs implement; reports stamp it so readers know which checks existed
 // when a platform was tested.
-const ChecklistVersion = "0.3"
+const ChecklistVersion = "0.4"
 
 // Statuses, matching the results template vocabulary.
 const (
@@ -122,6 +122,12 @@ type Session struct {
 	// fixtures that must land at exact paths (e.g. .agents/skills/...).
 	OverlayDirs []string
 
+	// OverlayDirsFor, when set, replaces OverlayDirs with a per-harness
+	// choice, for fixtures that must avoid a root the harness already
+	// uses natively (an overlay onto the native directory would collide
+	// with the Skills install instead of testing a second root).
+	OverlayDirsFor func(p profile.Profile) []string
+
 	// Turns run in order against this session.
 	Turns []Turn
 }
@@ -161,13 +167,16 @@ func Registry() []Spec {
 		pathTraversalBoundary(),
 		resourceNestingDepth(),
 		bundledScriptExecution(),
+		bundledFileEnumerationScale(),
 		discoveryListingFields(),
 		frontmatterHandling(),
 		contentWrappingFormat(),
+		activationLocationDisclosure(),
 		reactivationDeduplication(),
 		reactivationFreshness(),
 		compatibilityFieldBehavior(),
 		allowedToolsBehavior(),
+		allowedToolsNameMatching(),
 		crossSkillInvocation(),
 		invocationDepthLimit(),
 		circularInvocationHandling(),
@@ -180,6 +189,7 @@ func Registry() []Spec {
 		recursiveRootDiscovery(),
 		nestedSkillDiscovery(),
 		nameCollisionPrecedence(),
+		multiRootCollisionPrecedence(),
 		malformedYamlTolerance(),
 		missingDescriptionHandling(),
 		invalidNameTolerance(),
@@ -187,6 +197,7 @@ func Registry() []Spec {
 		metadataValueEdgeCases(),
 		oversizeDescriptionHandling(),
 		descriptionLengthUnit(),
+		nameLengthUnit(),
 		oversizeCompatibilityHandling(),
 	}
 }
@@ -595,6 +606,38 @@ func reactivationFreshness() Spec {
 				}
 				f.Evidence = append(f.Evidence, evAt(sos[0], last[len(last)-1].EventIndex, "reactivation delivered the pre-edit canary despite the on-disk edit"))
 			default:
+				// No reload at all. If the second activation turn still
+				// produced an answer, the edit never reached the model: on
+				// a pull harness the model reused the copy already in
+				// context (model-level); on a recording push harness the
+				// platform did not re-deliver. Only a second turn with no
+				// answer leaves freshness unobservable.
+				secondTurnAnswered := -1
+				for i, ev := range obs.Session.Events {
+					if ev.Kind == session.KindAssistantMessage && turnOf(sos[0], i) >= 1 {
+						secondTurnAnswered = i
+						break
+					}
+				}
+				if secondTurnAnswered >= 0 {
+					f.Status = StatusObserved
+					f.Verdict = "edit-missed-no-reload"
+					f.Confidence = ConfidenceDirect
+					f.Vehicle = vehicleOf(injected, pulled)
+					f.Evidence = append(f.Evidence, evAt(sos[0], secondTurnAnswered, "second activation answered without any reload of the edited file"))
+					if f.Vehicle == VehicleModelPull {
+						f.Notes = append(f.Notes, "model-level: the model reused the copy already in context instead of re-reading, so the on-disk edit never reached it; read alongside reactivation-deduplication")
+					} else {
+						f.Notes = append(f.Notes, "platform-level: the harness did not re-deliver the skill on reactivation, so the on-disk edit never reached the model; read alongside reactivation-deduplication")
+					}
+					for _, o := range assistantMentions(sos[0], probeLoadingBodyCanary) {
+						if turnOf(sos[0], o.EventIndex) >= 1 {
+							f.Notes = append(f.Notes, "the second answer quoted the pre-edit canary from context")
+							break
+						}
+					}
+					return f
+				}
 				f.Status = StatusInconclusive
 				f.Verdict = "reload-not-observed"
 				f.Notes = append(f.Notes, "the second activation never re-delivered skill content (deduplication or model memory); freshness is unobservable in this session, so read this alongside the reactivation-deduplication finding")

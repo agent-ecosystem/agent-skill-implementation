@@ -456,3 +456,156 @@ func allowedToolsBehavior() Spec {
 		},
 	}
 }
+
+const (
+	allowedToolsLowercaseBodyCanary = "STILT-SCORIA-5526"
+	allowedToolsLowercaseExecPhrase = "CHOUGH-TUFA-7180"
+	allowedToolsLowercaseFragment   = "CHOUGH-%s-7180"
+	allowedToolsShellBodyCanary     = "AUKLET-CHERT-3364"
+	allowedToolsShellExecPhrase     = "ROOK-GABBRO-8841"
+	allowedToolsShellFragment       = "ROOK-%s-8841"
+)
+
+func allowedToolsNameMatching() Spec {
+	twins := []struct{ spelling, skill, canary, phrase, fragment string }{
+		{"spec-style", "probe-allowed-tools", allowedToolsBodyCanary, allowedToolsExecPhrase, allowedToolsExecFragment},
+		{"lowercase", "probe-allowed-tools-lowercase", allowedToolsLowercaseBodyCanary, allowedToolsLowercaseExecPhrase, allowedToolsLowercaseFragment},
+		{"shell", "probe-allowed-tools-shell", allowedToolsShellBodyCanary, allowedToolsShellExecPhrase, allowedToolsShellFragment},
+	}
+	var sessions []Session
+	for _, t := range twins {
+		skill := t.skill
+		sessions = append(sessions, Session{
+			Skills: []string{skill},
+			Turns: []Turn{{
+				Prompt:     func(p profile.Profile) string { return p.ActivationPrompt(skill) },
+				Activation: true,
+			}},
+		})
+	}
+	return Spec{
+		ID:          "allowed-tools-name-matching",
+		Description: "Does the effect of allowed-tools depend on spelling the tool the platform's way? Three twins declare the same intent as Bash(printf:*), bash, and shell.",
+		Sessions:    sessions,
+		Evaluate: func(sos []*observe.SessionObservation) Finding {
+			f := Finding{CheckID: "allowed-tools-name-matching"}
+			var ran, blocked, other []string
+			observed := 0
+			for i, t := range twins {
+				tier, ev, notes := execTier(sos[i], t.canary, t.phrase, t.fragment)
+				for _, e := range ev {
+					f.Evidence = append(f.Evidence, evSession(sos[i], i+1, e.EventIndex, t.spelling+" twin: "+e.Note))
+				}
+				for _, n := range notes {
+					f.Notes = append(f.Notes, t.spelling+" twin: "+n)
+				}
+				switch tier {
+				case "activation-not-observed":
+					continue
+				case "executed":
+					ran = append(ran, t.spelling)
+				case "blocked-visibly":
+					blocked = append(blocked, t.spelling)
+				default:
+					other = append(other, t.spelling+":"+tier)
+				}
+				observed++
+				f.Notes = append(f.Notes, t.spelling+" twin final answer: "+finalAnswer(sos[i]))
+			}
+			if observed == 0 {
+				f.Status = StatusInconclusive
+				f.Verdict = "activation-not-observed"
+				return f
+			}
+			f.Status = StatusObserved
+			f.Confidence = ConfidenceDirect
+			switch {
+			case len(ran) == observed:
+				f.Verdict = "executed-regardless-of-spelling"
+				f.Notes = append(f.Notes, "the platform's permission posture allowed every twin's command; spelling had no observable effect")
+			case len(ran) == 0 && len(blocked) == observed:
+				f.Verdict = "blocked-regardless-of-spelling"
+				f.Notes = append(f.Notes, "no spelling of the field unblocked the command; either the field is ignored or none of the spellings matched a tool this platform pre-approves")
+			case len(ran) > 0:
+				f.Verdict = fmt.Sprintf("spelling-dependent:%v", ran)
+				f.Notes = append(f.Notes, fmt.Sprintf("platform-level: the command ran only for %v while %v were blocked; the field works but matches platform tool names", ran, blocked))
+			default:
+				f.Verdict = "blocked:" + strings.Join(blocked, "+") + "; other:" + strings.Join(other, "+")
+			}
+			return f
+		},
+	}
+}
+
+// activationPathMarkers are substrings of the skill's on-disk path that
+// never appear in the probe-loading body: the directory form every native
+// root ends in (skills/probe-loading), and the file form a listing may use
+// instead (codex 0.157 lists "r0/probe-loading/SKILL.md", an opaque root
+// alias rather than a real path).
+var activationPathMarkers = []string{"skills/probe-loading", "probe-loading/SKILL.md"}
+
+func activationLocationDisclosure() Spec {
+	activate := func(p profile.Profile) string { return p.ActivationPrompt("probe-loading") }
+	return Spec{
+		ID:          "activation-location-disclosure",
+		Description: "Does the content injected at activation tell the model where the skill lives on disk (its directory path), apart from any discovery listing?",
+		Sessions: []Session{{
+			Skills: []string{"probe-loading"},
+			Turns:  []Turn{{Prompt: activate, Activation: true}},
+		}},
+		Evaluate: func(sos []*observe.SessionObservation) Finding {
+			so := sos[0]
+			obs := so.Final()
+			f := Finding{CheckID: "activation-location-disclosure"}
+			bInj, bPull := loadsOf(so, probeLoadingBodyCanary)
+			if len(bInj)+len(bPull) == 0 {
+				f.Status = StatusInconclusive
+				f.Verdict = "activation-not-observed"
+				return f
+			}
+			f.Status = StatusObserved
+			f.Vehicle = vehicleOf(bInj, bPull)
+			if !obs.Profile.RecordsInjectedContext {
+				f.Verdict = "injection-not-recorded"
+				f.Confidence = ConfidenceInferred
+				f.Notes = append(f.Notes, "the platform records no injected context, so whether activation states the path cannot be observed; the model's own reads show the path it used")
+				f.Notes = append(f.Notes, "final answer: "+finalAnswer(so))
+				return f
+			}
+			listingSubtype := map[string]bool{}
+			for _, s := range obs.Profile.SkillListingSubtypes {
+				listingSubtype[s] = true
+			}
+			var atActivation, inListing []trace.Occurrence
+			for _, marker := range activationPathMarkers {
+				for _, o := range trace.At(trace.Phrase(obs.Session, marker, obs.Profile.EchoSubtypes), trace.LocHarnessInjected) {
+					if listingSubtype[o.Detail] {
+						inListing = append(inListing, o)
+					} else {
+						atActivation = append(atActivation, o)
+					}
+				}
+			}
+			f.Confidence = ConfidenceDirect
+			switch {
+			case len(atActivation) > 0:
+				f.Verdict = "path-stated-at-activation"
+				f.Evidence = append(f.Evidence, evAt(so, atActivation[0].EventIndex, "skill path in harness-injected activation content"))
+			case len(inListing) > 0:
+				f.Verdict = "path-only-in-discovery-listing"
+				f.Evidence = append(f.Evidence, evAt(so, inListing[0].EventIndex, "skill path appears only in the discovery listing"))
+			default:
+				f.Verdict = "path-not-stated"
+				f.Notes = append(f.Notes, "no harness-injected text carried the skill's path; the model must guess or search for the skill directory")
+			}
+			if pulls := trace.ToolReadsOf(obs.Session, activationPathMarkers[0]); len(pulls) > 0 {
+				f.Notes = append(f.Notes, "the model addressed the skill directory by path in its own tool calls")
+			}
+			if len(inListing) > 0 && len(atActivation) == 0 {
+				f.Notes = append(f.Notes, "the listing's location may be an alias rather than a real path (codex 0.157 writes r0/<skill>/SKILL.md); the model still resolved the directory itself")
+			}
+			f.Notes = append(f.Notes, "final answer: "+finalAnswer(so))
+			return f
+		},
+	}
+}

@@ -1,12 +1,17 @@
 # Agent Skill Implementation
 
-> Empirical research into how agent platforms implement Agent Skill loading, management, and presentation. 40 checks across 10 categories, with benchmark skills for cross-platform testing and automated, transcript-cited platform reports.
+> Empirical research into how agent platforms implement Agent Skill loading, management, and presentation. 46 checks across 10 categories, with benchmark skills for cross-platform testing and automated, transcript-cited platform reports.
 
 ## Docs
 
-- [Checks](https://agentskillimplementation.com/checks/index.md): The complete catalog of 40 platform behavior checks across 10 categories, with descriptions and rationale for each.
+- [Checks](https://agentskillimplementation.com/checks/index.md): The complete catalog of 46 platform behavior checks across 10 categories, with descriptions and rationale for each.
 - [Platform Reports](https://agentskillimplementation.com/platforms/index.md): Side-by-side comparison of skill loading verdicts across tested platforms, one table per check category.
-- [Cross-Platform Authoring Guidance](https://agentskillimplementation.com/guidance/index.md): What skill authors should do differently based on observed platform divergence, with each recommendation citing the check that motivates it.
+- [Guidance](https://agentskillimplementation.com/guidance/index.md): What the findings mean in practice, organized by who acts on them, with each recommendation citing the check that motivates it.
+- [Authoring Guidance](https://agentskillimplementation.com/guidance/authoring/index.md): What skill authors should do differently based on observed platform divergence.
+- [Installing and Using Skills](https://agentskillimplementation.com/guidance/using/index.md): Where to install skills, what collides with what, and what headless sessions can and cannot do.
+- [Distributing and Packaging Skills](https://agentskillimplementation.com/guidance/distributing/index.md): What a catalog, marketplace, or plugin has to get right for a skill to load on every platform it ships to.
+- [Notes for Harness Implementers](https://agentskillimplementation.com/guidance/implementing/index.md): Where tested platforms contradict the specification or each other, and the choices that would narrow the gaps.
+- [What a Bundled File Costs on Copilot CLI](https://agentskillimplementation.com/guidance/enumeration-cost/index.md): An audit of five public skills repositories against Copilot CLI's activation file list, with per-file, evals, and packaging-metadata costs.
 - [Glossary](https://agentskillimplementation.com/guidance/glossary/index.md): Definitions for the terms used throughout the checks, platform reports, and guidance (canary phrase, push harness, pull harness, and more).
 - [Antigravity CLI Report](https://agentskillimplementation.com/platforms/antigravity/index.md): Full automated findings for Antigravity CLI (headless), per check: verdict, vehicle, confidence, and observed fallback behavior.
 - [Claude Code Report](https://agentskillimplementation.com/platforms/claude-code/index.md): Full automated findings for Claude Code (headless), per check: verdict, vehicle, confidence, and observed fallback behavior.
@@ -17,7 +22,7 @@
 ## Tools
 
 - [skill-validator](https://github.com/agent-ecosystem/skill-validator): CLI tool for validating Agent Skills against the spec.
-- [Benchmark Skills](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills): 33 benchmark fixtures (spec-compliant skills plus deliberate structural and validation edge cases) with canary phrases for cross-platform behavior testing.
+- [Benchmark Skills](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills): 45 benchmark fixtures (spec-compliant skills plus deliberate structural and validation edge cases) with canary phrases for cross-platform behavior testing.
 - [Platform Template](https://github.com/agent-ecosystem/agent-skill-implementation/blob/main/platform-findings/template.md): Template for recording per-platform behavior findings.
 - [benchmark-runner](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-runner): Automated runner that executes the checks against installed harnesses and generates the platform reports from transcript-cited findings.
 - [skillxp](https://github.com/agent-ecosystem/skillxp): Harness-agnostic skill invocation engine the runner builds on: installs skills in a fixture, invokes a harness headlessly, locates and parses the transcript, and traces canary phrases.

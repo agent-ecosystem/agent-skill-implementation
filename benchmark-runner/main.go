@@ -157,7 +157,11 @@ func runCheck(ctx context.Context, p profile.Profile, spec checks.Spec, skillsDi
 		for _, dir := range cs.ProjectDirs {
 			ss.ProjectDirs = append(ss.ProjectDirs, filepath.Join(skillsDir, dir))
 		}
-		for _, dir := range cs.OverlayDirs {
+		overlays := cs.OverlayDirs
+		if cs.OverlayDirsFor != nil {
+			overlays = cs.OverlayDirsFor(p)
+		}
+		for _, dir := range overlays {
 			ss.OverlayDirs = append(ss.OverlayDirs, filepath.Join(skillsDir, dir))
 		}
 		for _, t := range cs.Turns {

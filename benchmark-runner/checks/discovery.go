@@ -19,6 +19,9 @@ const (
 	noDescriptionBodyCanary = "VIREO-PUMICE-3049"
 	collisionProjectCanary  = "RAVEN-CITRINE-6634"
 	collisionUserCanary     = "PIPIT-SHALE-1147"
+	multirootNativeCanary   = "GREBE-AZURITE-7301"
+	multirootAgentsCanary   = "BUNTING-SERPENTINE-4185"
+	multirootClaudeCanary   = "NIGHTJAR-KYANITE-6072"
 )
 
 // catalogPresence reports whether skillName is in the platform's catalog:
@@ -482,6 +485,281 @@ func descriptionLengthUnit() Spec {
 				f.Verdict = "inconsistent-length-unit"
 				f.Notes = append(f.Notes, "the three outcomes fit no single counting unit; see the per-fixture fates")
 			}
+			return f
+		},
+	}
+}
+
+// multirootVariant is one copy of probe-multiroot: where it lands, the
+// canary that proves its body loaded, and the description-only phrase that
+// proves its catalog entry was listed (bodies say "-root variant" in
+// lowercase, so the uppercase description marker is listing-only).
+type multirootVariant struct {
+	overlay, root, canary, descMarker, label string
+	// beacon names a non-colliding control skill the same overlay installs
+	// beside the variant; its presence in the catalog proves the root was
+	// scanned, so a missing variant was dropped by name, not by the scan.
+	beacon string
+}
+
+var multirootForeign = []multirootVariant{
+	{"overlay-multiroot-agents", filepath.Join(".agents", "skills"), multirootAgentsCanary, "AGENTS-root variant", ".agents/skills", "probe-multiroot-beacon-agents"},
+	{"overlay-multiroot-claude", filepath.Join(".claude", "skills"), multirootClaudeCanary, "CLAUDE-root variant", ".claude/skills", "probe-multiroot-beacon-claude"},
+}
+
+// multirootVariantsFor returns the native variant plus every foreign
+// variant whose root is not the harness's own skills directory.
+func multirootVariantsFor(p profile.Profile) []multirootVariant {
+	out := []multirootVariant{{"", p.ProjectSkillDir, multirootNativeCanary, "NATIVE-root variant", "native", ""}}
+	for _, v := range multirootForeign {
+		if v.root != p.ProjectSkillDir {
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
+func multiRootCollisionPrecedence() Spec {
+	return Spec{
+		ID:          "multi-root-collision-precedence",
+		Description: "With the same skill name installed under two project roots the platform scans (its native directory plus .agents/skills or .claude/skills), which variant is listed and which activates?",
+		Sessions: []Session{{
+			Skills: []string{"probe-multiroot"},
+			OverlayDirsFor: func(p profile.Profile) []string {
+				var out []string
+				for _, v := range multirootVariantsFor(p)[1:] {
+					out = append(out, v.overlay)
+				}
+				return out
+			},
+			Turns: []Turn{
+				{Prompt: listingPrompt},
+				{Prompt: func(p profile.Profile) string { return p.ActivationPrompt("probe-multiroot") }, Activation: true},
+			},
+		}},
+		Evaluate: func(sos []*observe.SessionObservation) Finding {
+			so := sos[0]
+			obs := so.Final()
+			f := Finding{CheckID: "multi-root-collision-precedence"}
+			variants := multirootVariantsFor(obs.Profile)
+			var installed []string
+			for _, v := range variants[1:] {
+				installed = append(installed, v.label)
+			}
+			f.Notes = append(f.Notes, "foreign roots installed alongside the native copy: "+strings.Join(installed, ", "))
+
+			// Scan control: each foreign overlay also installs a beacon
+			// skill with a unique name. A listed beacon proves its root
+			// was scanned.
+			var scanned []string
+			for _, v := range variants[1:] {
+				if listed, conf, ev := catalogPresence(so, v.beacon); listed {
+					scanned = append(scanned, v.label)
+					f.Evidence = append(f.Evidence, ev...)
+					_ = conf
+				}
+			}
+
+			// Listing: which variants' description markers reached the
+			// model on the listing turn (turn 0).
+			var listed []string
+			for _, v := range variants {
+				if obs.Profile.RecordsInjectedContext {
+					inj, _ := loadsOf(so, v.descMarker)
+					for _, o := range inj {
+						if turnOf(so, o.EventIndex) == 0 {
+							listed = append(listed, v.label)
+							f.Evidence = append(f.Evidence, evAt(so, o.EventIndex, "discovery listing carries the "+v.label+" variant's description"))
+							break
+						}
+					}
+					continue
+				}
+				for _, o := range assistantMentions(so, v.descMarker) {
+					if turnOf(so, o.EventIndex) == 0 {
+						listed = append(listed, v.label)
+						f.Evidence = append(f.Evidence, evAt(so, o.EventIndex, "tool-free listing answer echoes the "+v.label+" variant's description"))
+						break
+					}
+				}
+			}
+
+			// Activation: the first variant whose body loaded is the one
+			// the activation resolved to; any later load is the model
+			// exploring (on pull harnesses it may read every copy).
+			var loaded []string
+			var injAny, pullAny []trace.Occurrence
+			firstAt := -1
+			for _, v := range variants {
+				inj, pull := loadsOf(so, v.canary)
+				if len(inj)+len(pull) == 0 {
+					continue
+				}
+				at := loadsInOrder(inj, pull)[0].EventIndex
+				if firstAt < 0 || at < firstAt {
+					firstAt = at
+					loaded = append([]string{v.label}, loaded...)
+				} else {
+					loaded = append(loaded, v.label)
+				}
+				injAny = append(injAny, inj...)
+				pullAny = append(pullAny, pull...)
+				f.Evidence = append(f.Evidence, evAt(so, at, v.label+" variant's body canary loaded"))
+			}
+			if len(loaded) > 1 {
+				f.Notes = append(f.Notes, "the model also read the "+strings.Join(loaded[1:], " and ")+" variant(s) after the first load; graded on the first load, the rest is exploration")
+				loaded = loaded[:1]
+			}
+			if len(loaded) == 0 {
+				f.Status = StatusInconclusive
+				f.Verdict = "activation-not-observed"
+				f.Notes = append(f.Notes, "final answer: "+finalAnswer(so))
+				return f
+			}
+			f.Status = StatusObserved
+			f.Vehicle = vehicleOf(injAny, pullAny)
+			if obs.Profile.RecordsInjectedContext {
+				f.Confidence = ConfidenceDirect
+			} else {
+				f.Confidence = ConfidenceInferred
+				f.Notes = append(f.Notes, "listing evidence rests on the model's catalog echo; the platform records no injected context")
+			}
+			foreignListed := 0
+			for _, l := range listed {
+				if l != "native" {
+					foreignListed++
+				}
+			}
+			switch {
+			case len(listed) > 1:
+				f.Verdict = "catalog-lists-all; activated:" + strings.Join(loaded, "+")
+				f.Notes = append(f.Notes, "model-level: the catalog exposed more than one entry for the name, so which variant activated was the model's choice")
+			case foreignListed == 0 && len(loaded) == 1 && loaded[0] == "native" && len(scanned) == 0:
+				f.Verdict = "foreign-roots-not-scanned"
+				f.Notes = append(f.Notes, "neither the convention-root variants nor their beacon skills were listed; the platform reads only its native directory (consistent with cross-client-directory-interop)")
+			case len(loaded) == 1 && loaded[0] == "native":
+				f.Verdict = "native-root-wins"
+				if len(scanned) > 0 {
+					f.Notes = append(f.Notes, "platform-level: the beacon skills from "+strings.Join(scanned, ", ")+" were listed, so those roots were scanned and the colliding variant was dropped by name in favor of the native copy")
+				}
+			case len(loaded) == 1:
+				f.Verdict = "foreign-root-wins:" + loaded[0]
+			default:
+				f.Verdict = "foreign-root-wins:" + loaded[0]
+			}
+			if len(listed) > 0 {
+				f.Notes = append(f.Notes, "listed variants: "+strings.Join(listed, ", "))
+			}
+			if len(scanned) > 0 {
+				f.Notes = append(f.Notes, "roots proven scanned by their beacon: "+strings.Join(scanned, ", "))
+			}
+			f.Notes = append(f.Notes, "final answer: "+finalAnswer(so))
+			return f
+		},
+	}
+}
+
+// nameLengthFixtures are the name-length-unit probes: names whose length in
+// code points, UTF-16 code units, and UTF-8 bytes diverge. The 72-character
+// ASCII fixture from invalid-name-tolerance proves enforcement exists; the
+// exact-64 ASCII fixture is the boundary control; the short Greek name is
+// under the cap in every unit, so its absence means non-ASCII names are
+// rejected outright rather than counted. Descriptions carry a listing-only
+// marker phrase because a model's catalog echo may not reproduce a long
+// non-ASCII name verbatim.
+var nameLengthFixtures = []struct{ label, dir, marker string }{
+	{"ascii64", "probe-name-at-exactly-sixty-four-characters-to-mark-the-cap-abcd", "Length-unit probe ascii-sixty-four"},
+	{"ascii72", "probe-overlong-name-padded-well-past-the-spec-sixty-four-character-limit", ""},
+	{"greek16", "probe-αβγδεζηθικ", "Length-unit probe greek-sixteen"},
+	{"greek60", "probe-αβγδεζηθικλμνξοπρστυφχψωαβγδεζηθικλμνξοπρστυφχψωαβγδεζ", "Length-unit probe greek-sixty"},
+	{"math40", "probe-𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡", "Length-unit probe math-forty"},
+}
+
+// listedByNameOrMarker reports catalog presence via the skill name or,
+// failing that, a description-only marker phrase.
+func listedByNameOrMarker(so *observe.SessionObservation, name, marker string) (bool, []Evidence) {
+	if listed, _, ev := catalogPresence(so, name); listed {
+		return true, ev
+	}
+	if marker == "" {
+		return false, nil
+	}
+	obs := so.Final()
+	if obs.Profile.RecordsInjectedContext {
+		inj, _ := loadsOf(so, marker)
+		for _, o := range inj {
+			if turnOf(so, o.EventIndex) == 0 {
+				return true, []Evidence{evAt(so, o.EventIndex, "discovery listing carries the description marker for "+name)}
+			}
+		}
+		return false, nil
+	}
+	for _, o := range assistantMentions(so, marker) {
+		if turnOf(so, o.EventIndex) == 0 {
+			return true, []Evidence{evAt(so, o.EventIndex, "tool-free listing answer echoes the description marker for "+name)}
+		}
+	}
+	return false, nil
+}
+
+func nameLengthUnit() Spec {
+	var dirs []string
+	for _, fx := range nameLengthFixtures {
+		dirs = append(dirs, fx.dir)
+	}
+	return Spec{
+		ID:          "name-length-unit",
+		Description: "When a platform enforces the 64-character name limit, does it count Unicode code points, UTF-16 code units, or UTF-8 bytes, or does it reject non-ASCII names regardless of length?",
+		Sessions: []Session{{
+			Skills: dirs,
+			Turns:  []Turn{{Prompt: listingPrompt}},
+		}},
+		Evaluate: func(sos []*observe.SessionObservation) Finding {
+			so := sos[0]
+			f := Finding{CheckID: "name-length-unit", Status: StatusObserved, Confidence: ConfidenceDirect}
+			if !so.Final().Profile.RecordsInjectedContext {
+				f.Confidence = ConfidenceInferred
+			}
+			listed := map[string]bool{}
+			var summary []string
+			for _, fx := range nameLengthFixtures {
+				ok, ev := listedByNameOrMarker(so, fx.dir, fx.marker)
+				listed[fx.label] = ok
+				f.Evidence = append(f.Evidence, ev...)
+				fate := "skipped"
+				if ok {
+					fate = "listed"
+				}
+				summary = append(summary, fx.label+":"+fate)
+			}
+			f.Notes = append(f.Notes, "name fates: "+strings.Join(summary, ", "))
+			if !listed["ascii64"] {
+				f.Notes = append(f.Notes, "the exact-64 ASCII control was not listed: the cap sits below 64 or another rule fired; read the per-name fates with care")
+			}
+			switch {
+			case listed["ascii72"] && listed["greek16"]:
+				f.Verdict = "no-length-enforcement"
+				f.Notes = append(f.Notes, "the 72-character ASCII name was listed, so the platform does not enforce the cap and its counting unit is moot; non-ASCII names were accepted too")
+			case listed["ascii72"]:
+				f.Verdict = "no-length-enforcement; rejects-non-ascii-names"
+				f.Notes = append(f.Notes, "the 72-character ASCII name was listed, so the platform does not enforce the cap; it does reject non-ASCII names, since the 16-code-point Greek name was absent")
+			case !listed["greek16"]:
+				f.Verdict = "rejects-non-ascii-names"
+				f.Notes = append(f.Notes, "the platform enforces the cap (72 ASCII rejected) but also dropped the 16-code-point Greek name, which is under 64 in every unit: non-ASCII names are rejected on the character rule, so the counting unit cannot be observed")
+			case listed["greek60"] && listed["math40"]:
+				f.Verdict = "counts-code-points"
+				f.Notes = append(f.Notes, "the 72-character ASCII name was rejected while both non-ASCII names under 64 code points were listed: the platform counts code points, the reference validator's unit")
+			case listed["greek60"] && !listed["math40"]:
+				f.Verdict = "counts-utf16-units"
+				f.Notes = append(f.Notes, "the Greek name (60 in every unit but bytes) was listed and the astral name (74 UTF-16 units) was not: the platform counts UTF-16 code units")
+			case !listed["greek60"] && !listed["math40"]:
+				f.Verdict = "counts-bytes"
+				f.Notes = append(f.Notes, "the short Greek name was listed but both longer non-ASCII names (114 and 142 bytes) were not: the platform counts UTF-8 bytes")
+			default:
+				f.Verdict = "inconsistent-length-unit"
+				f.Notes = append(f.Notes, "the outcomes fit no single counting unit; see the per-name fates")
+			}
+			f.Notes = append(f.Notes, "final answer: "+finalAnswer(so))
 			return f
 		},
 	}

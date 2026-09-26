@@ -9,7 +9,7 @@ fixture, invoke the harness headlessly, locate and parse the transcript,
 trace canary phrases.
 
 Check IDs match [checks.md](../checks.md) (check list
-version 0.2); canary phrases match the
+version 0.4); canary phrases match the
 [canary index](../benchmark-skills/README.md#canary-phrase-index).
 Automated findings complement, not replace, the manual results in
 [platform-findings/](../platform-findings/):
@@ -87,17 +87,18 @@ prompt).
 | `path-resolution-base` | Automated |
 | `cross-skill-resource-shadowing` | Automated |
 | `path-traversal-boundary` | Automated (installs a sibling skill as the traversal target) |
+| `resource-nesting-depth` | Automated |
+| `bundled-script-execution` | Automated (the script assembles its canary at runtime, so output proves execution) |
+| `bundled-file-enumeration-scale` | Automated (40-file fixture; grades the harness-composed file list) |
 | `discovery-listing-fields` | Automated (passive verbatim-catalog turn) |
 | `frontmatter-handling` | Automated |
-| `metadata-value-edge-cases` | Automated |
 | `content-wrapping-format` | Automated |
+| `activation-location-disclosure` | Automated |
 | `reactivation-deduplication` | Automated (two-turn session) |
 | `reactivation-freshness` | Automated (two-turn session, edits SKILL.md between activations) |
 | `compatibility-field-behavior` | Automated |
-| `nested-skill-discovery` | Automated (passive listing turn) |
-| `resource-nesting-depth` | Automated |
-| `name-directory-mismatch` | Automated (three turns: listing, then activation by each name) |
-| `recursive-root-discovery` | Automated (installs a stray SKILL.md outside the skills root) |
+| `allowed-tools-behavior` | Automated (field-bearing skill and its control twin, one session each) |
+| `allowed-tools-name-matching` | Automated (two naming twins plus the spec-style twin, one session each) |
 | `cross-skill-invocation` | Automated |
 | `invocation-depth-limit` | Automated |
 | `circular-invocation-handling` | Automated |
@@ -107,9 +108,19 @@ prompt).
 | `nonstandard-dependency-fields` | Automated (installs the named dependencies so the platform could resolve them) |
 | `cross-scope-dependency` | Automated (two sessions: dependency at user scope, then absent; requires `-sandbox`) |
 | `cross-client-directory-interop` | Automated (skill installed only at `.agents/skills/` via project overlay) |
+| `recursive-root-discovery` | Automated (installs a stray SKILL.md outside the skills root) |
+| `nested-skill-discovery` | Automated (passive listing turn) |
+| `name-collision-precedence` | Automated (same name at project and user scope; requires `-sandbox`) |
+| `multi-root-collision-precedence` | Automated (same name under the native root and the convention roots) |
 | `malformed-yaml-tolerance` | Automated |
 | `missing-description-handling` | Automated |
-| `name-collision-precedence` | Automated (same name at project and user scope; requires `-sandbox`) |
+| `invalid-name-tolerance` | Automated (three fixtures, one rule each) |
+| `name-directory-mismatch` | Automated (three turns: listing, then activation by each name) |
+| `metadata-value-edge-cases` | Automated |
+| `oversize-description-handling` | Automated |
+| `description-length-unit` | Automated (three fixtures at the 1024 boundary in different units) |
+| `name-length-unit` | Automated (four name fixtures plus the overlong ASCII one; listing turn only) |
+| `oversize-compatibility-handling` | Automated |
 | `context-compaction-protection` | Manual |
 | `trust-gating-behavior` | Manual |
 

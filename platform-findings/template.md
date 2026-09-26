@@ -224,6 +224,17 @@ work on that platform.
 
 ---
 
+#### `bundled-file-enumeration-scale`
+
+- **Benchmark skill**: `probe-bulk-files`. Activate the skill and read the injected content (or the model's step-2 answer where injection is not recorded). Which bundled file names appear: bulk-file-01.md through bulk-file-40.md, the hidden dotfile, the PNG under assets/, the vendored .js? The body names none of them.
+- **Status**: Not tested
+- **Observation**: <!-- Nothing listed? Every file listed (count)? A cap (last listed number)? Dotfile, binary, or vendor tree omitted? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (the listing is composed by the harness). -->
+- **Fallback behavior**: <!-- Where the list is capped or filtered, can the model still reach the omitted files by exploring? -->
+
+---
+
 ### Category 4: Content Presentation
 
 #### `discovery-listing-fields`
@@ -252,6 +263,17 @@ work on that platform.
 - **Evidence**: <!--  -->
 - **Platform-level or model-level?**: <!-- Platform-level -->
 - **Fallback behavior**: <!-- N/A. Wrapping is informational; there is no "failure" to fall back from. Note whether the wrapping format helps or hinders the model's ability to follow skill instructions. -->
+
+---
+
+#### `activation-location-disclosure`
+
+- **Benchmark skill**: `probe-loading`. Activate the skill and check whether the injected content (not the discovery listing) states the skill's directory path, e.g. a line containing `skills/probe-loading`. On platforms that record no injected content, ask the model in the same turn where the skill's files live and whether it was told.
+- **Status**: Not tested
+- **Observation**: <!-- Path stated at activation? Only in the discovery listing? Not stated anywhere? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (what the harness injects). -->
+- **Fallback behavior**: <!-- Where no path is stated, how does the model find the skill directory (guessing conventional roots, searching)? -->
 
 ---
 
@@ -314,6 +336,17 @@ work on that platform.
 - **Evidence**: <!--  -->
 - **Platform-level or model-level?**: <!-- Platform-level (pre-approval is a harness mechanism); note the spec marks the field experimental. -->
 - **Fallback behavior**: <!-- Where the field is ignored, does the command fall into the normal permission flow, and can the user approve it there? -->
+
+---
+
+#### `allowed-tools-name-matching`
+
+- **Benchmark skills**: `probe-allowed-tools-lowercase` + `probe-allowed-tools-shell`, read against `allowed-tools-behavior`'s field-bearing twin. Run each in its own session. Derived phrases: CHOUGH-TUFA-7180 (lowercase twin's printf ran), ROOK-GABBRO-8841 (shell twin's printf ran); GROUSE-MICA-9017 is the spec-style twin's.
+- **Status**: Not tested
+- **Observation**: <!-- Did any spelling unblock the command where another was blocked? Which spelling matches this platform's tool name? Did the platform surface the field value anywhere? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (permission gating). -->
+- **Fallback behavior**: <!-- When blocked, did the model report the denial or find another way to produce the output? -->
 
 ---
 
@@ -434,6 +467,28 @@ work on that platform.
 - **Evidence**: <!--  -->
 - **Platform-level or model-level?**: <!-- Platform-level (precedence is resolved at discovery). -->
 - **Fallback behavior**: <!-- Can the user reach the shadowed variant at all (by path, by disambiguated name)? -->
+
+---
+
+#### `multi-root-collision-precedence`
+
+- **Benchmark skills**: `probe-multiroot` + `overlay-multiroot-agents` + `overlay-multiroot-claude`. Install `probe-multiroot` in the platform's native skills directory and copy each overlay's contents onto the project root so variants land at `.agents/skills/probe-multiroot/` and `.claude/skills/probe-multiroot/`; skip whichever overlay coincides with the native directory. List skills, then activate `probe-multiroot`. Canaries: GREBE-AZURITE-7301 (native root), BUNTING-SERPENTINE-4185 (.agents root), NIGHTJAR-KYANITE-6072 (.claude root). Descriptions carry "NATIVE-root variant", "AGENTS-root variant", and "CLAUDE-root variant" for telling listings apart. Each overlay also installs a non-colliding beacon skill (`probe-multiroot-beacon-agents`, `probe-multiroot-beacon-claude`): a listed beacon proves its root was scanned, so a missing variant was dropped by name rather than never seen.
+- **Status**: Not tested
+- **Observation**: <!-- Listed once or several times? Which root's canary activated? Any collision warning? Were the foreign roots scanned at all? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level if one entry is listed; model-level if the catalog lists several and the model chose. -->
+- **Fallback behavior**: <!-- Can the shadowed variant be reached at all (by path, disambiguated name)? -->
+
+---
+
+#### `name-length-unit`
+
+- **Benchmark skills**: `probe-name-at-exactly-sixty-four-characters-to-mark-the-cap-abcd` (64 ASCII characters), `probe-αβγδεζηθικ` (16 code points, 26 bytes), `probe-αβγδεζηθικλμνξοπρστυφχψωαβγδεζηθικλμνξοπρστυφχψωαβγδεζ` (60 code points, 60 UTF-16 units, 114 bytes), `probe-𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡` (40 code points, 74 UTF-16 units, 142 bytes), plus the 72-character ASCII fixture from `invalid-name-tolerance`. Each description opens with a listing-only marker (`Length-unit probe ascii-sixty-four`, `greek-sixteen`, `greek-sixty`, `math-forty`) in case the catalog echo does not reproduce a non-ASCII name verbatim. List skills only.
+- **Status**: Not tested
+- **Observation**: <!-- Per name: listed or skipped. Which posture fits: no enforcement (72 ASCII listed), rejects non-ASCII (16-code-point Greek skipped), code points (both long non-ASCII listed), UTF-16 units (Greek listed, astral skipped), or bytes (both long non-ASCII skipped)? Was the exact-64 control listed? -->
+- **Evidence**: <!--  -->
+- **Platform-level or model-level?**: <!-- Platform-level (counting and character checks happen at discovery). -->
+- **Fallback behavior**: <!-- Any error or warning for a rejected name, or silent? Does the file stay readable by path? -->
 
 ---
 

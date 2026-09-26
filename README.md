@@ -30,12 +30,12 @@ through empirical testing rather than assumptions.
 
 ## What's here
 
-- **[checks.md](checks.md)**: 41 checks across 10 categories
+- **[checks.md](checks.md)**: 46 checks across 10 categories
   of platform behavior (loading, validation, execution, and access control) that
   need empirical testing. Each check describes what it evaluates and why it
   matters for skill authors.
 
-- **[benchmark-skills/](benchmark-skills/)**: 35 spec-compliant skills designed
+- **[benchmark-skills/](benchmark-skills/)**: 45 spec-compliant skills designed
   to exercise those checks. Each contains unique canary phrases that reveal what a
   platform loaded and when, without relying on model self-reporting. See the
   [benchmark skills README](benchmark-skills/README.md) for the full inventory,
@@ -68,10 +68,11 @@ that may not match reality anywhere.
 Skill loading behavior is the starting point, but not the only area where platform
 behavior is unspecified and likely diverges. We plan to investigate these areas next:
 
-- **Tool restriction**: The `allowed-tools-behavior` check now covers whether the
-  field pre-approves anything, but the other half remains open: does any platform
-  *restrict* the model to declared tools, or provision additional tools a skill
-  requests?
+- **Tool restriction**: The `allowed-tools-behavior` and
+  `allowed-tools-name-matching` checks now cover whether the field pre-approves
+  anything under any spelling of the tool name, but the other half remains open:
+  does any platform *restrict* the model to declared tools, or provision
+  additional tools a skill requests?
 - **Activation mechanisms**: How does a user activate a skill? Slash command,
   natural language, automatic activation based on context? A skill designed for one
   activation style may never get discovered on a platform that only supports another.

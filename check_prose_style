@@ -21,9 +21,12 @@ if ! command -v vale >/dev/null 2>&1; then
   exit 1
 fi
 
-FILES=$( { git diff --name-only --diff-filter=ACMR -- '*.md'
-           git diff --cached --name-only --diff-filter=ACMR -- '*.md'
-           git ls-files --others --exclude-standard -- '*.md'
+# core.quotepath=false keeps non-ASCII paths literal; git would otherwise
+# octal-escape and double-quote them, which defeats the exclusions below
+# (the benchmark fixtures include skills with Greek and astral-plane names).
+FILES=$( { git -c core.quotepath=false diff --name-only --diff-filter=ACMR -- '*.md'
+           git -c core.quotepath=false diff --cached --name-only --diff-filter=ACMR -- '*.md'
+           git -c core.quotepath=false ls-files --others --exclude-standard -- '*.md'
          } | sort -u | grep -v '^benchmark-skills/' \
            | grep -v '^benchmark-runner/reports/' \
            | grep -v '^site/content/platforms/' \

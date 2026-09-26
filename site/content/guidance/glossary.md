@@ -1,8 +1,8 @@
 ---
 title: "Glossary"
-description: "Terms used throughout the checks, platform reports, and authoring guidance."
+description: "Terms used throughout the checks, platform reports, and guidance."
 date: 2026-08-01
-weight: 2
+weight: 5
 ---
 
 - **Canary phrase**: A unique string (e.g., CARDINAL-ZEBRA-7742) embedded in a

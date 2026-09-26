@@ -46,13 +46,13 @@ Can the agent run a bundled scripts/ file?
   Codex CLI        <span class="t-ok">✓ script ran; output returned</span>
   Copilot CLI      <span class="t-bad">✗ blocked with an error</span>
 <span> </span>
-<span class="t-dim">41 checks · 4 platforms · every claim transcript-cited</span></div>
+<span class="t-dim">46 checks · 4 platforms · every claim transcript-cited</span></div>
 </div>
 
 <div class="not-prose home-cards">
   <div class="home-card">
     <h3>The Checks</h3>
-    <p>41 checks across 10 categories, from loading timing to validation strictness. Each asks one testable question about platform behavior and explains why the answer matters to skill authors.</p>
+    <p>46 checks across 10 categories, from loading timing to validation strictness. Each asks one testable question about platform behavior and explains why the answer matters to skill authors.</p>
     <a class="home-card-link" href="/checks/">Browse the catalog &rarr;</a>
   </div>
   <div class="home-card">
@@ -61,8 +61,8 @@ Can the agent run a bundled scripts/ file?
     <a class="home-card-link" href="/platforms/">Read the reports &rarr;</a>
   </div>
   <div class="home-card">
-    <h3>Authoring Guidance</h3>
-    <p>The findings turned into practice: rules for writing skills that survive platform differences, each backed by the checks that motivated it, plus a glossary of the terms used throughout.</p>
+    <h3>Guidance</h3>
+    <p>The findings turned into practice for skill authors, people installing skills, distributors and packagers, and harness implementers, each rule backed by the checks that motivated it, plus a glossary of the terms used throughout.</p>
     <a class="home-card-link" href="/guidance/">Get the guidance &rarr;</a>
   </div>
 </div>
@@ -114,7 +114,7 @@ finding to an archived transcript.
 We need empirical data from real platforms, and even partial data from a single
 platform beats speculation about all of them. Install the
 [benchmark skills](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills),
-run any of the 41 checks, and submit findings with the
+run any of the 46 checks, and submit findings with the
 [platform template](https://github.com/agent-ecosystem/agent-skill-implementation/blob/main/platform-findings/template.md).
 The [GitHub repository](https://github.com/agent-ecosystem/agent-skill-implementation)
 has full instructions.
