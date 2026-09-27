@@ -17,24 +17,60 @@ import (
 )
 
 // Model answers embedded in notes may contain markdown links to fixture
-// files (observed on Antigravity: [SKILL.md](file:///var/folders/...)).
-// The targets are ephemeral sandbox paths that mean nothing to readers and
-// trip the site theme's link resolver, so site output keeps the link text
-// and drops the URL. Truncated answers can also leave a dangling partial
-// link, which the tail patterns clean up.
+// files (observed on Antigravity: [SKILL.md](file:///var/folders/...), and on
+// Codex as a bare [text](/private/var/folders/...) with no scheme). The
+// targets are ephemeral sandbox paths that mean nothing to readers and trip
+// the site theme's link resolver, so site output keeps the link text and
+// drops the URL. A scheme-less sandbox path also reads as site-relative once
+// published, which points the link at a page that does not exist. Truncated
+// answers can also leave a dangling partial link, which the tail patterns
+// clean up.
 var (
 	fileLinkPattern    = regexp.MustCompile(`\[([^\]]*)\]\(file://[^)]*\)`)
 	fileURLPattern     = regexp.MustCompile(`file://[^\s)]*`)
+	localLinkPattern   = regexp.MustCompile(`\[([^\]]*)\]\(/(?:private/)?(?:var|tmp|Users|home)/[^)]*\)`)
 	emptyLinkPattern   = regexp.MustCompile(`\[([^\]]*)\]\(\s*\)`)
 	danglingTailattern = regexp.MustCompile(`\]\(\s*$`)
+)
+
+// Answers also quote whatever the harness put in front of the model, which
+// includes XML-ish skill catalogs (<skill><name>...</name></skill>, observed on
+// Copilot CLI) and paths written with angle-bracket placeholders (Codex's
+// r0/<skill>/SKILL.md). Hugo renders the site's markdown with raw HTML enabled,
+// so those reach the page as real elements: an unclosed one truncates the
+// document for anything that parses it strictly, and the rest swallow their own
+// text. Wrapping each in a code span keeps the answer verbatim on screen and
+// leaves the page parseable. Tags already inside a code span are left alone, so
+// the wrapping is not applied twice.
+var (
+	codeSpanPattern = regexp.MustCompile("`[^`]*`")
+	rawTagPattern   = regexp.MustCompile(`</?[A-Za-z][A-Za-z0-9._-]*(?:\s[^<>]*)?/?>`)
 )
 
 func sanitizeForSite(text string) string {
 	text = fileLinkPattern.ReplaceAllString(text, "$1")
 	text = fileURLPattern.ReplaceAllString(text, "")
+	text = localLinkPattern.ReplaceAllString(text, "$1")
 	text = emptyLinkPattern.ReplaceAllString(text, "$1")
 	text = danglingTailattern.ReplaceAllString(text, "]")
+	text = outsideCodeSpans(text, func(s string) string {
+		return rawTagPattern.ReplaceAllString(s, "`$0`")
+	})
 	return text
+}
+
+// outsideCodeSpans applies fn to the stretches of text that sit outside
+// backtick code spans, leaving the spans themselves untouched.
+func outsideCodeSpans(text string, fn func(string) string) string {
+	var b strings.Builder
+	last := 0
+	for _, span := range codeSpanPattern.FindAllStringIndex(text, -1) {
+		b.WriteString(fn(text[last:span[0]]))
+		b.WriteString(text[span[0]:span[1]])
+		last = span[1]
+	}
+	b.WriteString(fn(text[last:]))
+	return b.String()
 }
 
 // reportCategories mirrors checks.md's category order, including

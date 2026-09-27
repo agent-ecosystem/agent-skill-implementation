@@ -285,7 +285,7 @@ _Does the content injected at activation tell the model where the skill lives on
 - **Evidence**:
   - skill path appears only in the discovery listing
 - **Note**: the model addressed the skill directory by path in its own tool calls
-- **Note**: the listing's location may be an alias rather than a real path (codex 0.157 writes r0/<skill>/SKILL.md); the model still resolved the directory itself
+- **Note**: the listing's location may be an alias rather than a real path (codex 0.157 writes r0/`<skill>`/SKILL.md); the model still resolved the directory itself
 - **Note**: final answer: 1. **Frontmatter visibility:** Visible. Fields: `name`, `description`, `allowed-tools`, `compatibility`, and `metadata` (containing `benchmark` and `version`).  2. **Content wrapping:** The skill is Markdown with YAML frontmatter. It arrived as a string in a JSON tool result, without additional XML-style wrapping.  3. **Resource awareness:** From the skill text alone, I know of `references/`, `scripts/`, and `assets/`, plus two referenced files:    - `references/api-overview.md`    - `references/error-codes.md`     No directory listing was supplied; I have not verified these resources.  4. **Resource content:** No supporting file contents were automatically loaded into my context. I read only `SKILL.md`.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -455,7 +455,7 @@ _Is a dependency expressed only in prose ("now activate the invoke-beta skill") 
   - invoke-alpha body loaded (chain entry)
   - invoke-beta's body canary loaded after invoke-alpha's instruction
 - **Note**: invoke-gamma deliberately not installed; the chain tail beyond beta is out of scope here
-- **Note**: final answer: invoke-alpha and invoke-beta activated, reporting canaries **IBIS-RUST-3310** and **TERN-MOSS-6647**.  The chain cannot complete because invoke-gamma was not found in either skill directory. [invoke-beta’s instructions](/private/var/folders/39/30d_262j423_n546m9g8_hc80000gn/T/skillxp-1094994251/project/.codex/skills/invoke-beta/SKILL.md) require: “Now activate the `invoke-gamma` skill to continue the chain.”
+- **Note**: final answer: invoke-alpha and invoke-beta activated, reporting canaries **IBIS-RUST-3310** and **TERN-MOSS-6647**.  The chain cannot complete because invoke-gamma was not found in either skill directory. invoke-beta’s instructions require: “Now activate the `invoke-gamma` skill to continue the chain.”
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `missing-dependency-behavior`

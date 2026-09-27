@@ -1,0 +1,48 @@
+{{- /*
+  Prepares a page's source markdown for the .md output format that agents
+  fetch, so the markdown carries the same content as the HTML and stays useful
+  once it is read away from the site it came from.
+
+  Always: root-relative link targets are rewritten to absolute URLs. They
+  resolve fine in a browser, but an agent that copies the markdown into its
+  context or a cache has nothing left to resolve them against.
+
+  With stripHTML: raw HTML blocks are turned back into markdown. Only the
+  homepage hand-writes HTML in its content, and its .md output was otherwise
+  mostly CSS. Headings, links and the terminal figure are converted rather
+  than flattened so the markdown keeps the page's structure and navigation;
+  everything else is dropped. This is off by default because the platform
+  reports quote angle-bracket placeholders inside code spans, and a blanket
+  tag strip would eat those.
+
+  Call with a dict: (dict "content" .RawContent "stripHTML" false)
+*/ -}}
+{{- $content := .content -}}
+{{- if .stripHTML -}}
+  {{- $content = replaceRE `(?s)<style[^>]*>.*?</style>` "" $content -}}
+  {{- $content = replaceRE `(?s)<script[^>]*>.*?</script>` "" $content -}}
+  {{- /* The hero's terminal figure is column-aligned text; a fence keeps it
+         from reflowing into a paragraph. Inner <span> markup is removed by
+         the general tag strip below. */ -}}
+  {{- $content = replaceRE `(?s)<div class="home-term">(.*?)</div>` "\n```text\n$1\n```\n" $content -}}
+  {{- $content = replaceRE `(?s)<a[^>]*href="([^"]*)"[^>]*>(.*?)</a>` "[$2]($1)" $content -}}
+  {{- $content = replaceRE `(?s)<h1[^>]*>\s*(.*?)\s*</h1>` "\n# $1\n" $content -}}
+  {{- $content = replaceRE `(?s)<h2[^>]*>\s*(.*?)\s*</h2>` "\n## $1\n" $content -}}
+  {{- $content = replaceRE `(?s)<h3[^>]*>\s*(.*?)\s*</h3>` "\n### $1\n" $content -}}
+  {{- $content = replaceRE `(?s)<h4[^>]*>\s*(.*?)\s*</h4>` "\n#### $1\n" $content -}}
+  {{- $content = replaceRE `</?[A-Za-z][A-Za-z0-9-]*(?:\s[^<>]*)?/?>` "" $content -}}
+  {{- $content = replaceRE `&rarr;` "→" $content -}}
+  {{- $content = replaceRE `&nbsp;` " " $content -}}
+  {{- $content = replaceRE `&quot;` "\"" $content -}}
+  {{- $content = replaceRE `&amp;` "&" $content -}}
+  {{- /* Indentation inherited from the HTML source would turn stripped
+         paragraphs and links into markdown code blocks. Four or more
+         leading spaces are the code-block threshold; the terminal figure
+         aligns with two, so it survives. */ -}}
+  {{- $content = replaceRE "(?m)^[ ]{4,}" "" $content -}}
+  {{- $content = replaceRE `[ \t]+\n` "\n" $content -}}
+  {{- $content = replaceRE `\n{3,}` "\n\n" $content -}}
+{{- end -}}
+{{- $base := strings.TrimSuffix "/" site.BaseURL -}}
+{{- $content = replaceRE `\]\(/([^/)][^)]*)\)` (printf "](%s/$1)" $base) $content -}}
+{{- return (strings.TrimSpace $content) -}}
