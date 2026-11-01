@@ -2,6 +2,14 @@ baseURL = "https://agentskillimplementation.com/"
 languageCode = "en"
 defaultContentLanguage = "en"
 
+# lastmod comes from the last commit touching each file, so pages show an
+# "Updated" date (Congo showDateUpdated). Build from a full git checkout.
+enableGitInfo = true
+
+# An explicit lastmod in front matter wins; otherwise the git commit date.
+[frontmatter]
+lastmod = ["lastmod", ":git", "date", "publishDate"]
+
 [mediaTypes."text/markdown"]
 suffixes = ["md"]
 
