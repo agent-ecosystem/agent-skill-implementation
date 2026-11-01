@@ -1,0 +1,36 @@
+{
+  "source": "length-unit-2026-09-19",
+  "generated": "2026-11-01",
+  "entries": [
+    {
+      "harness": "antigravity",
+      "harness_version": "1.2.7",
+      "model": "Gemini 3.8 Flash (High)",
+      "check_id": "description-length-unit",
+      "status": "observed",
+      "verdict": "no-length-enforcement",
+      "confidence": "behavioral-inference",
+      "ended": "2026-09-19T21:00:13.82584-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.267",
+      "model": "claude-fable-5-1",
+      "check_id": "description-length-unit",
+      "status": "observed",
+      "verdict": "no-length-enforcement",
+      "confidence": "transcript-direct",
+      "ended": "2026-09-19T21:01:39.919133-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.154.0",
+      "model": "gpt-6-astra",
+      "check_id": "description-length-unit",
+      "status": "observed",
+      "verdict": "counts-code-points",
+      "confidence": "transcript-direct",
+      "ended": "2026-09-19T21:03:35.94782-04:00"
+    }
+  ]
+}

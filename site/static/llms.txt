@@ -17,6 +17,7 @@
 - [Claude Code Report](https://agentskillimplementation.com/platforms/claude-code/index.md): Full automated findings for Claude Code (headless), per check: verdict, vehicle, confidence, and observed fallback behavior.
 - [Codex CLI Report](https://agentskillimplementation.com/platforms/codex/index.md): Full automated findings for Codex CLI (headless), per check: verdict, vehicle, confidence, and observed fallback behavior.
 - [GitHub Copilot CLI Report](https://agentskillimplementation.com/platforms/copilot/index.md): Full automated findings for GitHub Copilot CLI (headless), per check: verdict, vehicle, confidence, and observed fallback behavior.
+- [Changelog](https://agentskillimplementation.com/changelog/index.md): One entry per run of the automated checks: the harness releases and models tested, every verdict that moved since the previous run, and whether the platform or the model moved it.
 - [Home](https://agentskillimplementation.com/index.md): Overview, current status, and links to the GitHub repository for benchmark skills and platform results.
 
 ## Tools
@@ -25,4 +26,5 @@
 - [Benchmark Skills](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-skills): 45 benchmark fixtures (spec-compliant skills plus deliberate structural and validation edge cases) with canary phrases for cross-platform behavior testing.
 - [Platform Template](https://github.com/agent-ecosystem/agent-skill-implementation/blob/main/platform-findings/template.md): Template for recording per-platform behavior findings.
 - [benchmark-runner](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-runner): Automated runner that executes the checks against installed harnesses and generates the platform reports from transcript-cited findings.
+- [Verdict ledger](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-runner/ledger): One JSON file per run of the checks recording every finding's verdict, harness version, and model, so the history behind the changelog is public and reproducible.
 - [skillxp](https://github.com/agent-ecosystem/skillxp): Harness-agnostic skill invocation engine the runner builds on: installs skills in a fixture, invokes a harness headlessly, locates and parses the transcript, and traces canary phrases.

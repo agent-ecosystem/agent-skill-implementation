@@ -1,0 +1,237 @@
+{
+  "source": "batch2-2026-08-01",
+  "generated": "2026-11-01",
+  "entries": [
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.9",
+      "model": "Gemini 3.6 Flash (High)",
+      "check_id": "circular-invocation-handling",
+      "status": "observed",
+      "verdict": "cycle-stopped-model-choice",
+      "vehicle": "model-pull",
+      "confidence": "behavioral-inference",
+      "ended": "2026-08-01T09:31:46.519249-04:00"
+    },
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.9",
+      "model": "Gemini 3.6 Flash (High)",
+      "check_id": "cross-scope-dependency",
+      "status": "observed",
+      "verdict": "resolved-across-scopes; missing:reported-without-attempt",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:41:59.816528-04:00"
+    },
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.9",
+      "model": "Gemini 3.6 Flash (High)",
+      "check_id": "cross-skill-invocation",
+      "status": "observed",
+      "verdict": "second-skill-loaded",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:31:34.316608-04:00"
+    },
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.8",
+      "model": "Gemini 3.6 Flash (High)",
+      "check_id": "eager-link-resolution",
+      "status": "observed",
+      "verdict": "no-prefetch",
+      "vehicle": "model-pull",
+      "confidence": "behavioral-inference",
+      "ended": "2026-08-01T09:31:15.943073-04:00"
+    },
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.9",
+      "model": "Gemini 3.6 Flash (High)",
+      "check_id": "invocation-depth-limit",
+      "status": "observed",
+      "verdict": "chain-completed-depth-3",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:31:40.253996-04:00"
+    },
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.9",
+      "model": "Gemini 3.6 Flash (High)",
+      "check_id": "metadata-value-edge-cases",
+      "status": "observed",
+      "verdict": "loaded-despite-edge-case-metadata",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:34:32.960132-04:00"
+    },
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.9",
+      "model": "Gemini 3.6 Flash (High)",
+      "check_id": "missing-dependency-behavior",
+      "status": "observed",
+      "verdict": "reported-without-attempt",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:31:51.189019-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.212",
+      "model": "claude-fable-5",
+      "check_id": "circular-invocation-handling",
+      "status": "observed",
+      "verdict": "cycle-stopped-model-choice",
+      "vehicle": "harness-push",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:30:46.608988-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.212",
+      "model": "claude-sonnet-5",
+      "check_id": "cross-scope-dependency",
+      "status": "observed",
+      "verdict": "resolved-across-scopes; missing:visible-failure",
+      "vehicle": "harness-push",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:41:20.914737-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.212",
+      "model": "claude-fable-5",
+      "check_id": "cross-skill-invocation",
+      "status": "observed",
+      "verdict": "second-skill-loaded",
+      "vehicle": "harness-push",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:30:18.630142-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.212",
+      "model": "claude-fable-5",
+      "check_id": "eager-link-resolution",
+      "status": "observed",
+      "verdict": "no-prefetch",
+      "vehicle": "harness-push",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:29:37.744268-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.212",
+      "model": "claude-fable-5",
+      "check_id": "invocation-depth-limit",
+      "status": "observed",
+      "verdict": "chain-completed-depth-3",
+      "vehicle": "harness-push",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:30:29.351767-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.212",
+      "model": "claude-fable-5",
+      "check_id": "metadata-value-edge-cases",
+      "status": "observed",
+      "verdict": "loaded-despite-edge-case-metadata",
+      "vehicle": "harness-push",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:34:27.297235-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.212",
+      "model": "claude-fable-5",
+      "check_id": "missing-dependency-behavior",
+      "status": "observed",
+      "verdict": "attempted-visible-failure",
+      "vehicle": "harness-push",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:31:04.855854-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.146.0",
+      "model": "gpt-5.6-sol",
+      "check_id": "circular-invocation-handling",
+      "status": "observed",
+      "verdict": "cycle-stopped-model-choice",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:29:10.670711-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.146.0",
+      "model": "gpt-5.6-sol",
+      "check_id": "cross-scope-dependency",
+      "status": "observed",
+      "verdict": "resolved-across-scopes; missing:reported-without-attempt",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:36:02.598012-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.146.0",
+      "model": "gpt-5.6-sol",
+      "check_id": "cross-skill-invocation",
+      "status": "observed",
+      "verdict": "second-skill-loaded",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:28:52.151466-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.146.0",
+      "model": "gpt-5.6-sol",
+      "check_id": "eager-link-resolution",
+      "status": "observed",
+      "verdict": "no-prefetch",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:28:34.581486-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.146.0",
+      "model": "gpt-5.6-sol",
+      "check_id": "invocation-depth-limit",
+      "status": "observed",
+      "verdict": "chain-completed-depth-3",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:29:03.445595-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.146.0",
+      "model": "gpt-5.6-sol",
+      "check_id": "metadata-value-edge-cases",
+      "status": "observed",
+      "verdict": "loaded-despite-edge-case-metadata",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:34:09.088658-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.146.0",
+      "model": "gpt-5.6-sol",
+      "check_id": "missing-dependency-behavior",
+      "status": "observed",
+      "verdict": "reported-without-attempt",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T09:29:20.951376-04:00"
+    }
+  ]
+}

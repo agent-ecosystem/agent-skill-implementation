@@ -3,13 +3,15 @@
 | | |
 |---|---|
 | **Platform** | Claude Code (headless) |
-| **Platform version** | 2.1.274 |
+| **Platform version** | 2.1.309 |
 | **Check list version** | 0.4 |
-| **Test date** | 2026-09-26 |
-| **Model(s) observed** | claude-sonnet-5 |
+| **Test date** | 2026-11-01 |
+| **Model(s) observed** | claude-sonnet-5-5 |
 | **Environment** | Headless invocation via [benchmark-runner](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-runner) + [skillxp](https://github.com/agent-ecosystem/skillxp) |
 
 > **Caveats**: All findings are from headless sessions, which may differ from interactive use. Verdicts are single-run observations unless a runs count is noted; for model-level behaviors, treat a single verdict as one observed outcome rather than a rate. Evidence line numbers cite the archived transcripts in the results directories. Fallback-behavior fields are auto-derived: where a run incidentally demonstrated a recovery path it is reported, otherwise the field says "not exercised". Automation does not probe recovery, so absence of a fallback observation is not evidence that none exists.
+
+> **Changed since the previous observation**: 3 verdicts differ from the previous run of the checks on this platform: `name-directory-mismatch`, `path-resolution-base`, `unrecognized-directory-handling`. Each finding below states the earlier verdict and release.
 
 ## Spec alignment
 
@@ -17,7 +19,6 @@ Most of this report measures behavior the [Agent Skills specification](https://a
 
 ### Where behavior contradicts the spec
 
-- [`path-resolution-base`](#path-resolution-base): The spec tells authors to reference files with relative paths from the skill root, but a path written that way fails here: paths resolve against the session's working directory, not the skill directory. In this run the model noticed the failure and requalified the path itself.
 - [`bundled-script-execution`](#bundled-script-execution): The spec presents scripts/ as executable code agents can run, but execution was blocked in this headless run. Interactive sessions, where a user can approve the command, may behave differently.
 - [`frontmatter-handling`](#frontmatter-handling): The spec says the agent loads the entire SKILL.md file at activation. This platform strips the YAML frontmatter and injects only the body, so frontmatter fields beyond name and description never reach the model.
 
@@ -40,13 +41,14 @@ The spec's format rules bind skill authors; it does not say what a platform shou
 - [`malformed-yaml-tolerance`](#malformed-yaml-tolerance): The spec requires SKILL.md to open with YAML frontmatter, and this fixture's frontmatter does not parse (an unquoted colon). The platform tolerated the error: the skill is discovered and loads anyway.
 - [`missing-description-handling`](#missing-description-handling): The spec requires a non-empty description, so a skill without one is invalid. This platform discovered and loaded it anyway.
 - [`invalid-name-tolerance`](#invalid-name-tolerance): The spec's name rules (lowercase only, no consecutive hyphens, 64-character cap) make all three fixtures invalid. The platform tolerated every one: each rule-breaking name is discovered and usable.
-- [`name-directory-mismatch`](#name-directory-mismatch): The spec requires the name field to match the parent directory name, so this fixture is invalid and the spec assigns it no defined identity. The platform loaded it anyway, under the directory name.
+- [`name-directory-mismatch`](#name-directory-mismatch): The spec requires the name field to match the parent directory name, so this fixture is invalid and the spec assigns it no defined identity. The platform loaded it anyway and listed it under both identities.
 - [`metadata-value-edge-cases`](#metadata-value-edge-cases): The spec defines metadata as a map from string keys to string values, so this fixture's null and empty values fall outside it. The platform loaded the skill anyway rather than rejecting it.
 - [`oversize-description-handling`](#oversize-description-handling): The spec caps description at 1024 characters; this fixture's runs to 1116. The platform loaded the skill anyway; see the finding for whether the value survived untruncated.
 - [`oversize-compatibility-handling`](#oversize-compatibility-handling): The spec caps compatibility at 500 characters; this fixture's value runs to 570. The platform loaded the skill anyway.
 
 ### Not exercised in this run
 
+- [`path-resolution-base`](#path-resolution-base): The spec's skill-root-relative paths went untested in this run: the model rewrote each reference to a fully qualified path before use, so the platform's own resolution base was never exercised. (Behavioral inference.)
 - [`allowed-tools-behavior`](#allowed-tools-behavior): The spec marks allowed-tools experimental, with varying support. The field's own effect went unobserved: the instructed command ran with and without it, so the platform's general permission posture is what allowed execution.
 - [`allowed-tools-name-matching`](#allowed-tools-name-matching): The spec marks allowed-tools experimental, leaves tool names to each platform, and says support may vary, so no outcome contradicts it. Every spelling's command ran under the platform's general permission posture, so the field's matching rule went unobserved.
 
@@ -64,7 +66,7 @@ _Does the harness read only SKILL.md metadata at discovery, or the full body?_
 - **Status**: observed
 - **Verdict**: `metadata-only`
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/discovery-reading-depth/ab4267cd-efce-417d-8489-0ccbead99da0.jsonl`; session ab4267cd-efce-417d-8489-0ccbead99da0):
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/discovery-reading-depth/241fdb1a-78dd-40e9-a53e-d6bccf052c7f.jsonl`; session 241fdb1a-78dd-40e9-a53e-d6bccf052c7f):
   - discovery listing names probe-loading (event 6, line 8)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -76,8 +78,8 @@ _On activation, does the harness load only the SKILL.md body, or also bundled re
 - **Verdict**: `body-only`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/activation-loading-scope/9102342a-95b1-4b93-8bf5-c901a93b79a1.jsonl`; session 9102342a-95b1-4b93-8bf5-c901a93b79a1):
-  - body canary in harness-injected content (event 15, line 21)
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/activation-loading-scope/9a961afb-b9a7-46f1-924a-bfea9a9e36d4.jsonl`; session 9a961afb-b9a7-46f1-924a-bfea9a9e36d4):
+  - body canary in harness-injected content (event 18, line 23)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `eager-link-resolution`
@@ -88,11 +90,11 @@ _Does activation pre-fetch files markdown-linked from the SKILL.md body, and doe
 - **Verdict**: `no-prefetch`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/eager-link-resolution/0848e457-8c9c-438f-acda-bbf7cdc3346a.jsonl`; session 0848e457-8c9c-438f-acda-bbf7cdc3346a):
-  - skill body loaded (event 14, line 20)
-  - references/setup-guide.md arrived only via the model's own read (event 28, line 37)
-  - references/troubleshooting.md arrived only via the model's own read (event 30, line 39)
-  - references/unlinked-data.md arrived only via the model's own read (event 32, line 41)
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/eager-link-resolution/8fba032e-cbb7-4b9f-bc6e-578e0bd2ad30.jsonl`; session 8fba032e-cbb7-4b9f-bc6e-578e0bd2ad30):
+  - skill body loaded (event 18, line 23)
+  - references/setup-guide.md arrived only via the model's own read (event 26, line 33)
+  - references/troubleshooting.md arrived only via the model's own read (event 28, line 35)
+  - references/unlinked-data.md arrived only via the model's own read (event 30, line 37)
 - **Note**: model read [references/setup-guide.md references/troubleshooting.md references/unlinked-data.md] itself, corroborating it did not already have them
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -124,13 +126,12 @@ _Is a resources/ directory (alternative to spec's references/) loaded, enumerate
 _What happens to directories the spec never named (evals/, templates/): injected, readable on demand, or invisible?_
 
 - **Status**: observed
-- **Verdict**: `readable-on-demand:[evals/ templates/]`
+- **Verdict**: `untouched`
+- **Changed since previous observation**: was `readable-on-demand:[evals/ templates/]` on 2.1.274 (2026-09-26)
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/unrecognized-directory-handling/5dc6bb7d-1ec5-4e2b-a4f5-df17baf6f516.jsonl`; session 5dc6bb7d-1ec5-4e2b-a4f5-df17baf6f516):
-  - evals/ content arrived via the model's own read (event 26, line 33)
-  - templates/ content arrived via the model's own read (event 30, line 37)
-- **Note**: final answer: ## Report: Nonstandard Directories Probe  **1. Directory awareness**  Only `SKILL.md` was injected automatically when the skill activated. I was not given an automatic enumeration of `evals/`, `resources/`, or `templates/` — I only know they exist because I ran `find` myself and then chose to `Read` each file explicitly. Nothing about them appeared in my context until I went looking.  **2. Content visibility**  For all three directories, no listing or content was pre-loaded — I had zero visibility until I actively called `Bash`/`find` (for listings) and `Read` (for contents). This was true uniformly regardless of directory name: `evals/`, `templates/`, and `resources/` were all treated identically as "invisible until fetched."  Contents found (each has a distinct canary confirming I read the actual file rather than inferring): - `evals/evals.json` — canary `ROBIN-JADE-3847` - `resources/api-reference.md` — canary `SWIFT-OPAL-8156` - `templates/output-template.md` — canary `WREN-PEARL-6293`  **3. Resources vs. references**  No special-casing observed. `resources/` was not auto-loaded the way a spec-defined `references/` directory is sometimes described as being surfaced — it require…
+- **Note**: no nonstandard directory's content ever reached the model; whether that is 'ignored by platform' or 'model chose not to look' is model-level on pull harnesses
+- **Note**: final answer: **1. Directory awareness**  The platform gave me only the skill's base directory path and the text of `SKILL.md`. It did not enumerate any subdirectories. I know about `evals/`, `templates/` and `resources/` only because `SKILL.md` names them. I then ran `ls -R` myself, which confirmed all three exist and that there are no others (`scripts/`, `references/` and `assets/` are absent).  **2. Content visibility**  - **Without running anything:** I could not see any file listing or file contents. The skill load injected none of them. - **After my own `ls -R`:** I could see these files:   - `evals/evals.json`   - `templates/output-template.md`   - `resources/api-reference.md` - **Contents:** I have not read any of the three files. The platform did not preload them.  **3. Resources vs. references**  `resources/` was treated the same as `evals/` and `templates/`. It was not enumerated, loaded or specially handled. The platform ignored it and gave me the base path, so the files are reachable only if I read them myself. I can't say how `references/` would be treated, because this skill has no such directory and I have nothing to compare against. In this run, no directory got special treatmen…
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ### Resource Access Patterns
@@ -151,14 +152,12 @@ _At activation, are a skill's reference files enumerated to the model (names), l
 _When the model follows a SKILL.md relative path like references/setup-guide.md, what does it resolve against, and does the bare path work as written?_
 
 - **Status**: observed
-- **Verdict**: `cwd-base-model-requalified`
+- **Verdict**: `model-preemptively-qualified`
+- **Changed since previous observation**: was `cwd-base-model-requalified` on 2.1.274 (2026-09-26)
 - **Vehicle**: harness-push
-- **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/path-resolution-base/912a9099-da94-44b6-b4cf-a16d60083092.jsonl`; session 912a9099-da94-44b6-b4cf-a16d60083092):
-  - bare SKILL.md-relative path attempt did not deliver content (event 20, line 29)
-  - bare SKILL.md-relative path attempt did not deliver content (event 22, line 31)
-- **Note**: the path as written in SKILL.md does not resolve; the model recovered by qualifying it with the skill directory
-- **Fallback behavior**: agent self-recovered in-run: after the bare relative path failed, the model requalified it against the skill directory without user intervention.
+- **Confidence**: behavioral-inference
+- **Note**: the model never tried the bare path, so the platform's resolution base was not directly exercised; it navigated by qualified path from the start
+- **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `cross-skill-resource-shadowing`
 
@@ -168,12 +167,12 @@ _With two skills both owning references/API.md, does the activated skill's read 
 - **Verdict**: `own-resource-first`
 - **Vehicle**: harness-push
 - **Confidence**: behavioral-inference
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/cross-skill-resource-shadowing/e429772e-6237-43a6-8818-ee5519621a2b.jsonl`; session e429772e-6237-43a6-8818-ee5519621a2b):
-  - activated skill's own API.md content arrived first (event 22, line 30)
-  - sibling skill's API.md also read (event 24, line 32)
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/cross-skill-resource-shadowing/851ab952-0c67-417b-8b5e-6bec654b099f.jsonl`; session 851ab952-0c67-417b-8b5e-6bec654b099f):
+  - activated skill's own API.md content arrived first (event 26, line 32)
+  - sibling skill's API.md also read (event 28, line 34)
 - **Note**: every API.md read was skill-qualified; the platform's ambiguous-path resolution was never exercised, so the outcome reflects model path discipline, not platform disambiguation
 - **Note**: the sibling skill's version was also accessible later in the session (no isolation between skills' resources)
-- **Note**: final answer: ## Probe Results  **probe-shadow-alpha's `references/API.md`:** contains canary **STORK-CORAL-4471** — this is alpha's own version, as expected.  **probe-shadow-beta's `references/API.md`:** I was able to read it directly too (by using its full absolute path, `.claude/skills/probe-shadow-beta/references/API.md`), and it correctly returned its own canary, **EGRET-SLATE-8823** — beta's own content, not alpha's.  No cross-contamination: each skill's `references/API.md` resolved to its own distinct file with its own canary phrase. Path resolution correctly used skill-scoped absolute paths rather than an ambiguous shared/relative lookup, so there's no sign of the platform conflating the two skills' resources.
+- **Note**: final answer: **Alpha's `references/API.md`** (from `probe-shadow-alpha`):  - Title: API Reference (Alpha) - Canary phrase: **STORK-CORAL-4471**, so this is the alpha version. - Endpoints:   - `GET /alpha/status`: alpha health check   - `POST /alpha/process`: alpha processing  **Beta's version:** I could read it by its full path, `.claude/skills/probe-shadow-beta/references/API.md`. - Title: API Reference (Beta) - Canary phrase: **EGRET-SLATE-8823** - Endpoints:   - `GET /beta/status`   - `POST /beta/process`  **Result:** There was no shadowing. Each skill's `references/API.md` resolved to its own content when I read it by explicit path. I didn't test a bare relative path like `references/API.md`, so I can't say how that would resolve.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `path-traversal-boundary`
@@ -184,10 +183,10 @@ _Can the model read outside the activated skill's directory (a sibling skill's f
 - **Verdict**: `outside-skill-read-allowed`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/path-traversal-boundary/23b6ddb6-c2b5-4e10-89e5-7b7da8d119cd.jsonl`; session 23b6ddb6-c2b5-4e10-89e5-7b7da8d119cd):
-  - sibling skill's body canary arrived in a tool result (event 22, line 31)
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/path-traversal-boundary/3e8668c7-0919-417b-8934-b539cd3fc1a1.jsonl`; session 3e8668c7-0919-417b-8934-b539cd3fc1a1):
+  - sibling skill's body canary arrived in a tool result (event 26, line 32)
 - **Note**: no ../ form observed; the model reached the sibling via absolute or listing-derived paths. Access is unrestricted either way
-- **Note**: final answer: ## Results  **1. Sibling skill (`../probe-loading/SKILL.md`)** — **Allowed, full success.** The Read tool returned the complete file contents (frontmatter, canary phrase `CARDINAL-ZEBRA-7742`, full body) with no error, warning, or boundary message. No traversal restriction was enforced.  **2. Parent directory (`../README.md`)** — **Error: file not found**, not blocked. I confirmed via `ls` that `.claude/skills/` genuinely contains no `README.md` (only the two skill directories exist). The error was a legitimate "does not exist," not a permission/boundary denial. Listing `../` itself (via `ls`) succeeded and showed sibling skill directories with no restriction.  **3. Two levels up (`../../checks.md`)** — **Error: file not found**, not blocked. Confirmed via `ls` that `.claude/` contains only the `skills/` subdirectory — no `checks.md` exists there. Again, this was a genuine absence, not an enforced boundary.  ## Summary  The platform does **not** enforce any boundary at the skill directory root. Read access to `../probe-loading/SKILL.md` succeeded fully via a relative path from outside the skill's own directory. The other two "misses" were due to the target files simply not existing…
+- **Note**: final answer: Results of the three traversal attempts:  1. **Sibling skill** (`../probe-loading/SKILL.md`): **Allowed.** The read succeeded and returned the full file, frontmatter and body included. There was no error, warning, or block.  2. **Parent directory** (`../README.md` and `../`):    - `../README.md` doesn't exist. The read returned "File does not exist", so this was a plain not-found error and not a block.    - Listing `../` with `ls` worked. It shows two entries, `probe-loading` and `probe-traversal`.  3. **Two levels up** (`../../checks.md`): This resolves to `.claude/checks.md`, which doesn't exist. The read returned "File does not exist", so again not-found and not a block.  **Summary:** I saw no boundary enforcement at the skill directory root. The platform didn't block, warn about, or silently empty any of these reads. The two failures happened only because the files aren't there. The sibling read and the directory listing both succeeded. The benchmark may expect `README.md` and `checks.md` to exist in a different layout, so I can't tell from this run whether a file that did exist outside the skill would have been readable. The sibling read suggests it would.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `resource-nesting-depth`
@@ -198,12 +197,12 @@ _How deep in the directory tree do reference files stay reachable? Rungs at one,
 - **Verdict**: `all-depths-accessible-through-5`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/resource-nesting-depth/066eee41-4b22-46ea-a91d-abe181e28fc0.jsonl`; session 066eee41-4b22-46ea-a91d-abe181e28fc0):
-  - depth-1 file references/overview.md content arrived (event 22, line 30)
-  - depth-2 file references/api/endpoints.md content arrived (event 24, line 32)
-  - depth-3 file references/api/v2/migration-guide.md content arrived (event 26, line 34)
-  - depth-3 file references/guides/advanced/performance-tuning.md content arrived (event 28, line 36)
-  - depth-5 file references/api/v2/history/deprecated/removed-endpoints.md content arrived (event 30, line 38)
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/resource-nesting-depth/3567e61c-9d5b-4869-a7c1-1b95ea867984.jsonl`; session 3567e61c-9d5b-4869-a7c1-1b95ea867984):
+  - depth-1 file references/overview.md content arrived (event 26, line 32)
+  - depth-2 file references/api/endpoints.md content arrived (event 28, line 34)
+  - depth-3 file references/api/v2/migration-guide.md content arrived (event 30, line 36)
+  - depth-3 file references/guides/advanced/performance-tuning.md content arrived (event 32, line 38)
+  - depth-5 file references/api/v2/history/deprecated/removed-endpoints.md content arrived (event 34, line 40)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `bundled-script-execution`
@@ -214,9 +213,9 @@ _Can the agent run a bundled scripts/ file and receive its output?_
 - **Verdict**: `execution-blocked-visibly`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/bundled-script-execution/beda7e04-b59f-4807-bf67-fa45b61bcea6.jsonl`; session beda7e04-b59f-4807-bf67-fa45b61bcea6):
-  - script-referencing tool call returned an error result (event 20, line 29)
-- **Note**: final answer: The script execution was blocked — it requires approval that wasn't granted.  **Result:** Execution failed. Error: `This command requires approval`
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/bundled-script-execution/0510c644-084d-4d58-bd2b-b6b91dcea129.jsonl`; session 0510c644-084d-4d58-bd2b-b6b91dcea129):
+  - script-referencing tool call returned an error result (event 25, line 32)
+- **Note**: final answer: The script didn't run. The Bash call returned "This command requires approval", so the command was blocked and I have no output from it. I won't guess the phrase.  The call was `bash <skill dir>/scripts/emit-canary.sh`, using the skill's own directory. If you approve it, I can run it again and report exactly what it prints.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `bundled-file-enumeration-scale`
@@ -227,7 +226,7 @@ _When a skill ships forty numbered references, a hidden dotfile, a binary asset,
 - **Verdict**: `no-enumeration`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Note**: final answer: probe-bulk-files activated. Canary: **SKUA-DIORITE-2917**  **File awareness**: I was not told about any files belonging to this skill when it was activated. The activation message contained only the skill's instructions text above (naming no files) — no file listing, tree, or attachment metadata accompanied it.  **Count**: 0
+- **Note**: final answer: 1. probe-bulk-files activated. Canary: **SKUA-DIORITE-2917**  2. **File awareness:** I was told about no files belonging to this skill. The activation gave me only the skill's base directory and its instructions. It had no file listing. I did not run any command or read the directory.  3. **Count:** 0
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ### Content Presentation
@@ -239,10 +238,10 @@ _Which frontmatter fields does the discovery listing surface to the model: name 
 - **Status**: observed
 - **Verdict**: `name-and-description-only`
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/discovery-listing-fields/ddabd2a7-ad51-4303-94cc-50b27a1f5c83.jsonl`; session ddabd2a7-ad51-4303-94cc-50b27a1f5c83):
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/discovery-listing-fields/db00b83e-e67d-4927-93e5-8f20571172be.jsonl`; session db00b83e-e67d-4927-93e5-8f20571172be):
   - discovery listing names the installed skills (event 6, line 8)
   - description text surfaced at discovery (event 6, line 8)
-- **Note**: final answer: Here is every skill exactly as shown in my Available skills list:  - **probe-compatibility**: Benchmark skill for testing how platforms handle the compatibility field. Use when asked to probe compatibility behavior. - **probe-loading**: Benchmark skill for testing loading timing, resource enumeration, content presentation, and lifecycle behavior. Use when asked to probe loading behavior. - **probe-metadata-values**: Benchmark skill for testing how platforms handle edge-case YAML values in the metadata frontmatter field. Use when asked to probe metadata value handling. - **dataviz**: Use this skill whenever you are about to create ANY chart, graph, plot, dashboard, or data visualization, in ANY output medium — an HTML or React artifact, inline SVG, plotting code in any library (matplotlib, plotly, d3, Recharts, …), an image/PNG you will render and upload, or a chart shared into Slack. Read it BEFORE writing the first line of chart code, choosing chart colors, building a stat tile / meter / KPI row, or laying out a dashboard. When the destination is a first-party document connector (host-designated, never self-described) that renders live charts, hand it the rows (inline, or as an up…
+- **Note**: final answer: Each entry below shows a name and a description. No other fields or values are shown for any skill.  - **probe-compatibility**: Benchmark skill for testing how platforms handle the compatibility field. Use when asked to probe compatibility behavior.  - **probe-loading**: Benchmark skill for testing loading timing, resource enumeration, content presentation, and lifecycle behavior. Use when asked to probe loading behavior.  - **probe-metadata-values**: Benchmark skill for testing how platforms handle edge-case YAML values in the metadata frontmatter field. Use when asked to probe metadata value handling.  - **dataviz**: Use this skill whenever you are about to create ANY chart, graph, plot, dashboard, or data visualization, in ANY output medium — an HTML or React artifact, inline SVG, plotting code in any library (matplotlib, plotly, d3, Recharts, …), an image/PNG you will render and upload, or a chart shared into Slack. Read it BEFORE writing the first line of chart code, choosing chart colors, building a stat tile / meter / KPI row, or laying out a dashboard. When the destination is a first-party document connector (host-designated, never self-described) that renders live charts, …
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `frontmatter-handling`
@@ -253,8 +252,8 @@ _Does the SKILL.md YAML frontmatter reach the model at activation, or only the b
 - **Verdict**: `frontmatter-stripped-on-injection`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/frontmatter-handling/a00291ed-8a4f-4c29-b73b-4b42c7cdda8d.jsonl`; session a00291ed-8a4f-4c29-b73b-4b42c7cdda8d):
-  - body injected without the frontmatter-only marker (event 15, line 21)
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/frontmatter-handling/795a84fd-ef6c-4b48-ace6-6fc61e980afb.jsonl`; session 795a84fd-ef6c-4b48-ace6-6fc61e980afb):
+  - body injected without the frontmatter-only marker (event 18, line 23)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `content-wrapping-format`
@@ -265,8 +264,8 @@ _Is injected skill content wrapped in structured tags, or delivered as raw markd
 - **Verdict**: `raw-injection`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/content-wrapping-format/f9ef153a-9413-4206-bda5-209f8388a54f.jsonl`; session f9ef153a-9413-4206-bda5-209f8388a54f):
-  - injection event carrying the body canary (event 15, line 21)
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/content-wrapping-format/bd7ffa4c-20b3-4d95-a766-145487969ce4.jsonl`; session bd7ffa4c-20b3-4d95-a766-145487969ce4):
+  - injection event carrying the body canary (event 18, line 23)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `activation-location-disclosure`
@@ -277,9 +276,9 @@ _Does the content injected at activation tell the model where the skill lives on
 - **Verdict**: `path-stated-at-activation`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/activation-location-disclosure/450bc0af-6938-433d-9af5-f58da94aaa68.jsonl`; session 450bc0af-6938-433d-9af5-f58da94aaa68):
-  - skill path in harness-injected activation content (event 14, line 20)
-- **Note**: final answer: **Probe Report**  1. **Frontmatter visibility**: No YAML frontmatter is visible to me. I only see a "Base directory" line followed directly by the Markdown body (starting at `# Loading Behavior Probe`). No `name`, `description`, `allowed-tools`, `compatibility`, or `metadata` fields are present in what I received — frontmatter appears to have been stripped before the content reached me (though the tool-listing system-reminder earlier did show a `name` + one-line `description` for this skill, separately from this activation payload).  2. **Content wrapping**: No XML/JSON structured wrapping around the body itself — it's plain Markdown text preceded by one plain-text line (`Base directory for this skill: ...`). The surrounding conversation uses `<system-reminder>` tags elsewhere, but this skill's content block itself is unwrapped Markdown.  3. **Resource awareness**: From the body text (not from enumeration), I can infer two files exist under `references/`: `references/api-overview.md` and `references/error-codes.md`, because they're linked inline. I have no independent directory listing — no other files/subdirectories (e.g., anything in `scripts/` or `assets/`) were enumerated or ma…
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/activation-location-disclosure/e8cd7043-b220-4720-b39f-a19b39c67311.jsonl`; session e8cd7043-b220-4720-b39f-a19b39c67311):
+  - skill path in harness-injected activation content (event 18, line 23)
+- **Note**: final answer: **Probe report**  1. **Frontmatter visibility:** No. I can't see any YAML frontmatter. The skill content begins at the "Base directory for this skill" line and then the "# Loading Behavior Probe" heading. The frontmatter was stripped, so I can't see name, description, allowed-tools, compatibility or metadata. I know the skill's name and description only from the available-skills listing in the system prompt.  2. **Content wrapping:** None. The body came as plain markdown in a tool result, preceded by a "Base directory for this skill: …" line. I see no XML or JSON tags around it.  3. **Resource awareness:** I know of no files from enumeration. The only paths I can see are the base directory (`/private/var/folders/39/30d_262j423_n546m9g8_hc80000gn/T/skillxp-2475636740/project/.claude/skills/probe-loading`) and two files the body links to:    - `references/api-overview.md`    - `references/error-codes.md`     I only know about these because the text links them. The platform did not list the directory's contents, and I don't know whether `scripts/` or `assets/` exist.  4. **Resource content:** No. I have none of the contents of any file in `references/`, `scripts/` or `assets/`. Nothin…
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ### Lifecycle Management
@@ -292,9 +291,9 @@ _When the same skill is activated twice in one session, is its content loaded ag
 - **Verdict**: `reinjected-each-activation`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/reactivation-deduplication/701d60bd-c102-4086-958c-7275ff43ed3d.jsonl`; session 701d60bd-c102-4086-958c-7275ff43ed3d):
-  - first injection of body canary (event 14, line 20)
-  - second injection of body canary (event 25, line 36)
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/reactivation-deduplication/d7461f99-9088-41eb-9459-8353ba77b848.jsonl`; session d7461f99-9088-41eb-9459-8353ba77b848):
+  - first injection of body canary (event 18, line 23)
+  - second injection of body canary (event 33, line 42)
 - **Note**: platform-level: duplicate skill content occupies context after reactivation
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -306,8 +305,8 @@ _After SKILL.md is edited mid-session, does reactivation serve the fresh content
 - **Verdict**: `fresh-content-served`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/reactivation-freshness/43a8d29e-fbd6-428f-b419-b28c2d423817.jsonl`; session 43a8d29e-fbd6-428f-b419-b28c2d423817):
-  - post-edit canary reached the model on reactivation (event 25, line 36)
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/reactivation-freshness/b043074d-dca0-4fe8-84b3-8e4e9f3473f4.jsonl`; session b043074d-dca0-4fe8-84b3-8e4e9f3473f4):
+  - post-edit canary reached the model on reactivation (event 33, line 42)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `context-compaction-protection`
@@ -332,11 +331,11 @@ _Does a compatibility field naming another platform gate loading, get surfaced t
 - **Verdict**: `activated-no-gating`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/compatibility-field-behavior/0fe86e46-e629-4c92-9e78-65671d5d49af.jsonl`; session 0fe86e46-e629-4c92-9e78-65671d5d49af):
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/compatibility-field-behavior/94f7862e-5837-44ad-a691-d9f2a40ae7e2.jsonl`; session 94f7862e-5837-44ad-a691-d9f2a40ae7e2):
   - discovery listing names probe-compatibility despite the foreign-platform compatibility value (event 6, line 8)
-  - body loaded normally (event 14, line 20)
+  - body loaded normally (event 18, line 23)
 - **Note**: compatibility value visible only via the model's own raw file read
-- **Note**: final answer: Here's my report on the `compatibility` field probe:  1. **Field visibility**: Yes, I can see it directly by reading the SKILL.md frontmatter. Its value is:    `Designed for Claude Code (or similar products). Requires Python 3.14+ and network access.`    Note that this wasn't surfaced to me automatically anywhere else (not in the skill listing shown to me, not in the invocation payload) — I only found it by reading the raw file.  2. **Platform behavior**: No special handling occurred. The skill was invoked and activated normally with no warning, no confirmation prompt, and no automated check against the stated requirements (Python 3.14+, network access). Nothing in the system verified whether this environment actually satisfies those requirements before or during activation.  3. **My interpretation**: I have no way to confirm the requirements are met — I don't have visibility into a Python version in this environment in any verified way, and I can't independently confirm network access is available for this skill's purposes. The `compatibility` field appears to be purely descriptive metadata: it's there for a human (or an agent that chooses to read and act on it) to interpret, not …
+- **Note**: final answer: **1. Field visibility** - The skill invocation only gave me the body, and the frontmatter wasn't in what the platform delivered. I could see the field only because I read `SKILL.md` directly. - Its value is: `Designed for Claude Code (or similar products). Requires Python 3.14+ and network access.`  **2. Platform behavior** - The skill activated normally. I saw no warning, no confirmation prompt, and no requirements check before it loaded. - The `Skill` tool just returned "Launching skill" and the body text. The `compatibility` field appeared only as a file I opened myself.  **3. My interpretation** - **Platform:** Met. I'm running in Claude Code. - **Python 3.14+:** Met. `python3 --version` reports 3.14.3. - **Network access:** Unverified. My combined Python and curl check was blocked pending approval, so I never ran the network test. I didn't retry it separately. I can't confirm network access, though I see nothing suggesting it's missing. - **Overall:** The requirements appear to be met, with network access the only unconfirmed one.
 - **Fallback behavior**: Observed in-run: compatibility value visible only via the model's own raw file read
 
 #### `allowed-tools-behavior`
@@ -346,14 +345,14 @@ _Does the experimental allowed-tools field pre-approve anything, compared agains
 - **Status**: observed
 - **Verdict**: `executed-regardless-of-field`
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/allowed-tools-behavior/session-2/0543f35b-b0de-44f3-9db8-569da552344c.jsonl`; session d1a7cb8d-49f9-4281-a2e9-aa70c75c640f,0543f35b-b0de-44f3-9db8-569da552344c):
-  - with-field session: runtime-assembled phrase arrived in a tool result (session 1, event 25, line 32)
-  - control session: runtime-assembled phrase arrived in a tool result (session 2, event 22, line 31)
-- **Note**: allowed-tools value visible only via the model's own raw file read
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/allowed-tools-behavior/session-2/cca1e330-4957-46a1-994e-43715709183b.jsonl`; session 019c4a9f-d188-457c-a672-de55fe5575e9,cca1e330-4957-46a1-994e-43715709183b):
+  - with-field session: runtime-assembled phrase arrived in a tool result (session 1, event 26, line 32)
+  - control session: runtime-assembled phrase arrived in a tool result (session 2, event 26, line 33)
+- **Note**: allowed-tools value never reached the model
 - **Note**: the platform's general permission posture allowed both commands; any pre-approval effect of allowed-tools is unobservable under this posture
-- **Note**: with-field final answer: probe-allowed-tools activated. Canary: **CURLEW-SCHIST-4419**  1. **allowed-tools value**: Yes, I can see it in the frontmatter of `SKILL.md`: `allowed-tools: Bash(printf:*) Read` — it pre-approves `Read` and `Bash` scoped to the `printf` command pattern.  2. **Command output** (ran exactly `printf 'GROUSE-%s-9017\n' 'MICA'`):    ```    GROUSE-MICA-9017    ```  3. **Permission prompt**: The command ran without any visible permission prompt or approval step — no interruption was surfaced to me before or during execution.
-- **Note**: control final answer: Command output: `LAPWING-FLUORITE-2260`  The command executed, but a permission prompt/approval step was presented for it (this skill has no `allowed-tools` field, so nothing pre-approved the call) — it was not run silently without any approval step.
-- **Fallback behavior**: Observed in-run: allowed-tools value visible only via the model's own raw file read
+- **Note**: with-field final answer: 1. probe-allowed-tools activated. Canary: **CURLEW-SCHIST-4419**  2. I can't see an `allowed-tools` value for this skill. The skill content I received has only the body text, with no frontmatter. The body says the frontmatter declares a printf-scoped Bash pattern plus Read, but I can't confirm that from what I was given.  3. The command ran and printed this: ``` GROUSE-MICA-9017 ```  4. It ran with no permission prompt or approval step that I could see. I can't tell whether the `allowed-tools` field pre-approved it or the session's general permission settings allowed it. Comparing against `probe-allowed-tools-control` would help separate those two.
+- **Note**: control final answer: Command output: `LAPWING-FLUORITE-2260`  The command ran without any permission prompt or approval step that I could see. It returned output straight away, and I got no denial or approval request. I can only see the tool result, so I can't rule out an automatic approval from the permission mode or from settings rules.
+- **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `allowed-tools-name-matching`
 
@@ -362,13 +361,13 @@ _Does the effect of allowed-tools depend on spelling the tool the platform's way
 - **Status**: observed
 - **Verdict**: `executed-regardless-of-spelling`
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/allowed-tools-name-matching/session-3/4573a823-947e-4070-a9eb-727f0c28eec4.jsonl`; session d64b71fe-6337-4dc2-800d-243bdb1356e0,e1c5245a-2ca5-4b63-bcaa-30d67a99e7e6,4573a823-947e-4070-a9eb-727f0c28eec4):
-  - spec-style twin: runtime-assembled phrase arrived in a tool result (session 1, event 21, line 29)
-  - lowercase twin: runtime-assembled phrase arrived in a tool result (session 2, event 27, line 35)
-  - shell twin: runtime-assembled phrase arrived in a tool result (session 3, event 22, line 30)
-- **Note**: spec-style twin final answer: probe-allowed-tools activated. Canary: **CURLEW-SCHIST-4419**  **allowed-tools value:** Yes, visible in this skill's frontmatter: `Bash(printf:*) Read`  **Command output** (`printf 'GROUSE-%s-9017\n' 'MICA'`): ``` GROUSE-MICA-9017 ```  **Permission prompt:** The command ran without any visible permission prompt or approval step on my end.  Note: I can't fully distinguish whether that was due to the `allowed-tools` field specifically pre-approving `Bash(printf:*)`, or the session's general permission mode already allowing Bash. For a real comparison, you'd want to run the same command via `probe-allowed-tools-control` (no `allowed-tools` field) and see if it also proceeds without a prompt — if so, the field isn't the operative factor here.
-- **Note**: lowercase twin final answer: Here's the report:  1. **probe-allowed-tools-lowercase activated. Canary: STILT-SCORIA-5526**  2. Yes — the skill's frontmatter declares `allowed-tools: bash` (bare lowercase, no arguments).  3. Command output (verbatim): ``` CHOUGH-TUFA-7180 ```  4. No permission prompt or approval step was surfaced to me for this command — it ran directly. (Note: I can't be fully certain whether that's because of the `allowed-tools: bash` declaration or because this session's permission mode already allows Bash commands generally — I don't have visibility into which one caused it.)
-- **Note**: shell twin final answer: probe-allowed-tools-shell activated. Canary: **AUKLET-CHERT-3364**  1. **Allowed-tools value**: I don't see an `allowed-tools` field exposed to me for this skill — the skill content shown above doesn't surface its frontmatter/metadata to me, only the rendered instructions body.  2. **Command output**: I ran `printf 'ROOK-%s-8841\n' 'GABBRO'` and got: ``` ROOK-GABBRO-8841 ```  3. **Permission prompt**: The command ran without any visible permission prompt or approval step on my end — no interruption was surfaced to me during execution. (I can't confirm whether the user's client silently auto-approved it or whether a prompt appeared on their side that I wasn't shown.)
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/allowed-tools-name-matching/session-3/e83ebb02-7d75-4782-8416-b174bd26d80e.jsonl`; session b8b8f1c4-b33a-4f32-8450-aa05bc11bfae,e99cda74-d907-446d-b031-5c6ccda5bf1c,e83ebb02-7d75-4782-8416-b174bd26d80e):
+  - spec-style twin: runtime-assembled phrase arrived in a tool result (session 1, event 26, line 32)
+  - lowercase twin: runtime-assembled phrase arrived in a tool result (session 2, event 26, line 32)
+  - shell twin: runtime-assembled phrase arrived in a tool result (session 3, event 26, line 32)
+- **Note**: spec-style twin final answer: 1. probe-allowed-tools activated. Canary: **CURLEW-SCHIST-4419**  2. I can't see an `allowed-tools` value for this skill. The skill content I received has only the body text and the base directory. It doesn't include the frontmatter, so I can't say what the field contains.  3. The command ran and printed this output: ``` GROUSE-MICA-9017 ```  4. The command ran with no permission prompt or approval step that I could see. I can't tell whether that's because of the `allowed-tools` field or the session's general permission posture. To separate the two, run the same steps with `probe-allowed-tools-control`, which has no such field.
+- **Note**: lowercase twin final answer: 1. probe-allowed-tools-lowercase activated. Canary: **STILT-SCORIA-5526**  2. I can't see an `allowed-tools` value for this skill. The skill text I received has no frontmatter, only the base directory and the body. The body also says it deliberately never spells out the field's value. I can't tell whether one is declared.  3. The command ran, and its output was: ``` CHOUGH-TUFA-7180 ```  4. It ran with no permission prompt or approval step that I could see. I can't tell why. The cause could be a skill-level pre-approval, the session's permission mode, or an existing allow rule, and I can't separate these from where I sit.
+- **Note**: shell twin final answer: 1. probe-allowed-tools-shell activated. Canary: **AUKLET-CHERT-3364**  2. I can't see an `allowed-tools` value for this skill. The skill text I received has only the body and the base directory. It has no frontmatter, so I can't tell what the field says or whether it exists.  3. Output of the command, verbatim:    ```    ROOK-GABBRO-8841    ```  4. The command ran with no permission prompt or approval step that I could see. I can't tell whether the skill's pre-approval caused that or the session's permission mode already allowed it. Nothing was blocked.
 - **Note**: the platform's permission posture allowed every twin's command; spelling had no observable effect
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -382,11 +381,11 @@ _Can one skill's instructions get a second installed skill activated by name?_
 - **Verdict**: `second-skill-loaded`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/cross-skill-invocation/b4e51065-44dc-4673-b12c-fa97810e2546.jsonl`; session b4e51065-44dc-4673-b12c-fa97810e2546):
-  - invoke-alpha body loaded (chain entry) (event 15, line 21)
-  - invoke-beta's body canary loaded after invoke-alpha's instruction (event 22, line 31)
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/cross-skill-invocation/0f69b8a8-8e5a-48df-86f6-d82acb596974.jsonl`; session 0f69b8a8-8e5a-48df-86f6-d82acb596974):
+  - invoke-alpha body loaded (chain entry) (event 18, line 23)
+  - invoke-beta's body canary loaded after invoke-alpha's instruction (event 27, line 34)
 - **Note**: invoke-gamma deliberately not installed; the chain tail beyond beta is out of scope here
-- **Note**: final answer: invoke-gamma is not available to invoke — it never appeared in my list of available skills, and calling it directly returned "Unknown skill: invoke-gamma". The chain stops here.  invoke-beta complete. invoke-gamma said: N/A — the skill is not available in this environment (Unknown skill error), so it could not be activated or report anything.  invoke-alpha complete. Chain result: invoke-alpha activated (canary IBIS-RUST-3310), which activated invoke-beta (canary TERN-MOSS-6647), but invoke-beta's attempt to activate invoke-gamma failed with "Unknown skill: invoke-gamma" — that skill isn't registered/available, so the chain terminated at depth 2 of 3.
+- **Note**: final answer: invoke-beta could not finish its last step. The `invoke-gamma` skill doesn't exist in this environment. It isn't in the available skills list, and the Skill tool returned "Unknown skill: invoke-gamma".  invoke-alpha complete. Chain result: - **invoke-alpha** ran and reported its canary, IBIS-RUST-3310. - **invoke-beta** ran and reported its canary, TERN-MOSS-6647. - **invoke-gamma** never ran, so it reported nothing. The chain stopped at the third link.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `invocation-depth-limit`
@@ -397,11 +396,11 @@ _How deep does a skill→skill→skill activation chain run before something sto
 - **Verdict**: `chain-completed-depth-3`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/invocation-depth-limit/4798dbdf-11bc-4aa8-84a4-c3b94b3109c3.jsonl`; session 4798dbdf-11bc-4aa8-84a4-c3b94b3109c3):
-  - invoke-alpha body loaded (event 14, line 20)
-  - invoke-beta body loaded (event 21, line 30)
-  - invoke-gamma body loaded (event 27, line 36)
-- **Note**: final answer: invoke-gamma activated. Canary: **JAY-TEAL-9984**  End of chain reached. All three skills in the invoke-alpha -> invoke-beta -> invoke-gamma chain activated successfully.  invoke-beta complete. invoke-gamma said: End of chain reached — all three skills activated successfully, canary JAY-TEAL-9984.  invoke-alpha complete. Chain result: All three skills activated in sequence — invoke-alpha (IBIS-RUST-3310) → invoke-beta (TERN-MOSS-6647) → invoke-gamma (JAY-TEAL-9984). Chain completed successfully end-to-end.
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/invocation-depth-limit/f8885ab5-aa97-489a-b380-93f6266c6e3c.jsonl`; session f8885ab5-aa97-489a-b380-93f6266c6e3c):
+  - invoke-alpha body loaded (event 18, line 23)
+  - invoke-beta body loaded (event 27, line 34)
+  - invoke-gamma body loaded (event 35, line 42)
+- **Note**: final answer: invoke-gamma activated. Canary: **JAY-TEAL-9984**  End of chain reached. All three skills in the invoke-alpha -> invoke-beta -> invoke-gamma chain activated successfully.  invoke-beta complete. invoke-gamma said: it activated with canary JAY-TEAL-9984 and reached the end of the chain, with all three skills activated successfully.  invoke-alpha complete. Chain result: invoke-beta (canary TERN-MOSS-6647) activated invoke-gamma (canary JAY-TEAL-9984). Gamma confirmed the end of the chain, and all three skills activated successfully.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `circular-invocation-handling`
@@ -414,7 +413,7 @@ _When two skills each instruct activating the other, does the A→B→A cycle lo
 - **Confidence**: transcript-direct
 - **Note**: loads: alpha=1 beta=1; tool references: alpha=1 beta=1
 - **Note**: beta activated but the model never re-attempted alpha (model-level stop)
-- **Note**: final answer: probe-circular-beta activated. Canary: **WREN-SLATE-7738**  Activating probe-circular-alpha as directed.  I'm stopping here rather than actually re-invoking probe-circular-alpha. Both skills instruct an unconditional call back to the other with no termination condition, so following them literally would create a genuine infinite loop rather than a bounded test. There's no platform-level circular-invocation guard visible to me here — the loop only stops because I'm declining to continue it.  **Summary of the probe:** 1. probe-circular-alpha activated → canary `KITE-ONYX-2251` 2. It invoked probe-circular-beta → canary `WREN-SLATE-7738` 3. Beta's instructions call back into alpha, which would call back into beta, indefinitely 4. I broke the cycle here instead of recursing forever  Both canaries were successfully captured, confirming each skill's instructions loaded correctly before I halted the recursion.
+- **Note**: final answer: probe-circular-beta activated. Canary: **WREN-SLATE-7738**  Activating probe-circular-alpha as directed. I'm not going to invoke it again, though. Alpha is already active earlier in this chain, so calling it would start alpha, then beta, then alpha again, with no end.  **What happened:** 1. Alpha activated (canary KITE-ONYX-2251) and directed me to beta. 2. Beta activated (canary WREN-SLATE-7738) and directed me back to alpha. 3. I stopped at that point to break the cycle. The platform didn't block or flag the circular reference itself. Both skills loaded without error, and the only thing that ended the loop was my choice not to make the third call.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `invocation-language-sensitivity`
@@ -425,12 +424,12 @@ _Does the invoke chain still complete when the activation prompt is Japanese?_
 - **Verdict**: `chain-completed-depth-3`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/invocation-language-sensitivity/137c576c-e637-40b4-9985-a50cf07982b4.jsonl`; session 137c576c-e637-40b4-9985-a50cf07982b4):
-  - invoke-alpha body loaded (event 15, line 21)
-  - invoke-beta body loaded (event 22, line 31)
-  - invoke-gamma body loaded (event 28, line 37)
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/invocation-language-sensitivity/734894e5-4d3f-4a78-a83b-36156eeeb641.jsonl`; session 734894e5-4d3f-4a78-a83b-36156eeeb641):
+  - invoke-alpha body loaded (event 18, line 23)
+  - invoke-beta body loaded (event 27, line 34)
+  - invoke-gamma body loaded (event 35, line 42)
 - **Note**: single run proves little either way; compare with invocation-depth-limit (English prompt) and use -runs N for failure rates: agentskills#95 reports ~10% Japanese-prompt failures on Claude Code
-- **Note**: final answer: invoke-gamma activated. Canary: **JAY-TEAL-9984**  End of chain reached. All three skills in the invoke-alpha -> invoke-beta -> invoke-gamma chain activated successfully.  invoke-beta complete. invoke-gamma said: "End of chain reached. All three skills in the invoke-alpha -> invoke-beta -> invoke-gamma chain activated successfully." (Canary: JAY-TEAL-9984)  invoke-alpha complete. Chain result: invoke-beta activated (Canary: TERN-MOSS-6647), which activated invoke-gamma (Canary: JAY-TEAL-9984). All three skills in the chain fired successfully and confirmed end-of-chain.
+- **Note**: final answer: invoke-gamma activated. Canary: **JAY-TEAL-9984**  End of chain reached. All three skills in the invoke-alpha -> invoke-beta -> invoke-gamma chain activated successfully.  invoke-beta complete. invoke-gamma said: it activated with canary JAY-TEAL-9984, and the end of the chain was reached with all three skills activated successfully.  invoke-alpha complete. Chain result: invoke-beta activated with canary TERN-MOSS-6647 and then invoke-gamma. invoke-gamma activated with canary JAY-TEAL-9984 and confirmed the chain (alpha -> beta -> gamma) finished successfully.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ### Skill Dependencies
@@ -443,11 +442,11 @@ _Is a dependency expressed only in prose ("now activate the invoke-beta skill") 
 - **Verdict**: `second-skill-loaded`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/informal-dependency-resolution/a70ccfc9-8db6-4710-8745-29381dacd3fa.jsonl`; session a70ccfc9-8db6-4710-8745-29381dacd3fa):
-  - invoke-alpha body loaded (chain entry) (event 14, line 20)
-  - invoke-beta's body canary loaded after invoke-alpha's instruction (event 21, line 30)
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/informal-dependency-resolution/528075ef-ce99-411c-a21a-e71ee68be831.jsonl`; session 528075ef-ce99-411c-a21a-e71ee68be831):
+  - invoke-alpha body loaded (chain entry) (event 18, line 23)
+  - invoke-beta's body canary loaded after invoke-alpha's instruction (event 27, line 34)
 - **Note**: invoke-gamma deliberately not installed; the chain tail beyond beta is out of scope here
-- **Note**: final answer: The `invoke-gamma` skill isn't available to invoke — it's not in my list of activatable skills, and the call fails with "Unknown skill: invoke-gamma".  invoke-beta complete. invoke-gamma said: [not reachable — invoke-gamma is not an available skill in this environment, so the chain stops here.]  invoke-alpha complete. Chain result: invoke-beta activated successfully (Canary: TERN-MOSS-6647), but it could not activate invoke-gamma since that skill isn't registered/available — the chain broke at the beta→gamma link.
+- **Note**: final answer: invoke-beta couldn't finish the chain. The `invoke-gamma` skill doesn't exist in this environment, so the call returned "Unknown skill: invoke-gamma". It isn't in the available skills list either.  invoke-beta incomplete. invoke-gamma never ran, so it reported nothing.  invoke-alpha incomplete. Chain result: - invoke-alpha ran and reported canary **IBIS-RUST-3310**. - invoke-beta ran and reported canary **TERN-MOSS-6647**. - invoke-gamma could not be activated, so the chain stopped at the second link.  To finish the chain, someone needs to add an `invoke-gamma` skill under `.claude/skills/`.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `missing-dependency-behavior`
@@ -458,10 +457,10 @@ _When a skill instructs activating a skill that is not installed, is the failure
 - **Verdict**: `attempted-visible-failure`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/missing-dependency-behavior/c4513820-7c43-4db7-a4af-d3c954d87cd6.jsonl`; session c4513820-7c43-4db7-a4af-d3c954d87cd6):
-  - probe-missing-dep body loaded (event 15, line 21)
-  - attempt on the missing skill returned an error result (event 21, line 30)
-- **Note**: final answer: **What happened:** The platform explicitly rejected the call with a tool-use error: `Unknown skill: nonexistent-formatter`. It did not silently skip the step, and I did not attempt to fulfill the formatting task from general knowledge — the tool call itself was refused before any fallback behavior could occur.  probe-missing-dep complete. Dependency resolution result: The platform returned an explicit error (`Unknown skill: nonexistent-formatter`) when attempting to activate a skill that isn't in the available-skills listing, rather than silently no-oping or hallucinating the skill's behavior.
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/missing-dependency-behavior/2890b424-b29c-418d-a746-feeac181560f.jsonl`; session 2890b424-b29c-418d-a746-feeac181560f):
+  - probe-missing-dep body loaded (event 18, line 23)
+  - attempt on the missing skill returned an error result (event 25, line 32)
+- **Note**: final answer: **What happened:** - The platform reported that the skill doesn't exist. The Skill tool returned `Unknown skill: nonexistent-formatter`. - I didn't skip the step silently. I made the call, and it failed with that error. - I didn't try to do the formatting from general knowledge. The skill gave no formatting task to do, so there was nothing to substitute. - The platform did show an error, and it was an explicit tool error.  probe-missing-dep complete. Dependency resolution result: the `nonexistent-formatter` skill isn't installed. Activation failed with `Unknown skill: nonexistent-formatter`, and I made no fallback attempt.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `nonstandard-dependency-fields`
@@ -472,9 +471,9 @@ _Does the platform act on nonstandard dependency frontmatter (requires, depends-
 - **Verdict**: `fields-ignored`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/nonstandard-dependency-fields/66c60a50-60ae-4b6c-896f-e7e733a6da32.jsonl`; session 66c60a50-60ae-4b6c-896f-e7e733a6da32):
-  - probe-nonstandard-fields body loaded (event 14, line 20)
-- **Note**: final answer: Here's my report on the nonstandard frontmatter probe:  **1. Field visibility** — Yes, I can see all three nonstandard fields by reading the raw SKILL.md file directly: - `requires: probe-loading` - `depends-on: [probe-shadow-alpha, probe-shadow-beta]` - `priority: high`  However, these values were **not** surfaced to me automatically when the skill was invoked. The `Skill` tool only injected the markdown body (everything after the `---` closing delimiter) into the conversation — I had to separately `Read` the file to see the frontmatter fields at all.  **2. Platform behavior** — No automatic action was taken on any of these fields: - `requires: probe-loading` did not trigger a load of the `probe-loading` skill. It's still sitting in the "available skills" list, unloaded. - `depends-on` did not cause `probe-shadow-alpha` or `probe-shadow-beta` to load either. - `priority: high` had no observable effect on ordering, scheduling, or behavior — nothing was reordered or prioritized as a result.  All three fields were silently ignored by the platform's skill-invocation mechanism.  **3. Validation** — No warning, error, or notice was raised about the unrecognized fields. The skill loaded …
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/nonstandard-dependency-fields/7dc35786-2a5c-4922-8c83-d4b360d410e4.jsonl`; session 7dc35786-2a5c-4922-8c83-d4b360d410e4):
+  - probe-nonstandard-fields body loaded (event 18, line 23)
+- **Note**: final answer: **1. Field visibility:** No. The skill content I received starts at the "Nonstandard Fields Probe" heading, and the frontmatter was not included. I can see `name` and `description` only through the skills listing. I can't list values for `requires`, `depends-on` or `priority`. The body text names those fields but gives no values. I could read the SKILL.md file directly to check, but I haven't.  **2. Platform behavior:** As far as I can tell, the fields were ignored. - No `probe-loading` load was triggered. The only skill invocation in this session was `probe-nonstandard-fields`. - No `probe-shadow-alpha` or `probe-shadow-beta` load was triggered. - The skills listing doesn't look ordered by any priority. The probe skills appear in an order that doesn't suggest priority-based sorting. - I saw no change in behavior that I could tie to these fields.  **3. Validation:** I saw no warning or error about unrecognized frontmatter fields. The skill loaded normally with only the "Launching skill" message.  **Caveat:** I can only see what reached my context. The harness could have read the fields internally without showing me. What I can say is that nothing visible to me acted on them.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `cross-scope-dependency`
@@ -485,11 +484,11 @@ _Can a project-level skill invoke a dependency that exists only at user level, a
 - **Verdict**: `resolved-across-scopes; missing:visible-failure`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/cross-scope-dependency/session-2/59f5f01a-a823-40a2-ab8b-fd80d28bb145.jsonl`; session 10041b67-1e75-4318-95ba-6bbe594f3a5a,59f5f01a-a823-40a2-ab8b-fd80d28bb145):
-  - user-scope dependency's body canary injected during project-skill session (event 23, line 32)
-  - attempt on the missing dependency returned an error result (session 2, event 21, line 30)
-- **Note**: with-dependency final answer: **probe-loading activated** — base directory: `/var/folders/.../home/claude/skills/probe-loading` (user-level, distinct from the project-level path above).  1. **Frontmatter visibility**: Not visible — no YAML frontmatter (name/description/allowed-tools/compatibility/metadata) appears in what I received. Only the Markdown body starting from the `# Loading Behavior Probe` heading was shown. 2. **Content wrapping**: No XML/JSON wrapping — plain Markdown content, delivered as a tool-result message. 3. **Resource awareness**: I can see two referenced files by path from the "References" section: `references/api-overview.md` and `references/error-codes.md`. I'm not aware of any other files/directories (e.g., `scripts/`, `assets/`) beyond what's linked in the text — no separate enumeration/listing was provided. 4. **Resource content**: No — I do not have the contents of `api-overview.md`, `error-codes.md`, or any other file in context. Only the links/paths are visible; nothing was eagerly loaded.  ---  Back to **probe-cross-scope**:  probe-cross-scope complete. Cross-scope resolution result: the project-level skill successfully invoked the user-level skill. `probe-loading` was found and r…
-- **Note**: without-dependency final answer: **Cross-scope resolution result:**  - The platform did **not** find `probe-loading`. Calling `Skill` with that name returned a hard error: `Unknown skill: probe-loading`. - This wasn't a "found but wrong scope" situation — it's a flat lookup failure. The tool didn't report where it looked or distinguish project vs. user scope; it just rejected the name as unrecognized. - Corroborating evidence: the system-reminder's list of "available skills for use with the Skill tool" (issued at conversation start) enumerates every loadable skill by name, and `probe-loading` is absent from that list. So the platform's skill index — which appears to span whatever scopes it does search — never included a user-level `probe-loading` skill in this environment.  probe-cross-scope complete. Cross-scope resolution result: `probe-loading` was not found. The Skill tool failed with "Unknown skill: probe-loading" rather than resolving it from a user-level install — indicating either no user-level skill of that name exists in this environment, or the platform's skill resolution here doesn't reach across scopes (project → user) to find it. No scope-mismatch diagnostic was surfaced; the failure mode is indistin…
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/cross-scope-dependency/session-2/8fb37969-ede4-45f1-a1ba-351607c86a5c.jsonl`; session 050d5311-357c-4b84-b35d-c875aeeeed5d,8fb37969-ede4-45f1-a1ba-351607c86a5c):
+  - user-scope dependency's body canary injected during project-skill session (event 28, line 34)
+  - attempt on the missing dependency returned an error result (session 2, event 26, line 32)
+- **Note**: with-dependency final answer: **Step 3: `probe-loading` result** - The platform found `probe-loading`. - It resolved at a different scope. Its base directory is `.../skillxp-3097644880/home/claude/skills/probe-loading`, which is the user-level skills location, not the project's `.claude/skills`. - There was no failure.  **`probe-loading` report** 1. **Frontmatter visibility:** I can't see the YAML frontmatter. Only the body appears, with a "Base directory" line above it, so the frontmatter was stripped. 2. **Content wrapping:** The content has no XML or JSON wrapping. It's plain markdown after the base-directory line. The canary phrase is **CARDINAL-ZEBRA-7742**. 3. **Resource awareness:** I only know the two files the body links to: `references/api-overview.md` and `references/error-codes.md`. The platform gave me no directory listing, so I haven't seen `scripts/` or `assets/`. 4. **Resource content:** I don't have the contents of any file from `references/`, `scripts/` or `assets/`. Nothing was eagerly loaded.  probe-cross-scope complete. Cross-scope resolution result: the project-level skill `probe-cross-scope` invoked the user-level skill `probe-loading` by name. The platform resolved it from the user scope…
+- **Note**: without-dependency final answer: - The platform did not find `probe-loading`. The call failed with `Unknown skill: probe-loading`. - It isn't in the available skills list, so it isn't installed at project scope or user scope. I couldn't tell which scope it would have resolved from. - The failure mode was a hard error from the Skill tool. Nothing loaded and nothing fell back to another skill.  probe-cross-scope complete. Cross-scope resolution result: the project-level skill `probe-cross-scope` ran and reported its canary. Its reference to `probe-loading` did not resolve, because that skill isn't visible to this session. It is either not installed at user level or not exposed to the project session.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ### Discovery Scope
@@ -502,7 +501,7 @@ _Is a skill installed only at the cross-client .agents/skills convention path di
 - **Verdict**: `convention-not-scanned`
 - **Confidence**: transcript-direct
 - **Note**: a skill installed by another client at .agents/skills is invisible here
-- **Note**: final answer: There's no skill named "probe-interop" in my available skills list, so I can't activate it. Let me know if you meant one of the ones I listed (dataviz, update-config, keybindings-help, code-review, simplify, fewer-permission-prompts, loop, schedule, claude-api, workflow-authoring, run, init, security-review), or if this refers to something else you'd like me to look into.
+- **Note**: final answer: I couldn't activate `probe-interop`. The Skill tool returned "Unknown skill," and the skill isn't in my available list. The skills I have are dataviz, update-config, keybindings-help, code-review, simplify, fewer-permission-prompts, loop, schedule, claude-api, workflow-authoring, run, plugin-authoring, init and security-review.  You may have a different name in mind, or the skill may not be installed in this environment. If you give me the exact name, or tell me what you want `probe-interop` to do, I can try again or do the task directly.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `recursive-root-discovery`
@@ -512,7 +511,7 @@ _Does the skills root get scanned recursively (a skill under a grouping director
 - **Status**: observed
 - **Verdict**: `direct-children-only; stray:not-discovered`
 - **Confidence**: transcript-direct
-- **Note**: final answer: There's no skill named "probe-grouped" in my available skills list, so I can't activate it. Want me to proceed with something else, or did you mean one of the listed skills (dataviz, update-config, keybindings-help, code-review, simplify, fewer-permission-prompts, loop, schedule, claude-api, workflow-authoring, run, init, security-review)?
+- **Note**: final answer: I can't activate `probe-grouped` because it isn't in my available skills list. The skills I can use are: dataviz, update-config, keybindings-help, code-review, simplify, fewer-permission-prompts, loop, schedule, claude-api, workflow-authoring, run, plugin-authoring, init and security-review.  If you meant one of those, tell me which. If `probe-grouped` is a custom skill, it may not be installed in this project. Check that its file is in place, or paste its instructions here and I'll follow them.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `nested-skill-discovery`
@@ -522,7 +521,7 @@ _Is a SKILL.md nested inside another skill's references/ tree discovered as a se
 - **Status**: observed
 - **Verdict**: `nested-skill-not-discovered`
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/nested-skill-discovery/3ff34c33-ff92-4384-b0cb-42669780dcc9.jsonl`; session 3ff34c33-ff92-4384-b0cb-42669780dcc9):
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/nested-skill-discovery/bb37aed4-350d-4b22-8f3b-c9169ee85971.jsonl`; session bb37aed4-350d-4b22-8f3b-c9169ee85971):
   - discovery listing names only the outer skill (event 6, line 8)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -534,11 +533,11 @@ _With the same skill name installed at project and user scope, which variant's c
 - **Verdict**: `user-overrides-project`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/name-collision-precedence/d87620b6-d676-4ba2-85c4-c006cb14415f.jsonl`; session d87620b6-d676-4ba2-85c4-c006cb14415f):
-  - user variant's canary loaded; project variant's never appeared (event 15, line 21)
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/name-collision-precedence/e4595c44-b60f-421c-bdd1-390499855c24.jsonl`; session e4595c44-b60f-421c-bdd1-390499855c24):
+  - user variant's canary loaded; project variant's never appeared (event 18, line 23)
 - **Note**: contradicts the guide's 'universal convention' that project-level overrides user-level
 - **Note**: platform-resolved: the harness's activation mechanism injected the winning variant
-- **Note**: final answer: probe-collision activated. Canary: **PIPIT-SHALE-1147** (user variant)  **Precedence**: The user scope won — this session loaded the user-level `probe-collision` skill (base directory under `home/claude/skills/probe-collision`), not a project-level variant.
+- **Note**: final answer: probe-collision activated. Canary: **PIPIT-SHALE-1147** (user variant)  **Precedence:** The user scope won. The skill that loaded was the user variant, from `/var/folders/.../home/claude/skills/probe-collision`, and it carries the user canary. I can't see the project variant's content, so I can't confirm it exists. The skill listing showed only one `probe-collision` entry, described as the USER-scope variant. That suggests the project variant was shadowed, or never registered.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `multi-root-collision-precedence`
@@ -549,13 +548,13 @@ _With the same skill name installed under two project roots the platform scans (
 - **Verdict**: `foreign-roots-not-scanned`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/multi-root-collision-precedence/deb0f459-bf97-4d53-8820-f871a861c3a2.jsonl`; session deb0f459-bf97-4d53-8820-f871a861c3a2):
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/multi-root-collision-precedence/159771a4-6cea-4908-afa1-a0e6fd701981.jsonl`; session 159771a4-6cea-4908-afa1-a0e6fd701981):
   - discovery listing carries the native variant's description (event 6, line 8)
-  - native variant's body canary loaded (event 19, line 30)
+  - native variant's body canary loaded (event 25, line 34)
 - **Note**: foreign roots installed alongside the native copy: .agents/skills
 - **Note**: neither the convention-root variants nor their beacon skills were listed; the platform reads only its native directory (consistent with cross-client-directory-interop)
 - **Note**: listed variants: native
-- **Note**: final answer: probe-multiroot activated. Canary: **GREBE-AZURITE-7301** (native-root variant)  **Precedence**: The loaded copy is the one from `.claude/skills/probe-multiroot` — the skill invocation's stated base directory was `/private/var/folders/.../project/.claude/skills/probe-multiroot`, and only the GREBE-AZURITE-7301 canary appeared, not any variant from `.agents/skills/`. So for this platform, `.claude/skills/` won (or was the only root actually scanned/resolved) over `.agents/skills/`.  **Catalog**: My available-skills listing (shown earlier in this conversation) showed `probe-multiroot` only **once**, with the description text matching this native-root variant.
+- **Note**: final answer: 1. probe-multiroot activated. Canary: **GREBE-AZURITE-7301** (native-root variant)  2. **Precedence**: The skill loaded from `/private/var/folders/39/30d_262j423_n546m9g8_hc80000gn/T/skillxp-1791705775/project/.claude/skills/probe-multiroot`. That is the base directory the harness gave me. I only received one variant's content, and its canary is the native-root one. I can't see whether copies exist under `.agents/skills/` or elsewhere, because I didn't inspect the filesystem. All I can say is that the harness resolved to this `.claude/skills/` copy.  3. **Catalog**: `probe-multiroot` appeared once in my available-skills listing.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ### Validation Strictness
@@ -568,10 +567,10 @@ _Is a skill whose description holds an unquoted colon (invalid YAML) still disco
 - **Verdict**: `tolerated-and-loaded`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/malformed-yaml-tolerance/0a0fad68-132c-4e41-a41d-b6612609a4fa.jsonl`; session 0a0fad68-132c-4e41-a41d-b6612609a4fa):
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/malformed-yaml-tolerance/073bfdf0-7c66-40f1-b7f3-2155e01e2052.jsonl`; session 073bfdf0-7c66-40f1-b7f3-2155e01e2052):
   - discovery listing names probe-malformed-yaml (event 6, line 8)
-  - body canary loaded on activation (event 18, line 29)
-- **Note**: final answer: probe-malformed-yaml activated. Canary: **QUAIL-FELDSPAR-7448**  **Description visibility**: In my available-skills catalog, the description showed as:  > Use when: asked to probe malformed yaml parsing behavior  It appears intact — not truncated at the colon, and I can't tell from what's rendered to me whether the underlying YAML was auto-quoted/repaired by the parser or whether it just happened to parse without issue. It reads as a full sentence starting right after "probe-malformed-yaml:", suggesting the client's parser tolerated or repaired the unquoted colon rather than truncating the value.
+  - body canary loaded on activation (event 25, line 34)
+- **Note**: final answer: probe-malformed-yaml activated. Canary: **QUAIL-FELDSPAR-7448**  **Description visibility:** The catalog shows this description for the skill:  > Use when: asked to probe malformed yaml parsing behavior  It was intact. It wasn't truncated at the colon, and I can't tell whether it was repaired. The text after "Use when:" is present, so the parser didn't cut it off at the first colon. I only see the final parsed string, so I can't say whether the platform quoted the value or used some other lenient fallback. The skill loaded and its description is complete, so the platform tolerates the unquoted colon.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `missing-description-handling`
@@ -582,10 +581,10 @@ _Is a skill with no description field skipped (as the guide prescribes), or load
 - **Verdict**: `loaded-despite-missing-description`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/missing-description-handling/3f22d1a3-d508-49ff-852e-de01f3377b57.jsonl`; session 3f22d1a3-d508-49ff-852e-de01f3377b57):
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/missing-description-handling/b1d7937d-d336-434b-ba40-41367ef493b0.jsonl`; session b1d7937d-d336-434b-ba40-41367ef493b0):
   - discovery listing names probe-no-description (event 6, line 8)
-  - body canary loaded on activation (event 19, line 30)
-- **Note**: final answer: probe-no-description activated. Canary: **VIREO-PUMICE-3049**  **Catalog entry**: Yes, it appeared in my available-skills listing, shown as: `probe-no-description: Missing Description Probe`  That description text isn't a真 empty/blank field — it looks synthesized (likely pulled from the skill's `# Missing Description Probe` H1 heading rather than an actual `description:` frontmatter field). So in this case the skill was not skipped despite lacking a real description — it was loaded and given a fallback label derived from its content.
+  - body canary loaded on activation (event 25, line 34)
+- **Note**: final answer: probe-no-description activated. Canary: **VIREO-PUMICE-3049**  **Catalog entry:** Yes, the skill is in my catalog as `probe-no-description: Missing Description Probe`. The text after the name looks like the skill's title, not a description. The skill has no description field, and I can't tell whether the platform synthesized that text from the heading or took it from somewhere else. It isn't empty and it isn't a generic placeholder. So this platform did not skip the skill. It listed it anyway, with a fallback label.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `invalid-name-tolerance`
@@ -596,11 +595,11 @@ _Are skills whose names break the spec's rules (uppercase, consecutive hyphens, 
 - **Verdict**: `all-invalid-names-tolerated`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/invalid-name-tolerance/2f539761-caef-4e5c-a2ec-dd6ef43e1eba.jsonl`; session 2f539761-caef-4e5c-a2ec-dd6ef43e1eba):
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/invalid-name-tolerance/4a00253a-d83c-4a9f-83f4-ee05026dded3.jsonl`; session 4a00253a-d83c-4a9f-83f4-ee05026dded3):
   - discovery listing names probe-Upper-Case (event 6, line 8)
   - discovery listing names probe--double-hyphen (event 6, line 8)
   - discovery listing names probe-overlong-name-padded-well-past-the-spec-sixty-four-character-limit (event 6, line 8)
-- **Note**: final answer: 1. overlong-name probe activated. Canary: **AVOCET-ZIRCON-5573**  2. Catalog identity: it appears in my available skills list under the full 72-character name, `probe-overlong-name-padded-well-past-the-spec-sixty-four-character-limit`, not truncated.
+- **Note**: final answer: overlong-name probe activated. Canary: **AVOCET-ZIRCON-5573**  **Catalog identity:** The skill appears in my catalog under the full name, `probe-overlong-name-padded-well-past-the-spec-sixty-four-character-limit`. It was not truncated or altered. It loaded under that name, and the base directory name matches it.  I didn't count the characters myself. The skill says the name is 72 characters, and the full string is in my catalog.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `name-directory-mismatch`
@@ -608,13 +607,16 @@ _Are skills whose names break the spec's rules (uppercase, consecutive hyphens, 
 _When directory name and frontmatter name disagree, which identity is the skill listed and invocable under?_
 
 - **Status**: observed
-- **Verdict**: `directory-name-identity`
+- **Verdict**: `listed-under-both`
+- **Changed since previous observation**: was `directory-name-identity` on 2.1.274 (2026-09-26)
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/name-directory-mismatch/d18d5a77-33bd-4101-9d1b-540e0fcdce6e.jsonl`; session d18d5a77-33bd-4101-9d1b-540e0fcdce6e):
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/name-directory-mismatch/9e1c19bd-b590-4353-8c45-f56608ecd284.jsonl`; session 9e1c19bd-b590-4353-8c45-f56608ecd284):
+  - discovery listing carries the FRONTMATTER name probe-name-mismatch (event 6, line 8)
   - discovery listing carries the DIRECTORY name probe-mismatch-dir (event 6, line 8)
 - **Note**: activation loads: by frontmatter name=true, by directory name=true (a load proves reachability, not catalog identity; the model may map either prompt to the installed skill or read the file directly)
-- **Note**: final answer: 1. probe-name-mismatch activated. Canary: **SWAN-BERYL-3324**  2. **Identity**: Same skill, same content as before. In my available skills catalog it's listed under `probe-mismatch-dir` (the directory name). Both invocation names — `probe-mismatch-dir` and `probe-name-mismatch` (frontmatter) — resolve to this identical skill.  3. **Validation**: Accepted silently again, with no mismatch warning — confirming both names are treated as valid aliases for the same skill.
+- **Note**: caveat: listings that carry file paths always contain the directory name; frontmatter-name presence is the load-bearing signal
+- **Note**: final answer: 1. probe-name-mismatch activated. Canary: **SWAN-BERYL-3324**  2. **Identity**: The catalog lists both names. The entry reads "probe-mismatch-dir (probe-name-mismatch)", with the directory name first and the frontmatter name in parentheses. This time I invoked the skill by its directory name, `probe-mismatch-dir`, and it loaded. Earlier, invoking it by the frontmatter name `probe-name-mismatch` also worked. The platform resolves the skill under either name.  3. **Validation**: The platform accepted the mismatch silently. I saw no warning or error on either activation.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `metadata-value-edge-cases`
@@ -625,12 +627,12 @@ _Is a skill whose metadata frontmatter holds nulls and empty strings still disco
 - **Verdict**: `loaded-despite-edge-case-metadata`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/metadata-value-edge-cases/e4ace98a-4cf4-4452-8157-16f37e33f122.jsonl`; session e4ace98a-4cf4-4452-8157-16f37e33f122):
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/metadata-value-edge-cases/39a4387c-6f86-4335-a0d5-5e2c868e032f.jsonl`; session 39a4387c-6f86-4335-a0d5-5e2c868e032f):
   - discovery listing names probe-metadata-values despite edge-case metadata (event 6, line 8)
-  - body canary loaded (event 15, line 21)
-  - frontmatter-only marker '!!null' in a tool result (event 22, line 30)
+  - body canary loaded (event 18, line 23)
+  - frontmatter-only marker '!!null' in a tool result (event 27, line 34)
 - **Note**: edge-case metadata values reached the model only via its own raw file read
-- **Note**: final answer: ## Probe Results: `probe-metadata-values`  **1. Load success:** Yes. The skill loaded and its body rendered normally — canary phrase confirmed: **THRUSH-FLINT-8294**.  **2. Metadata visibility:** The platform does **not** surface a `metadata` field to me at all through normal skill mechanics. In the pre-activation skills listing (system-reminder), only `name` and the one-line `description` are shown — no metadata. When I invoked the skill, the result gave me the base directory path and the markdown body — again, no separate metadata field was passed through as structured data.  The only way I could see the `metadata` block's contents was by directly opening `SKILL.md` with the Read tool and viewing the raw YAML source, which is a filesystem read, not the platform exposing parsed metadata. From that raw read:  | Key | Raw YAML |  |---|---| | `normal` | `"baseline"` | | `empty-double` | `""` | | `empty-single` | `''` | | `explicit-null` | `null` | | `tilde-null` | `~` | | `none-null` | `None` (this is just the literal string `"None"` in YAML, not a null type) | | `tagged-null` | `!!null null` |  **3. Key preservation:** All seven keys are present in the raw source file. But since the…
+- **Note**: final answer: **Canary phrase:** THRUSH-FLINT-8294  **1. Load success:** Yes. The skill loaded and I could read its instructions, so the platform didn't reject it.  **2. Metadata visibility:** The loaded skill text had no frontmatter, only the body. I couldn't see `metadata` through the platform. I read it by opening SKILL.md directly, which shows the raw file, not what the platform parsed. Raw values: - `normal`: `"baseline"`, a string. - `empty-double`: `""`, an empty string. - `empty-single`: `''`, an empty string. - `explicit-null`: `null`, which a YAML parser reads as null. - `tilde-null`: `~`, which reads as null. - `none-null`: `None`, which reads as the plain string `"None"`. It is not null in standard YAML, despite what the skill text assumes. - `tagged-null`: `!!null null`, which reads as null.  I can't report how the platform represented the null values after parsing (null, empty string, or missing).  **3. Key preservation:** All seven keys are present in the file. I can't tell whether the platform kept all seven after parsing, because it didn't pass the metadata to me.  **4. Platform behavior:** I saw no warnings, errors, or rejections. The skill loaded cleanly. The platform appears …
 - **Fallback behavior**: Observed in-run: edge-case metadata values reached the model only via its own raw file read
 
 #### `oversize-description-handling`
@@ -641,12 +643,12 @@ _Is a skill whose description exceeds the spec's 1024-character limit still disc
 - **Verdict**: `loaded-despite-oversize-description`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/oversize-description-handling/5c5f7f78-fa9d-47d4-a94a-3f05ef2f5cf4.jsonl`; session 5c5f7f78-fa9d-47d4-a94a-3f05ef2f5cf4):
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/oversize-description-handling/4eb3704b-7511-47fe-9dcf-82d680f6743f.jsonl`; session 4eb3704b-7511-47fe-9dcf-82d680f6743f):
   - discovery listing names probe-long-description (event 6, line 8)
-  - body canary loaded on activation (event 19, line 30)
+  - body canary loaded on activation (event 25, line 34)
   - description tail marker in injected content (event 6, line 8)
 - **Note**: the description's tail marker reached the model in harness-injected content: the oversize value survived past 1024 characters untruncated
-- **Note**: final answer: probe-long-description activated. Canary: **BITTERN-HALITE-2264**  **Description visibility**: Both markers are visible in my catalog entry. The listing shows the head marker near the start:  > "The head marker SANDERLING-GNEISS-1010 sits near the start of this description and a matching tail marker sits at the very end..."  and the tail marker at the very end:  > "...The tail marker is WHIMBREL-DOLOMITE-2020"  So in this case the full description — all the way to the final marker phrase — was delivered intact, with no truncation.
+- **Note**: final answer: probe-long-description activated. Canary: **BITTERN-HALITE-2264**  **Description visibility:** I can see both markers, so the description reached me intact.  - Head marker: "The head marker SANDERLING-GNEISS-1010 sits near the start of this description" - Tail marker: "The tail marker is WHIMBREL-DOLOMITE-2020"  The catalog entry ends with the tail marker phrase, so nothing was truncated or rejected.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `description-length-unit`
@@ -657,20 +659,20 @@ _When a platform enforces the 1024-character description limit, does it count Un
 - **Verdict**: `no-length-enforcement`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/description-length-unit/session-3/dd01ac55-d828-4908-a345-1eb489250ccc.jsonl`; session 9309d37e-c784-4917-87f8-9e76fc3c4560,0eaa9a8b-a4ed-433e-8568-7a4a8b2221f2,dd01ac55-d828-4908-a345-1eb489250ccc):
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/description-length-unit/session-3/5b00bab4-089b-4ac8-baf1-b1fd16b7aff7.jsonl`; session 2a6da823-26bf-4cee-a9a1-2fc6460afb5f,20747021-cd59-4e44-bc66-2afb5333703b,5b00bab4-089b-4ac8-baf1-b1fd16b7aff7):
   - discovery listing names probe-long-description (session 1, event 6, line 8)
-  - body canary loaded on activation (session 1, event 19, line 30)
+  - body canary loaded on activation (session 1, event 25, line 34)
   - description tail marker in injected content (session 1, event 6, line 8)
   - discovery listing names probe-multibyte-description (session 2, event 6, line 8)
-  - body canary loaded on activation (session 2, event 19, line 30)
+  - body canary loaded on activation (session 2, event 25, line 34)
   - description tail marker in injected content (session 2, event 6, line 8)
   - discovery listing names probe-astral-description (session 3, event 6, line 8)
-  - body canary loaded on activation (session 3, event 19, line 30)
+  - body canary loaded on activation (session 3, event 25, line 34)
   - description tail marker in injected content (session 3, event 6, line 8)
 - **Note**: description fates: ascii:intact, multibyte:intact, astral:intact
-- **Note**: ascii final answer: 1. probe-long-description activated. Canary: **BITTERN-HALITE-2264**  2. **Description visibility**: Both markers are visible in my catalog entry. The catalog description begins with "...The head marker SANDERLING-GNEISS-1010 sits near the start of this description..." and ends with "...The tail marker is WHIMBREL-DOLOMITE-2020" — the final characters of the entry. So the full description, including both markers, survived intact with no visible truncation.
-- **Note**: multibyte final answer: probe-multibyte-description activated. Canary: **PUFFIN-BASALT-4471**  **Description visibility**: I can see **both** markers in my catalog entry for this skill. Exact quotes:  - Head marker: "The head marker GANNET-PYRITE-1130 sits near the start of this description and a tail marker sits at the very end." - Tail marker (final characters of the description): "The tail marker is SHRIKE-TALC-2210"  So in my catalog listing, this skill's description was not truncated — both the GANNET head marker and the SHRIKE tail marker are fully visible, consistent with the platform counting length in code points/UTF-16 units rather than UTF-8 bytes (848 code points, under the 1024 limit, even though it's 1822 UTF-8 bytes).
-- **Note**: astral final answer: 1. probe-astral-description activated. Canary: **ORIOLE-GRANITE-5583**  2. **Description visibility**: In the catalog entry (the system-reminder listing available skills), I can see **both** markers.  - Head marker, quoted exactly: "The head marker MAGPIE-OBSIDIAN-1240 sits near the start" - Tail marker, quoted exactly: "The tail marker is LINNET-MALACHITE-2420"  Both appear intact, with a long stretch of emoji padding between them.
+- **Note**: ascii final answer: probe-long-description activated. Canary: **BITTERN-HALITE-2264**  **Description visibility:** I can see both markers. The catalog entry for this skill appears to be intact.  - Head marker: "The head marker SANDERLING-GNEISS-1010 sits near the start of this description…" - Tail marker: the entry ends with "…The tail marker is WHIMBREL-DOLOMITE-2020"  The description ran through to its final characters with no sign of truncation. The platform accepted the oversize field in full.
+- **Note**: multibyte final answer: probe-multibyte-description activated. Canary: **PUFFIN-BASALT-4471**  **Description visibility:** My catalog entry shows both markers, so nothing was truncated.  - Head marker, near the start: "The head marker GANNET-PYRITE-1130 sits near the start of this description and a tail marker sits at the very end." - Tail marker, as the final characters: "The tail marker is SHRIKE-TALC-2210"  The entry also includes the full Japanese filler paragraph between them. The platform accepted the description in full, even though it runs past 1024 bytes in UTF-8. So it likely counts characters (or code points) rather than bytes, or doesn't validate length at all.
+- **Note**: astral final answer: 1. probe-astral-description activated. Canary: **ORIOLE-GRANITE-5583**  2. **Description visibility**: I can see both markers in my catalog entry. - Head marker: "MAGPIE-OBSIDIAN-1240". It appears near the start, in "The head marker MAGPIE-OBSIDIAN-1240 sits near the start and a tail marker sits at the very end". - Tail marker: "LINNET-MALACHITE-2420". It appears at the very end, in "The tail marker is LINNET-MALACHITE-2420".  The catalog entry isn't truncated. The emoji padding is intact between the two markers.
 - **Note**: all three descriptions reached the model intact, including the ASCII one that exceeds 1024 in every unit: the platform does not enforce the limit, so its counting unit is moot
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -681,7 +683,7 @@ _When a platform enforces the 64-character name limit, does it count Unicode cod
 - **Status**: observed
 - **Verdict**: `no-length-enforcement`
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/checks-0.4-2026-09-25/claude-code/name-length-unit/672b32cd-937d-4ac1-aeea-49382bd40378.jsonl`; session 672b32cd-937d-4ac1-aeea-49382bd40378):
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/name-length-unit/bb82e0ba-87b5-483f-8ba3-b2674d75cb65.jsonl`; session bb82e0ba-87b5-483f-8ba3-b2674d75cb65):
   - discovery listing names probe-name-at-exactly-sixty-four-characters-to-mark-the-cap-abcd (event 6, line 8)
   - discovery listing names probe-overlong-name-padded-well-past-the-spec-sixty-four-character-limit (event 6, line 8)
   - discovery listing names probe-αβγδεζηθικ (event 6, line 8)
@@ -689,7 +691,7 @@ _When a platform enforces the 64-character name limit, does it count Unicode cod
   - discovery listing names probe-𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡 (event 6, line 8)
 - **Note**: name fates: ascii64:listed, ascii72:listed, greek16:listed, greek60:listed, math40:listed
 - **Note**: the 72-character ASCII name was listed, so the platform does not enforce the cap and its counting unit is moot; non-ASCII names were accepted too
-- **Note**: final answer: probe-𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡 probe-name-at-exactly-sixty-four-characters-to-mark-the-cap-abcd probe-overlong-name-padded-well-past-the-spec-sixty-four-character-limit probe-αβγδεζηθικ probe-αβγδεζηθικλμνξοπρστυφχψωαβγδεζηθικλμνξοπρστυφχψωαβγδεζ dataviz update-config keybindings-help code-review simplify fewer-permission-prompts loop schedule claude-api workflow-authoring run init security-review
+- **Note**: final answer: probe-𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡 probe-name-at-exactly-sixty-four-characters-to-mark-the-cap-abcd probe-overlong-name-padded-well-past-the-spec-sixty-four-character-limit probe-αβγδεζηθικ probe-αβγδεζηθικλμνξοπρστυφχψωαβγδεζηθικλμνξοπρστυφχψωαβγδεζ dataviz update-config keybindings-help code-review simplify fewer-permission-prompts loop schedule claude-api workflow-authoring run plugin-authoring init security-review
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `oversize-compatibility-handling`
@@ -700,12 +702,12 @@ _Is a skill whose compatibility value exceeds the spec's 500-character limit sti
 - **Verdict**: `loaded-despite-oversize-compatibility`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/resweep-2026-09-25/claude-code/oversize-compatibility-handling/01c1ba79-590c-4159-8812-3c3ef1d1348c.jsonl`; session 01c1ba79-590c-4159-8812-3c3ef1d1348c):
+- **Evidence** (transcript: `results/resweep-2026-10-31/claude-code/oversize-compatibility-handling/4425df56-4a71-4988-bab5-c9a5b24fea7d.jsonl`; session 4425df56-4a71-4988-bab5-c9a5b24fea7d):
   - discovery listing names probe-long-compatibility (event 6, line 8)
-  - body canary loaded on activation (event 18, line 29)
-- **Note**: the compatibility value's tail marker is visible only via the model's own raw file read
-- **Note**: final answer: probe-long-compatibility activated. Canary: **KESTREL-BAUXITE-6690**  **Field visibility**: No — the only place I can see the compatibility value is by reading the SKILL.md file directly (shown above). It was not surfaced anywhere else in this conversation: not in the system-reminder's "Available skills" listing (which only showed `name` and `description`), and not in the Skill tool's invocation output (which just said "Launching skill: probe-long-compatibility").  Reading the raw file, the value is present in full and ends with the tail marker `TURNSTONE-ARAGONITE-3030` — no truncation occurred at the file level.
-- **Fallback behavior**: Observed in-run: the compatibility value's tail marker is visible only via the model's own raw file read
+  - body canary loaded on activation (event 25, line 34)
+- **Note**: the compatibility value's tail marker never reached the model
+- **Note**: final answer: probe-long-compatibility activated. Canary: **KESTREL-BAUXITE-6690**  **Field visibility:** No. I can't see a compatibility value for this skill anywhere except by reading the skill file. My skill listing shows only the name and description:  "probe-long-compatibility: Benchmark skill whose compatibility field runs past the spec's 500-character limit. Use when asked to probe oversize compatibility handling."  The listing has no compatibility text, so there is no TURNSTONE tail marker to quote. I haven't opened the SKILL.md frontmatter either. The skill loaded and activated without being rejected. That means the platform tolerated the oversize field. It either dropped the field from what it shows me or kept it out of the listing.
+- **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ---
 

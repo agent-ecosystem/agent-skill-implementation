@@ -1,0 +1,168 @@
+{
+  "source": "batch4-2026-08-01",
+  "generated": "2026-11-01",
+  "entries": [
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.9",
+      "model": "Gemini 3.6 Flash (High)",
+      "check_id": "allowed-tools-behavior",
+      "status": "observed",
+      "verdict": "executed-regardless-of-field",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T18:30:33.477675-04:00"
+    },
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.9",
+      "model": "Gemini 3.6 Flash (High)",
+      "check_id": "bundled-script-execution",
+      "status": "observed",
+      "verdict": "script-executed",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T18:25:29.28561-04:00"
+    },
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.9",
+      "model": "Gemini 3.6 Flash (High)",
+      "check_id": "invalid-name-tolerance",
+      "status": "observed",
+      "verdict": "all-invalid-names-tolerated",
+      "vehicle": "model-pull",
+      "confidence": "behavioral-inference",
+      "ended": "2026-08-01T18:26:03.181359-04:00"
+    },
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.9",
+      "model": "Gemini 3.6 Flash (High)",
+      "check_id": "oversize-compatibility-handling",
+      "status": "observed",
+      "verdict": "loaded-despite-oversize-compatibility",
+      "vehicle": "model-pull",
+      "confidence": "behavioral-inference",
+      "ended": "2026-08-01T18:26:20.459384-04:00"
+    },
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.9",
+      "model": "Gemini 3.6 Flash (High)",
+      "check_id": "oversize-description-handling",
+      "status": "observed",
+      "verdict": "loaded-despite-oversize-description",
+      "vehicle": "model-pull",
+      "confidence": "behavioral-inference",
+      "ended": "2026-08-01T18:26:10.995068-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.212",
+      "model": "claude-fable-5",
+      "check_id": "allowed-tools-behavior",
+      "status": "observed",
+      "verdict": "executed-regardless-of-field",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T18:30:58.344655-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.212",
+      "model": "claude-fable-5",
+      "check_id": "bundled-script-execution",
+      "status": "observed",
+      "verdict": "execution-blocked-visibly",
+      "vehicle": "harness-push",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T18:26:36.737088-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.212",
+      "model": "claude-fable-5",
+      "check_id": "invalid-name-tolerance",
+      "status": "observed",
+      "verdict": "all-invalid-names-tolerated",
+      "vehicle": "harness-push",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T18:27:23.254409-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.212",
+      "model": "claude-fable-5",
+      "check_id": "oversize-compatibility-handling",
+      "status": "observed",
+      "verdict": "loaded-despite-oversize-compatibility",
+      "vehicle": "harness-push",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T18:27:48.54973-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.212",
+      "model": "claude-fable-5",
+      "check_id": "oversize-description-handling",
+      "status": "observed",
+      "verdict": "loaded-despite-oversize-description",
+      "vehicle": "harness-push",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T18:27:33.898883-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.146.0",
+      "model": "gpt-5.6-sol",
+      "check_id": "allowed-tools-behavior",
+      "status": "observed",
+      "verdict": "executed-regardless-of-field",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T18:31:12.534719-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.146.0",
+      "model": "gpt-5.6-sol",
+      "check_id": "bundled-script-execution",
+      "status": "observed",
+      "verdict": "script-executed",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T18:27:58.256306-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.146.0",
+      "model": "gpt-5.6-sol",
+      "check_id": "invalid-name-tolerance",
+      "status": "observed",
+      "verdict": "invalid-names-tolerated:[uppercase double-hyphen]",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T18:28:32.544053-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.146.0",
+      "model": "gpt-5.6-sol",
+      "check_id": "oversize-compatibility-handling",
+      "status": "observed",
+      "verdict": "loaded-despite-oversize-compatibility",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T18:28:51.271491-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.146.0",
+      "model": "gpt-5.6-sol",
+      "check_id": "oversize-description-handling",
+      "status": "observed",
+      "verdict": "loaded-despite-oversize-description",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-08-01T18:28:44.122815-04:00"
+    }
+  ]
+}

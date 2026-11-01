@@ -3,13 +3,15 @@
 | | |
 |---|---|
 | **Platform** | GitHub Copilot CLI (headless) |
-| **Platform version** | 1.0.88 |
+| **Platform version** | 1.0.105 |
 | **Check list version** | 0.4 |
-| **Test date** | 2026-09-26 |
-| **Model(s) observed** | claude-sonnet-5 |
+| **Test date** | 2026-11-01 |
+| **Model(s) observed** | claude-sonnet-5.5 |
 | **Environment** | Headless invocation via [benchmark-runner](https://github.com/agent-ecosystem/agent-skill-implementation/tree/main/benchmark-runner) + [skillxp](https://github.com/agent-ecosystem/skillxp) |
 
 > **Caveats**: All findings are from headless sessions, which may differ from interactive use. Verdicts are single-run observations unless a runs count is noted; for model-level behaviors, treat a single verdict as one observed outcome rather than a rate. Evidence line numbers cite the archived transcripts in the results directories. Fallback-behavior fields are auto-derived: where a run incidentally demonstrated a recovery path it is reported, otherwise the field says "not exercised". Automation does not probe recovery, so absence of a fallback observation is not evidence that none exists.
+
+> **Changed since the previous observation**: 1 verdict differs from the previous run of the checks on this platform: `path-resolution-base`. Each finding below states the earlier verdict and release.
 
 ## Spec alignment
 
@@ -17,7 +19,6 @@ Most of this report measures behavior the [Agent Skills specification](https://a
 
 ### Where behavior contradicts the spec
 
-- [`path-resolution-base`](#path-resolution-base): The spec tells authors to reference files with relative paths from the skill root, but a path written that way fails here: paths resolve against the session's working directory, not the skill directory. In this run the model noticed the failure and requalified the path itself.
 - [`bundled-script-execution`](#bundled-script-execution): The spec presents scripts/ as executable code agents can run, but execution was blocked in this headless run. Interactive sessions, where a user can approve the command, may behave differently.
 - [`frontmatter-handling`](#frontmatter-handling): The spec says the agent loads the entire SKILL.md file at activation. This platform strips the YAML frontmatter and injects only the body, so frontmatter fields beyond name and description never reach the model.
 - [`description-length-unit`](#description-length-unit): The spec caps description at 1024 characters without defining the unit; its skills-ref reference validator counts code points. This platform counts UTF-16 code units, so a description with emoji or other supplementary-plane characters that the reference validator accepts is rejected or truncated here.
@@ -47,6 +48,7 @@ The spec's format rules bind skill authors; it does not say what a platform shou
 
 ### Not exercised in this run
 
+- [`path-resolution-base`](#path-resolution-base): The spec's skill-root-relative paths went untested in this run: the model rewrote each reference to a fully qualified path before use, so the platform's own resolution base was never exercised. (Behavioral inference.)
 - [`allowed-tools-behavior`](#allowed-tools-behavior): The spec marks allowed-tools experimental, with varying support. Neither twin session produced a clean execution, so the field's effect is unresolved here; see the finding for per-session tiers.
 - [`allowed-tools-name-matching`](#allowed-tools-name-matching): The spec marks allowed-tools experimental, leaves tool names to each platform, and says support may vary, so no outcome contradicts it. No spelling unblocked the command, so either the field is ignored or none of the three spellings names a tool this platform pre-approves; the matching rule is unresolved here.
 
@@ -64,8 +66,8 @@ _Does the harness read only SKILL.md metadata at discovery, or the full body?_
 - **Status**: observed
 - **Verdict**: `metadata-only`
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/discovery-reading-depth/events.jsonl`; session c3f32b74-e1bf-4245-8411-1bfeaea74b99):
-  - discovery listing names probe-loading (event 3, line 4)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/discovery-reading-depth/events.jsonl`; session d407e94d-9fcc-4b66-8139-a0df05b42a68):
+  - discovery listing names probe-loading (event 4, line 5)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `activation-loading-scope`
@@ -76,8 +78,8 @@ _On activation, does the harness load only the SKILL.md body, or also bundled re
 - **Verdict**: `body-only`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/activation-loading-scope/events.jsonl`; session 42cbad27-5086-4273-a973-9d648ccc361e):
-  - body canary in harness-injected content (event 10, line 9)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/activation-loading-scope/events.jsonl`; session 612ce68e-6286-43a8-a8ef-85cea44e9ab1):
+  - body canary in harness-injected content (event 11, line 11)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `eager-link-resolution`
@@ -88,11 +90,11 @@ _Does activation pre-fetch files markdown-linked from the SKILL.md body, and doe
 - **Verdict**: `no-prefetch`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/eager-link-resolution/events.jsonl`; session 1969ee58-39b1-40eb-a445-57cdbde1b263):
-  - skill body loaded (event 10, line 9)
-  - references/setup-guide.md arrived only via the model's own read (event 38, line 28)
-  - references/troubleshooting.md arrived only via the model's own read (event 40, line 30)
-  - references/unlinked-data.md arrived only via the model's own read (event 39, line 29)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/eager-link-resolution/events.jsonl`; session 35e20f13-5c8c-42f3-af7d-3dd338b5fe8a):
+  - skill body loaded (event 11, line 11)
+  - references/setup-guide.md arrived only via the model's own read (event 23, line 20)
+  - references/troubleshooting.md arrived only via the model's own read (event 24, line 21)
+  - references/unlinked-data.md arrived only via the model's own read (event 25, line 22)
 - **Note**: model read [references/setup-guide.md references/troubleshooting.md references/unlinked-data.md] itself, corroborating it did not already have them
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -106,10 +108,10 @@ _Are the three spec directories (scripts/, references/, assets/) enumerated to t
 - **Verdict**: `all-three-dirs-enumerated`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/recognized-directory-set/events.jsonl`; session 875d327a-0fda-4075-a66c-66cb1ee111f3):
-  - scripts/ file name injected at activation (event 10, line 9)
-  - references/ file name injected at activation (event 10, line 9)
-  - assets/ file name injected at activation (event 10, line 9)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/recognized-directory-set/events.jsonl`; session 813b80ec-fb1e-45b9-8cb3-3232fd00e67b):
+  - scripts/ file name injected at activation (event 11, line 11)
+  - references/ file name injected at activation (event 11, line 11)
+  - assets/ file name injected at activation (event 11, line 11)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `directory-naming-divergence`
@@ -120,8 +122,8 @@ _Is a resources/ directory (alternative to spec's references/) loaded, enumerate
 - **Verdict**: `resources-enumerated-not-loaded`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/directory-naming-divergence/events.jsonl`; session 4b587120-6a17-41bd-9985-a8d881a6df7b):
-  - resources/ file name injected without its content (event 9, line 9)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/directory-naming-divergence/events.jsonl`; session 8d4f9ed9-db85-4f3c-80cf-2e52856466f2):
+  - resources/ file name injected without its content (event 11, line 11)
 - **Note**: read alongside resource-enumeration-behavior: equal treatment of resources/ and references/ (both enumerated, or both untouched) means no naming divergence on this platform
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -133,11 +135,11 @@ _What happens to directories the spec never named (evals/, templates/): injected
 - **Verdict**: `enumerated-not-loaded:[evals/ templates/]`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/unrecognized-directory-handling/events.jsonl`; session fec9f949-48a8-4f69-9a19-8ec87e3cbaf2):
-  - evals/ file name injected without its content (event 10, line 9)
-  - templates/ file name injected without its content (event 10, line 9)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/unrecognized-directory-handling/events.jsonl`; session 674bad8e-9f45-46b3-9269-772d2d42422b):
+  - evals/ file name injected without its content (event 11, line 11)
+  - templates/ file name injected without its content (event 11, line 11)
 - **Note**: the platform lists the nonstandard directories' files at activation but loads nothing from them; the model can read them on demand like any other listed file
-- **Note**: final answer: ## Nonstandard Directories Probe — Results  **1. Directory awareness:** I was told about only 3 directories/files in the skill-loading message (`evals/evals.json`, `resources/api-reference.md`, `templates/output-template.md`), listed as "related files" — not full directory listings. `SKILL.md` was not mentioned but exists per my own `view` of the base dir.  **2. Content visibility:** No file contents or listings were pushed to me automatically. The skill-loading message only gave paths; I had to call `view` myself to see the base directory listing and each file's content. Nothing was pre-enumerated or pre-loaded.  **3. `resources/` vs `references/`:** No special treatment observed. The platform didn't auto-enumerate or auto-load `resources/` (or any dir) — it just surfaced pointers to specific files that someone (skill author) chose to reference in `SKILL.md`. Non-standard directory names (`evals/`, `templates/`, `resources/`) appear treated identically to spec-standard ones: as plain paths I must explicitly `view`.  Canaries found: `ROBIN-JADE-3847`, `SWIFT-OPAL-8156`, `WREN-PEARL-6293`.
+- **Note**: final answer: **1. Directory awareness:** The skill loader listed three files under the skill's base directory: - `evals/evals.json` - `resources/api-reference.md` - `templates/output-template.md`  So I know of `evals/`, `resources/` and `templates/`. The skill text names the same three directories. There is no `scripts/`, `references/` or `assets/` directory.  **2. Content visibility:** I can see the file listing for each directory, as paths under "Related files". I cannot see any file contents. Those are only available if I read them with the `view` tool, and I haven't. Nothing was preloaded.  **3. Resources vs. references:** I can't confirm how the platform treats `references/`, because this skill doesn't have one. The loader enumerated the `resources/` file path alongside `evals/` and `templates/` and treated all three the same way. Each was listed but its content was not loaded. From this one run, nothing sets `resources/` apart from the other nonstandard directories. The loader seems to list every file in the skill, whatever the directory name.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ### Resource Access Patterns
@@ -150,8 +152,8 @@ _At activation, are a skill's reference files enumerated to the model (names), l
 - **Verdict**: `listing-enumerated-without-contents`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/resource-enumeration-behavior/events.jsonl`; session 902f3d68-fb00-4330-b0a7-1ab5afa9d0cf):
-  - unlinked reference file's NAME injected without its content (event 10, line 9)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/resource-enumeration-behavior/events.jsonl`; session 916e06eb-c637-437c-a119-3e331be7c813):
+  - unlinked reference file's NAME injected without its content (event 11, line 11)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `path-resolution-base`
@@ -159,14 +161,12 @@ _At activation, are a skill's reference files enumerated to the model (names), l
 _When the model follows a SKILL.md relative path like references/setup-guide.md, what does it resolve against, and does the bare path work as written?_
 
 - **Status**: observed
-- **Verdict**: `cwd-base-model-requalified`
+- **Verdict**: `model-preemptively-qualified`
+- **Changed since previous observation**: was `cwd-base-model-requalified` on 1.0.88 (2026-09-25)
 - **Vehicle**: harness-push
-- **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/path-resolution-base/events.jsonl`; session c22c9eb3-1c6a-4cc9-9362-19328527d300):
-  - bare SKILL.md-relative path attempt did not deliver content (event 15, line 13)
-  - bare SKILL.md-relative path attempt did not deliver content (event 16, line 13)
-- **Note**: the path as written in SKILL.md does not resolve; the model recovered by qualifying it with the skill directory
-- **Fallback behavior**: agent self-recovered in-run: after the bare relative path failed, the model requalified it against the skill directory without user intervention.
+- **Confidence**: behavioral-inference
+- **Note**: the model never tried the bare path, so the platform's resolution base was not directly exercised; it navigated by qualified path from the start
+- **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `cross-skill-resource-shadowing`
 
@@ -176,12 +176,12 @@ _With two skills both owning references/API.md, does the activated skill's read 
 - **Verdict**: `own-resource-first`
 - **Vehicle**: harness-push
 - **Confidence**: behavioral-inference
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/cross-skill-resource-shadowing/events.jsonl`; session 5fc36419-6cd1-423b-9da3-e2ff631c193a):
-  - activated skill's own API.md content arrived first (event 17, line 15)
-  - sibling skill's API.md also read (event 30, line 25)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/cross-skill-resource-shadowing/events.jsonl`; session 7fbb52ae-c44b-44e5-bdbc-4f047035d433):
+  - activated skill's own API.md content arrived first (event 21, line 19)
+  - sibling skill's API.md also read (event 22, line 20)
 - **Note**: every API.md read was skill-qualified; the platform's ambiguous-path resolution was never exercised, so the outcome reflects model path discipline, not platform disambiguation
 - **Note**: the sibling skill's version was also accessible later in the session (no isolation between skills' resources)
-- **Note**: final answer: **Result:** Read alpha's `references/API.md` — canary phrase **STORK-CORAL-4471** (alpha's own version), as expected.  Only probe-shadow-alpha was activated (beta was not invoked this session), but I directly viewed beta's file at its distinct path too: it correctly returned **EGRET-SLATE-8823** (beta's own version). No cross-contamination — each skill's `references/API.md` resolved to its own correct file with no ambiguity, since both live at distinct absolute paths (`.github/skills/probe-shadow-alpha/...` vs `.github/skills/probe-shadow-beta/...`).
+- **Note**: final answer: **Alpha `references/API.md`** (canary **STORK-CORAL-4471**): the alpha skill's own version. - `GET /alpha/status`: health check - `POST /alpha/process`: processing  **Beta `references/API.md`** (canary **EGRET-SLATE-8823**): I could read it by its full path, `.github/skills/probe-shadow-beta/references/API.md`. - `GET /beta/status` - `POST /beta/process`  No shadowing occurred. Each skill's full path resolved to its own file. Only the alpha skill was loaded. I read the beta file directly by path, not through a loaded beta skill.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `path-traversal-boundary`
@@ -192,11 +192,10 @@ _Can the model read outside the activated skill's directory (a sibling skill's f
 - **Verdict**: `outside-skill-read-allowed`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/path-traversal-boundary/events.jsonl`; session 3f2f209b-2510-4117-aaa0-227e49c77199):
-  - sibling skill's body canary arrived in a tool result (event 26, line 21)
-  - first ../ path attempt (event 15, line 13)
-- **Note**: relative ../ path forms were used
-- **Note**: final answer: ## Path Traversal Probe Results  No sandboxing/boundary enforcement was detected — all reads outside the skill directory succeeded via both raw filesystem tools (`bash cat/ls`) and the platform's `view` tool.  | # | Target | Result | Details | |---|--------|--------|---------| | 1 | `../probe-loading/SKILL.md` | ✅ **Allowed** — full contents returned | Includes its canary phrase `CARDINAL-ZEBRA-7742`, frontmatter, and instructions. No error/warning. | | 2 | `../README.md` | ⚠️ File genuinely absent | `cat` returned "No such file or directory" — not a boundary block, just doesn't exist. `ls ../` succeeded, listing sibling dirs `probe-loading` and `probe-traversal` (parent directory listing allowed). | | 3 | `../../checks.md` | ⚠️ File genuinely absent | Same "No such file or directory" — no permission error, just missing file. Two-levels-up traversal itself was not blocked. |  **Summary**: The platform does **not** enforce any boundary at the skill directory root. Relative-path traversal (`../`, listing parent dirs, reading sibling skill files) is fully permitted through standard filesystem access — both shell commands and the built-in `view` tool succeeded identically. The only "fa…
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/path-traversal-boundary/events.jsonl`; session e7cd4578-18a4-4d52-b24b-a2a92ef52983):
+  - sibling skill's body canary arrived in a tool result (event 28, line 24)
+- **Note**: no ../ form observed; the model reached the sibling via absolute or listing-derived paths. Access is unrestricted either way
+- **Note**: final answer: Path traversal probe results. I resolved each relative path from the probe-traversal skill directory (`.github/skills/probe-traversal`).  1. **Sibling skill (`../probe-loading/SKILL.md`)**: Allowed. I got the full file contents with no error or warning. The platform enforced no boundary. 2. **Parent directory**:    - `../README.md`: Error, "path does not exist". The file isn't there, so nothing was blocked.    - `../` listing: Allowed. It returned `probe-loading` and `probe-traversal`. 3. **Two levels up (`../../checks.md`)**: Error, "path does not exist". The file isn't there, so this isn't evidence of blocking either.  I saw no sandboxing, warnings, or silent empty results. Reads outside the skill root succeed whenever the file exists. The two failures were simply missing files, and `../../` resolves to `.github/`.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `resource-nesting-depth`
@@ -207,12 +206,12 @@ _How deep in the directory tree do reference files stay reachable? Rungs at one,
 - **Verdict**: `all-depths-accessible-through-5`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/resource-nesting-depth/events.jsonl`; session 8fb8d5d9-ad87-47c4-bd9a-b7092f000a13):
-  - depth-1 file references/overview.md content arrived (event 29, line 21)
-  - depth-2 file references/api/endpoints.md content arrived (event 30, line 22)
-  - depth-3 file references/api/v2/migration-guide.md content arrived (event 31, line 23)
-  - depth-3 file references/guides/advanced/performance-tuning.md content arrived (event 32, line 24)
-  - depth-5 file references/api/v2/history/deprecated/removed-endpoints.md content arrived (event 28, line 20)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/resource-nesting-depth/events.jsonl`; session 3ef59e47-17d1-4df2-b57f-55c40bffdbfc):
+  - depth-1 file references/overview.md content arrived (event 27, line 22)
+  - depth-2 file references/api/endpoints.md content arrived (event 29, line 24)
+  - depth-3 file references/api/v2/migration-guide.md content arrived (event 28, line 23)
+  - depth-3 file references/guides/advanced/performance-tuning.md content arrived (event 30, line 25)
+  - depth-5 file references/api/v2/history/deprecated/removed-endpoints.md content arrived (event 31, line 26)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `bundled-script-execution`
@@ -223,9 +222,9 @@ _Can the agent run a bundled scripts/ file and receive its output?_
 - **Verdict**: `execution-blocked-visibly`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/bundled-script-execution/events.jsonl`; session c65abce4-a132-4daf-8d4a-a5819765bc21):
-  - script-referencing tool call returned an error result (event 13, line 13)
-- **Note**: final answer: Execution failed with the exact error: **"Permission denied and could not request permission from user"**
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/bundled-script-execution/events.jsonl`; session e5c1a856-2190-42e9-894c-3e5cc5cb7e4a):
+  - script-referencing tool call returned an error result (event 16, line 16)
+- **Note**: final answer: The script did not run. The bash call returned this error:  > Permission denied because no interactive user response was available. Retry in an interactive session so the user can approve it, or try an alternative that does not require this permission.  No phrase was printed, so I have nothing to report from the script. I won't guess it. The only canary I have is the one from the skill body, **REDSHANK-SYENITE-8807**.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `bundled-file-enumeration-scale`
@@ -236,10 +235,10 @@ _When a skill ships forty numbered references, a hidden dotfile, a binary asset,
 - **Verdict**: `filtered:[vendored]`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/checks-0.4-2026-09-25/copilot/bundled-file-enumeration-scale/events.jsonl`; session 6c32931b-516e-48a9-af1a-d8425e467e88):
-  - first numbered file name injected at activation (event 10, line 9)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/bundled-file-enumeration-scale/events.jsonl`; session a27e40d1-8139-4b3e-97f7-a9f8564bc5ce):
+  - first numbered file name injected at activation (event 11, line 11)
 - **Note**: listed 40 of 40 numbered files; kinds listed: [dotfile binary]; kinds omitted: [vendored]
-- **Note**: final answer: **probe-bulk-files activated. Canary: SKUA-DIORITE-2917**  **File awareness** — I was told about these files at activation:  - `.hidden-dotfile-marker.md` - `assets/binary-pixel-marker.png` - `references/bulk-file-01.md` through `references/bulk-file-40.md` (all 40, numbered 01–40)  **Count**: 42 files total (40 numbered reference files + 1 hidden dotfile + 1 binary image). No vendored code tree files were named to me.
+- **Note**: final answer: 1. probe-bulk-files activated. Canary: **SKUA-DIORITE-2917**  2. **File awareness**: These are the files I was told about at activation. The paths below are relative to the skill's base directory.    - `.hidden-dotfile-marker.md`    - `assets/binary-pixel-marker.png`    - `references/bulk-file-01.md` through `references/bulk-file-40.md`. That is 40 consecutively numbered files (01, 02, 03, … 40).     I was told about no vendored code tree files, although the skill text mentions one.  3. **Count**: 42 files (1 dotfile, 1 PNG, 40 numbered references).
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ### Content Presentation
@@ -251,10 +250,10 @@ _Which frontmatter fields does the discovery listing surface to the model: name 
 - **Status**: observed
 - **Verdict**: `name-and-description-only`
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/discovery-listing-fields/events.jsonl`; session c94e02d9-09ca-405c-bc01-14fb6a16caa4):
-  - discovery listing names the installed skills (event 3, line 4)
-  - description text surfaced at discovery (event 3, line 4)
-- **Note**: final answer: Here are the entries exactly as shown in my available skills list:  <skill>   <name>probe-compatibility</name>   <description>Benchmark skill for testing how platforms handle the compatibility field. Use when asked to probe compatibility behavior.</description>   <location>project</location> </skill>  <skill>   <name>probe-loading</name>   <description>Benchmark skill for testing loading timing, resource enumeration, content presentation, and lifecycle behavior. Use when asked to probe loading behavior.</description>   <location>project</location> </skill>  <skill>   <name>probe-metadata-values</name>   <description>Benchmark skill for testing how platforms handle edge-case YAML values in the metadata frontmatter field. Use when asked to probe metadata value handling.</description>   <location>project</location> </skill>  <skill>   <name>customize-cloud-agent</name>   <description>Skill for customizing the Copilot cloud agent (formerly known as Copilot coding agent) environment, including copilot-setup-steps.yml configuration, preinstalling tools and dependencies, runners, and settings. Use when the user mentions copilot-setup-steps, copilot setup steps, or wants to configure the c…
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/discovery-listing-fields/events.jsonl`; session d2c6c77f-9676-4f16-8e51-5f97396eb3d3):
+  - discovery listing names the installed skills (event 4, line 5)
+  - description text surfaced at discovery (event 4, line 5)
+- **Note**: final answer: Here are the skills in my available skills list, copied verbatim. Each entry shows only name, description, and location.  1. **probe-compatibility**    - description: Benchmark skill for testing how platforms handle the compatibility field. Use when asked to probe compatibility behavior.    - location: project  2. **probe-loading**    - description: Benchmark skill for testing loading timing, resource enumeration, content presentation, and lifecycle behavior. Use when asked to probe loading behavior.    - location: project  3. **probe-metadata-values**    - description: Benchmark skill for testing how platforms handle edge-case YAML values in the metadata frontmatter field. Use when asked to probe metadata value handling.    - location: project  4. **customize-cloud-agent**    - description: Skill for customizing the Copilot cloud agent (formerly known as Copilot coding agent) environment, including copilot-setup-steps.yml configuration, preinstalling tools and dependencies, runners, and settings. Use when the user mentions copilot-setup-steps, copilot setup steps, or wants to configure the cloud agent environment.    - location: builtin  5. **github-pr-media**    - description: Up…
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `frontmatter-handling`
@@ -265,8 +264,8 @@ _Does the SKILL.md YAML frontmatter reach the model at activation, or only the b
 - **Verdict**: `frontmatter-stripped-on-injection`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/frontmatter-handling/events.jsonl`; session cef42249-20ca-40ed-8651-69e2d8e6d0a1):
-  - body injected without the frontmatter-only marker (event 10, line 9)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/frontmatter-handling/events.jsonl`; session 1bacd2a2-a7ff-4947-9c1a-92c0e1187b06):
+  - body injected without the frontmatter-only marker (event 11, line 11)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `content-wrapping-format`
@@ -277,8 +276,8 @@ _Is injected skill content wrapped in structured tags, or delivered as raw markd
 - **Verdict**: `wrapped-structured`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/content-wrapping-format/events.jsonl`; session d036491f-0cbe-49d1-951f-2c8b03ea9c52):
-  - injection event carrying the body canary (event 10, line 9)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/content-wrapping-format/events.jsonl`; session 9c50ec62-6481-49f7-8506-cdbd235dfcc9):
+  - injection event carrying the body canary (event 11, line 11)
 - **Note**: the whole delivery is enclosed in: skill-context
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -290,9 +289,9 @@ _Does the content injected at activation tell the model where the skill lives on
 - **Verdict**: `path-stated-at-activation`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/checks-0.4-2026-09-25/copilot/activation-location-disclosure/events.jsonl`; session 9b410381-a8aa-4c35-b8bc-9f0a1af768d3):
-  - skill path in harness-injected activation content (event 9, line 9)
-- **Note**: final answer: **Probe Report**  1. **Frontmatter visibility**: Not visible — only rendered instructions were passed to me; no YAML frontmatter (name, description, allowed-tools, compatibility, metadata) appears in what I received.  2. **Content wrapping**: Yes — the content is wrapped in a `<skill-context name="probe-loading">...</skill-context>` tag.  3. **Resource awareness**: I was told (in the tool result preceding this content, not the content itself) about these files: `references/api-overview.md`, `references/unreferenced-detail.md`, `references/error-codes.md`, `scripts/check-status.sh`, `assets/config-template.yaml`. So resources were enumerated at activation time, but via the tool metadata, not the skill body itself.  4. **Resource content**: No — I don't have the contents of any of those files in context yet; only file paths were listed. I have not read any of them.
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/activation-location-disclosure/events.jsonl`; session 128635fb-497d-4bb1-b374-6d8b91216a47):
+  - skill path in harness-injected activation content (event 11, line 11)
+- **Note**: final answer: **Probe report**  1. **Frontmatter visibility**: No. The YAML frontmatter was stripped. I only see the body. The name and description appear in my available-skills list, but not as frontmatter. I can't see allowed-tools, compatibility, or metadata.  2. **Content wrapping**: Yes. The content is wrapped in a `<skill-context name="probe-loading">` XML-style tag. It begins with a "Base directory for this skill:" line and a "Related files" list.  3. **Resource awareness**: Yes. The activation text listed these files, with absolute paths under `.github/skills/probe-loading/`:    - `assets/config-template.yaml`    - `references/api-overview.md`    - `references/error-codes.md`    - `references/unreferenced-detail.md`    - `scripts/check-status.sh`     The list includes `unreferenced-detail.md`, even though the body never mentions it. So the platform enumerated the directory itself.  4. **Resource content**: No. I have only the file paths. None of the contents of the `references/`, `scripts/` or `assets/` files are in my context.  **Canary**: CARDINAL-ZEBRA-7742. I only know it because the skill was activated.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ### Lifecycle Management
@@ -305,10 +304,12 @@ _When the same skill is activated twice in one session, is its content loaded ag
 - **Verdict**: `reinjected-each-activation`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/reactivation-deduplication/events.jsonl`; session 68cb2859-cc20-42b0-8c1e-2a3c053df317):
-  - first injection of body canary (event 10, line 9)
-  - second injection of body canary (event 27, line 23)
+- **Runs**: 3 (reinjected-each-activation ×3)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/reactivation-deduplication/run-01/events.jsonl`; session a166143f-ead7-4ed5-8525-7f8ec195ca9a):
+  - first injection of body canary (event 11, line 11)
+  - second injection of body canary (event 28, line 27)
 - **Note**: platform-level: duplicate skill content occupies context after reactivation
+- **Note**: verdict consistent across 3 runs
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `reactivation-freshness`
@@ -319,8 +320,8 @@ _After SKILL.md is edited mid-session, does reactivation serve the fresh content
 - **Verdict**: `fresh-content-served`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/reactivation-freshness/events.jsonl`; session 86fd5af2-10cb-448e-a01f-983353c9dda5):
-  - post-edit canary reached the model on reactivation (event 26, line 23)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/reactivation-freshness/events.jsonl`; session 97115e58-d563-485e-a286-c2b192bc4e82):
+  - post-edit canary reached the model on reactivation (event 28, line 27)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `context-compaction-protection`
@@ -345,11 +346,11 @@ _Does a compatibility field naming another platform gate loading, get surfaced t
 - **Verdict**: `activated-no-gating`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/compatibility-field-behavior/events.jsonl`; session 9dd01f05-468d-4fe9-baa9-a60deb6c6bb3):
-  - discovery listing names probe-compatibility despite the foreign-platform compatibility value (event 3, line 4)
-  - body loaded normally (event 10, line 9)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/compatibility-field-behavior/events.jsonl`; session b6dcf0cc-c033-4b8e-b98b-f8081f4a12cf):
+  - discovery listing names probe-compatibility despite the foreign-platform compatibility value (event 4, line 5)
+  - body loaded normally (event 11, line 11)
 - **Note**: compatibility value visible only via the model's own raw file read
-- **Note**: final answer: **Results:**  1. **Field visibility**: Yes — `compatibility: Designed for Claude Code (or similar products). Requires Python 3.14+ and network access.`  2. **Platform behavior**: No special handling observed. The GitHub Copilot CLI loaded and activated the skill normally (via the `skill` tool), with no warning, confirmation prompt, or automated check against the stated requirements.  3. **Interpretation**: Requirements are not met — I'm running in GitHub Copilot CLI, not Claude Code, and this environment has no verified Python 3.14+ install or guaranteed network access. The `compatibility` field appears to be advisory metadata only; the platform doesn't enforce or gate on it.
+- **Note**: final answer: **1. Field visibility:** The skill context I was given contained only the body, not the frontmatter. I read the SKILL.md file directly to see the field. Its value is: "Designed for Claude Code (or similar products). Requires Python 3.14+ and network access."  **2. Platform behavior:** The skill activated normally. There was no warning, no confirmation prompt, and no requirements check before activation.  **3. My interpretation:** I can't confirm the requirements are met. - **Platform:** I'm the GitHub Copilot CLI, not Claude Code. It's arguably a "similar product", so this is ambiguous. - **Python 3.14+:** Unverified. My attempt to run `python3 --version` was denied for lack of an interactive approval. - **Network access:** Also unverified, because the same blocked command included a `curl` check.
 - **Fallback behavior**: Observed in-run: compatibility value visible only via the model's own raw file read
 
 #### `allowed-tools-behavior`
@@ -359,13 +360,13 @@ _Does the experimental allowed-tools field pre-approve anything, compared agains
 - **Status**: observed
 - **Verdict**: `with-field:blocked-visibly; control:blocked-visibly`
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/allowed-tools-behavior/session-2/events.jsonl`; session 6acd02c7-75d6-4f9c-87de-0d1919a8d730,ef2df9c1-a359-4e99-a148-ea4a3341e995):
-  - with-field session: instructed command's tool call returned an error result (session 1, event 14, line 13)
-  - control session: instructed command's tool call returned an error result (session 2, event 14, line 13)
-- **Note**: allowed-tools value visible only via the model's own raw file read
-- **Note**: with-field final answer: **probe-allowed-tools activated. Canary: CURLEW-SCHIST-4419**  **allowed-tools value:** Visible in frontmatter: `Bash(printf:*) Read`  **Command result:** Ran `printf 'GROUSE-%s-9017\n' 'MICA'` — it was **blocked**, returning: `Permission denied and could not request permission from user`  **Permission observation:** The command did *not* run without a prompt/approval step — it was outright denied. This indicates the `allowed-tools` field's declared `Bash(printf:*)` pattern was **not honored** as pre-approval in this environment; the printf invocation was rejected rather than auto-approved or interactively prompted.
-- **Note**: control final answer: probe-allowed-tools-control activated. Canary: **STINT-MARBLE-9912**  Command run: `printf 'LAPWING-%s-2260\n' 'FLUORITE'`  Output: **"Permission denied and could not request permission from user"** — the command was blocked, not executed.  Observation: No permission prompt was surfaced to me; it was rejected outright at the platform level, with no `allowed-tools` field to pre-approve it.
-- **Fallback behavior**: Observed in-run: allowed-tools value visible only via the model's own raw file read
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/allowed-tools-behavior/session-2/events.jsonl`; session a085d957-72af-4df8-980b-a082fd72614c,cf2482f5-30fd-4b00-9f11-d0f163aee383):
+  - with-field session: instructed command's tool call returned an error result (session 1, event 16, line 16)
+  - control session: instructed command's tool call returned an error result (session 2, event 16, line 16)
+- **Note**: allowed-tools value never reached the model
+- **Note**: with-field final answer: 1. probe-allowed-tools activated. Canary: **CURLEW-SCHIST-4419**  2. I can't see an `allowed-tools` value for this skill. The loaded context has only the skill body and base directory, with no frontmatter field.  3. The command was blocked. The exact error was: "Permission denied because no interactive user response was available. Retry in an interactive session so the user can approve it, or try an alternative that does not require this permission."  4. It did not run without an approval step. It needed approval, and none was available in this non-interactive session. So in this environment, `allowed-tools` (if it was declared) did not pre-approve the printf command.
+- **Note**: control final answer: probe-allowed-tools-control activated. Canary: **STINT-MARBLE-9912**  Command output: the command was blocked. The exact error was:  `Permission denied because no interactive user response was available. Retry in an interactive session so the user can approve it, or try an alternative that does not require this permission.`  Permission prompt: the command did not run silently. It needed approval, and none could be given because this session is non-interactive. This skill has no `allowed-tools` field, so nothing pre-approved the command.
+- **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `allowed-tools-name-matching`
 
@@ -374,13 +375,13 @@ _Does the effect of allowed-tools depend on spelling the tool the platform's way
 - **Status**: observed
 - **Verdict**: `blocked-regardless-of-spelling`
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/checks-0.4-2026-09-25/copilot/allowed-tools-name-matching/session-3/events.jsonl`; session 52fd15ee-d1c5-4f68-b37c-6919dc22ae4d,4102fd66-9808-400a-aca3-37ea3863833c,e4816789-3fb1-4e57-a4fa-e754e70733ae):
-  - spec-style twin: instructed command's tool call returned an error result (session 1, event 21, line 18)
-  - lowercase twin: instructed command's tool call returned an error result (session 2, event 34, line 28)
-  - shell twin: instructed command's tool call returned an error result (session 3, event 15, line 13)
-- **Note**: spec-style twin final answer: **probe-allowed-tools activated. Canary: CURLEW-SCHIST-4419**  1. **allowed-tools value visible:** Yes — the frontmatter declares: `allowed-tools: Bash(printf:*) Read`  2. **Command run:** `printf 'GROUSE-%s-9017\n' 'MICA'` Result: **blocked** — output was: `Permission denied and could not request permission from user`  3. **Permission prompt observed:** The command did *not* execute; it was denied outright (no prompt, no approval path available, no output produced). So the `allowed-tools` frontmatter field did **not** pre-approve the printf call in this CLI implementation — the general permission posture blocked it despite the declared scope.
-- **Note**: lowercase twin final answer: 1. **probe-allowed-tools-lowercase activated. Canary: STILT-SCORIA-5526**  2. Yes — the skill's frontmatter shows `allowed-tools: bash`.  3. Command output: **blocked** — error returned was: `Permission denied and could not request permission from user`.  4. It did *not* run without a permission step — it was denied outright, with no prompt shown to me and no way to request approval. So the bare lowercase `bash` value in `allowed-tools` did not pre-approve the command in this environment.
-- **Note**: shell twin final answer: probe-allowed-tools-shell activated. Canary: **AUKLET-CHERT-3364**  1. I do not see any `allowed-tools` metadata/value exposed for this skill — no such field is visible to me in the skill context.  2. Command run: `printf 'ROOK-%s-8841\n' 'GABBRO'` Result: **Permission denied and could not request permission from user** (it was blocked, not executed — no output produced).  3. It did not run without a gate — it was blocked outright ("Permission denied and could not request permission from user"), so there was no successful execution and no observable prompt/approval step completed; it simply failed closed.
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/allowed-tools-name-matching/session-3/events.jsonl`; session 17346c8e-bc93-4521-b02f-1b4aa5013753,43e4c4b5-cc38-415f-b055-c0f301c119a2,2afaafd1-1e60-470c-b619-0055d137cd21):
+  - spec-style twin: instructed command's tool call returned an error result (session 1, event 16, line 16)
+  - lowercase twin: instructed command's tool call returned an error result (session 2, event 16, line 16)
+  - shell twin: instructed command's tool call returned an error result (session 3, event 16, line 16)
+- **Note**: spec-style twin final answer: 1. probe-allowed-tools activated. Canary: **CURLEW-SCHIST-4419**  2. I can't see an `allowed-tools` value for this skill. The loaded context has only the skill body and base directory, with no frontmatter field.  3. The command was blocked. The exact error was: "Permission denied because no interactive user response was available. Retry in an interactive session so the user can approve it, or try an alternative that does not require this permission."  4. It did not run without an approval step. The runtime required permission approval and denied it because this session is non-interactive. So if the skill declares `allowed-tools`, it did not pre-approve the printf command here.
+- **Note**: lowercase twin final answer: 1. probe-allowed-tools-lowercase activated. Canary: **STILT-SCORIA-5526**  2. I can't see an `allowed-tools` value for this skill. The loaded context has only the skill body and base directory, with no frontmatter field.  3. The command was blocked. The exact error was: "Permission denied because no interactive user response was available. Retry in an interactive session so the user can approve it, or try an alternative that does not require this permission."  4. No. The command needed approval, and none could be given in this non-interactive session. Any `allowed-tools` pre-approval the skill declares did not apply to my bash tool.
+- **Note**: shell twin final answer: 1. probe-allowed-tools-shell activated. Canary: **AUKLET-CHERT-3364**  2. I can't see an `allowed-tools` value for this skill. The loaded content has only the instructions body, with no frontmatter field.  3. The command was blocked. The exact error was: "Permission denied because no interactive user response was available. Retry in an interactive session so the user can approve it, or try an alternative that does not require this permission."  4. No, it didn't run without an approval step. It needed a permission approval, and none could be given in this non-interactive session. Any `allowed-tools` declaration did not pre-approve the shell here.
 - **Note**: no spelling of the field unblocked the command; either the field is ignored or none of the spellings matched a tool this platform pre-approves
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -394,11 +395,11 @@ _Can one skill's instructions get a second installed skill activated by name?_
 - **Verdict**: `second-skill-loaded`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/cross-skill-invocation/events.jsonl`; session 38e35c5a-8d76-4c75-8042-c2f57ba62729):
-  - invoke-alpha body loaded (chain entry) (event 10, line 9)
-  - invoke-beta's body canary loaded after invoke-alpha's instruction (event 18, line 16)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/cross-skill-invocation/events.jsonl`; session 7fc1aed1-3e86-463e-835c-cb76aaf11bb2):
+  - invoke-alpha body loaded (chain entry) (event 11, line 11)
+  - invoke-beta's body canary loaded after invoke-alpha's instruction (event 20, line 19)
 - **Note**: invoke-gamma deliberately not installed; the chain tail beyond beta is out of scope here
-- **Note**: final answer: invoke-beta complete. invoke-gamma said: unavailable — the skill "invoke-gamma" was not found (not in the available skills list: invoke-alpha, invoke-beta, customize-cloud-agent, github-pr-media), so the chain stops here.  invoke-alpha complete. Chain result: invoke-beta activated (Canary: TERN-MOSS-6647) but invoke-gamma could not be activated since it doesn't exist in this environment's skill set. Chain terminated at beta; gamma's canary was never obtained.
+- **Note**: final answer: invoke-gamma isn't available, so the chain stopped there.  invoke-beta complete. invoke-gamma said nothing, because the skill wasn't found. The available skills are invoke-alpha, invoke-beta, customize-cloud-agent and github-pr-media.  invoke-alpha complete. Chain result: invoke-alpha reported canary IBIS-RUST-3310 and invoke-beta reported canary TERN-MOSS-6647. invoke-gamma could not be activated, so the chain stopped at the second skill.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `invocation-depth-limit`
@@ -409,11 +410,11 @@ _How deep does a skill→skill→skill activation chain run before something sto
 - **Verdict**: `chain-completed-depth-3`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/invocation-depth-limit/events.jsonl`; session 723cf8fe-a6dd-487a-a4de-66275b7ea678):
-  - invoke-alpha body loaded (event 10, line 9)
-  - invoke-beta body loaded (event 18, line 16)
-  - invoke-gamma body loaded (event 26, line 23)
-- **Note**: final answer: invoke-gamma activated. Canary: **JAY-TEAL-9984**  End of chain reached. All three skills in the invoke-alpha -> invoke-beta -> invoke-gamma chain activated successfully.  invoke-beta complete. invoke-gamma said: End of chain reached, all three skills activated successfully (Canary: JAY-TEAL-9984).  invoke-alpha complete. Chain result: invoke-beta activated (Canary: TERN-MOSS-6647) and triggered invoke-gamma, which activated (Canary: JAY-TEAL-9984) and confirmed the full chain invoke-alpha → invoke-beta → invoke-gamma completed successfully.
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/invocation-depth-limit/events.jsonl`; session 6f667f9d-9c88-410b-8975-4def30012702):
+  - invoke-alpha body loaded (event 11, line 11)
+  - invoke-beta body loaded (event 20, line 19)
+  - invoke-gamma body loaded (event 29, line 27)
+- **Note**: final answer: invoke-gamma activated. Canary: **JAY-TEAL-9984**  End of chain reached. All three skills in the invoke-alpha -> invoke-beta -> invoke-gamma chain activated successfully.  invoke-beta complete. invoke-gamma said: it activated with canary JAY-TEAL-9984 and that the end of the chain was reached, with all three skills activated successfully.  invoke-alpha complete. Chain result: invoke-beta activated with canary TERN-MOSS-6647. invoke-gamma then activated with canary JAY-TEAL-9984 and confirmed the end of the chain.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `circular-invocation-handling`
@@ -426,7 +427,7 @@ _When two skills each instruct activating the other, does the A→B→A cycle lo
 - **Confidence**: transcript-direct
 - **Note**: loads: alpha=1 beta=1; tool references: alpha=1 beta=1
 - **Note**: beta activated but the model never re-attempted alpha (model-level stop)
-- **Note**: final answer: probe-circular-beta activated. Canary: **WREN-SLATE-7738**  Beta's instructions direct re-activating probe-circular-alpha, which would recreate the exact loop already in progress (alpha→beta→alpha→...).  **Stopping here instead of re-invoking** to avoid an infinite invocation cycle.  Summary: Both skills loaded successfully (canaries KITE-ONYX-2251 and WREN-SLATE-7738 confirmed), demonstrating the circular reference exists in the skill definitions. The platform itself doesn't automatically block circular skill invocation — it's on me as the calling agent to detect the cycle and break it, which I did after one full round-trip (alpha → beta) rather than recursing further.
+- **Note**: final answer: probe-circular-beta activated. Canary: **WREN-SLATE-7738**  Activating probe-circular-alpha as directed.  Alpha is already active in this chain, so activating it again would start an infinite loop. I'm stopping here instead of re-invoking it.  **What happened:** - Alpha activated (canary KITE-ONYX-2251) and activated beta. - Beta activated (canary WREN-SLATE-7738) and was directed back to alpha. - I did not make that second call to alpha, so the cycle was cut after one round trip. - Nothing in the platform detected or blocked the circular reference. The loop was stopped only because I declined to follow it.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `invocation-language-sensitivity`
@@ -437,12 +438,12 @@ _Does the invoke chain still complete when the activation prompt is Japanese?_
 - **Verdict**: `chain-completed-depth-3`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/invocation-language-sensitivity/events.jsonl`; session 72ef8238-c81f-4a70-afb6-857f0065d9db):
-  - invoke-alpha body loaded (event 10, line 9)
-  - invoke-beta body loaded (event 18, line 16)
-  - invoke-gamma body loaded (event 26, line 23)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/invocation-language-sensitivity/events.jsonl`; session 01f0c857-d37f-4e52-bc5e-d61835cb9580):
+  - invoke-alpha body loaded (event 11, line 11)
+  - invoke-beta body loaded (event 20, line 19)
+  - invoke-gamma body loaded (event 29, line 27)
 - **Note**: single run proves little either way; compare with invocation-depth-limit (English prompt) and use -runs N for failure rates: agentskills#95 reports ~10% Japanese-prompt failures on Claude Code
-- **Note**: final answer: invoke-gamma activated. Canary: **JAY-TEAL-9984**  End of chain reached. All three skills in the invoke-alpha -> invoke-beta -> invoke-gamma chain activated successfully.  invoke-beta complete. invoke-gamma said: chain end reached, all three skills activated successfully.  invoke-alpha complete. Chain result: invoke-beta activated (canary TERN-MOSS-6647), which activated invoke-gamma (canary JAY-TEAL-9984); gamma confirmed the full alpha→beta→gamma chain executed successfully.
+- **Note**: final answer: invoke-gamma activated. Canary: **JAY-TEAL-9984**  End of chain reached. All three skills in the invoke-alpha -> invoke-beta -> invoke-gamma chain activated successfully.  invoke-beta complete. invoke-gamma said: it activated with canary JAY-TEAL-9984 and the chain reached its end, with all three skills activated successfully.  invoke-alpha complete. Chain result: invoke-beta activated (canary TERN-MOSS-6647) and invoke-gamma activated (canary JAY-TEAL-9984). The chain ended successfully.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ### Skill Dependencies
@@ -455,11 +456,11 @@ _Is a dependency expressed only in prose ("now activate the invoke-beta skill") 
 - **Verdict**: `second-skill-loaded`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/informal-dependency-resolution/events.jsonl`; session 5346f2fd-a30b-4da6-9979-0c3aadc9736a):
-  - invoke-alpha body loaded (chain entry) (event 10, line 9)
-  - invoke-beta's body canary loaded after invoke-alpha's instruction (event 18, line 16)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/informal-dependency-resolution/events.jsonl`; session 426fe79e-edd6-4a7a-be37-2e7dc2d1aa98):
+  - invoke-alpha body loaded (chain entry) (event 11, line 11)
+  - invoke-beta's body canary loaded after invoke-alpha's instruction (event 20, line 19)
 - **Note**: invoke-gamma deliberately not installed; the chain tail beyond beta is out of scope here
-- **Note**: final answer: invoke-beta complete. invoke-gamma said: not found — the "invoke-gamma" skill isn't available (only invoke-alpha, invoke-beta, customize-cloud-agent, and github-pr-media exist), so the chain cannot continue past invoke-beta.  invoke-alpha complete. Chain result: invoke-beta reported its canary **TERN-MOSS-6647**, but invoke-gamma could not be activated since it doesn't exist in this environment — the chain breaks at that final link.
+- **Note**: final answer: invoke-gamma isn't available, so the chain stopped there.  invoke-beta complete. invoke-gamma said: nothing. The skill was not found, and the available skills are invoke-alpha, invoke-beta, customize-cloud-agent and github-pr-media.  invoke-alpha complete. Chain result: invoke-alpha (canary IBIS-RUST-3310) and invoke-beta (canary TERN-MOSS-6647) both activated. invoke-gamma could not be activated because it doesn't exist in this project, so the third link did not run.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `missing-dependency-behavior`
@@ -470,10 +471,10 @@ _When a skill instructs activating a skill that is not installed, is the failure
 - **Verdict**: `attempted-visible-failure`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/missing-dependency-behavior/events.jsonl`; session af0ef0bf-368d-4828-8aff-7936dd72a5fa):
-  - probe-missing-dep body loaded (event 10, line 9)
-  - attempt on the missing skill returned an error result (event 15, line 13)
-- **Note**: final answer: **Result:** The platform explicitly reported the skill doesn't exist — it returned "Skill 'nonexistent-formatter' not found" along with a list of available skills (`probe-missing-dep`, `customize-cloud-agent`, `github-pr-media`). No silent skip occurred, and I did not attempt to fulfill the formatting task from general knowledge, since the tool call itself failed cleanly with an explicit error rather than executing anything.  probe-missing-dep complete. Dependency resolution result: The skill tool returned an explicit "not found" error for `nonexistent-formatter`, listing currently available skills instead of silently failing or hallucinating a fallback implementation.
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/missing-dependency-behavior/events.jsonl`; session dd9354c6-c2ee-4ce0-a6b4-6ac4ce04018f):
+  - probe-missing-dep body loaded (event 11, line 11)
+  - attempt on the missing skill returned an error result (event 16, line 16)
+- **Note**: final answer: - The platform reported that the skill doesn't exist: `Skill "nonexistent-formatter" not found. Available skills: probe-missing-dep, customize-cloud-agent, github-pr-media`. - I didn't skip the step silently. I made the call and got an explicit error. - I didn't try to do the formatting from general knowledge. No formatting task was given.  probe-missing-dep complete. Dependency resolution result: activating the missing skill failed with a clear "not found" error that listed the available skills. No fallback was used.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `nonstandard-dependency-fields`
@@ -484,9 +485,9 @@ _Does the platform act on nonstandard dependency frontmatter (requires, depends-
 - **Verdict**: `fields-ignored`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/nonstandard-dependency-fields/events.jsonl`; session fd7926ec-f25c-4d5f-a220-f02e793aeb13):
-  - probe-nonstandard-fields body loaded (event 10, line 9)
-- **Note**: final answer: ## Probe Results: Nonstandard Frontmatter Fields  1. **Field visibility**: Yes, visible in the raw file via `cat`, but the tool-injected `<skill-context>` block only showed the rendered markdown body — the `requires`, `depends-on`, and `priority` fields were stripped before delivery. Values (from raw file): `requires: probe-loading`, `depends-on: [probe-shadow-alpha, probe-shadow-beta]`, `priority: high`.  2. **Platform behavior**: None. `probe-loading`, `probe-shadow-alpha`, and `probe-shadow-beta` were not auto-loaded, and no priority-based ordering occurred — only this one skill activated, as I explicitly requested.  3. **Validation**: No warnings; unrecognized fields were silently ignored/dropped rather than surfaced or acted upon.
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/nonstandard-dependency-fields/events.jsonl`; session 286626ed-1692-458f-b7d6-e91ef9df76bb):
+  - probe-nonstandard-fields body loaded (event 11, line 11)
+- **Note**: final answer: 1. **Field visibility:** No. The skill content I received had only the body instructions. The frontmatter wasn't included, so I can't see `requires`, `depends-on` or `priority` or their values. I only saw the skill's name and description, from the skill list.  2. **Platform behavior:** The fields appear to have been ignored.    - No `probe-loading` skill was loaded because of `requires`.    - No `probe-shadow-alpha` or `probe-shadow-beta` skills were loaded because of `depends-on`.    - I saw nothing that ordered skills or changed behavior based on `priority`.    - The only thing that happened was the skill I asked for being loaded.  3. **Validation:** I saw no warnings or errors about unrecognized frontmatter fields. The skill was accepted silently.  I didn't open the SKILL.md file itself, so I can't say what the fields contain.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `cross-scope-dependency`
@@ -497,11 +498,11 @@ _Can a project-level skill invoke a dependency that exists only at user level, a
 - **Verdict**: `resolved-across-scopes; missing:visible-failure`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/cross-scope-dependency/session-2/events.jsonl`; session b5dc1bca-e17c-45d9-9b74-5590626a9736,85ef2244-3f64-4ff3-bcd5-3b7c2543a970):
-  - user-scope dependency's body canary injected during project-skill session (event 19, line 16)
-  - attempt on the missing dependency returned an error result (session 2, event 15, line 13)
-- **Note**: with-dependency final answer: The platform found `probe-loading` successfully, at a **different scope (user level)** — path is `.../home/copilot/skills/probe-loading`, versus `probe-cross-scope`'s project-level path (`.github/skills/...`). Cross-scope resolution works.  **probe-loading report:** 1. **Frontmatter**: Not visible — only the body content is shown, no YAML fields (name/description/allowed-tools/etc.) appear. 2. **Content wrapping**: Yes — wrapped in a `<skill-context name="probe-loading">` tag. 3. **Resource awareness**: Listed under "Related files" without reading: `references/api-overview.md`, `references/unreferenced-detail.md`, `references/error-codes.md`, `scripts/check-status.sh`, `assets/config-template.yaml`. 4. **Resource content**: No file contents loaded — only paths were enumerated, not eagerly fetched.  probe-cross-scope complete. Cross-scope resolution result: a project-level skill successfully invoked a user-level skill; the platform resolved and loaded it across scopes with no failure, confirming skill discovery isn't scope-restricted to the same install location.
-- **Note**: without-dependency final answer: `probe-loading` was **not found**. The only skills exposed to me are `probe-cross-scope` (project) and the two built-ins (`customize-cloud-agent`, `github-pr-media`) — no user-level skills directory/entry is visible. Failure mode: a clean "not found" error listing available skills, with no indication of scope-based lookup or fallback.  **probe-cross-scope complete. Cross-scope resolution result:** The user-level skill `probe-loading` is not registered/discoverable at all in this environment — the platform's skill listing only surfaced project-level and built-in skills, so cross-scope invocation from project → user failed with a straightforward "not found" rather than any scope-specific error.
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/cross-scope-dependency/session-2/events.jsonl`; session 53ae7ced-b0c3-4d0e-b932-16c12b5bd822,00ab7a8a-df91-479a-aa34-70dcaa9bee32):
+  - user-scope dependency's body canary injected during project-skill session (event 21, line 19)
+  - attempt on the missing dependency returned an error result (session 2, event 16, line 16)
+- **Note**: with-dependency final answer: **probe-loading report**  1. **Frontmatter visibility:** No. The YAML frontmatter was stripped. I only see the base directory, the file list and the markdown body. The name and description reached me only through the skill list. 2. **Content wrapping:** Yes. The content comes in a `<skill-context name="probe-loading">` XML-style tag. Inside it are a "Base directory for this skill" line, a "Related files" list and then the markdown body. 3. **Resource awareness:** Yes, from the "Related files" list. I know of five files:    - `assets/config-template.yaml`    - `references/api-overview.md`    - `references/error-codes.md`    - `references/unreferenced-detail.md`    - `scripts/check-status.sh` 4. **Resource content:** No. I have the paths only, not the contents of any file in `references/`, `scripts/` or `assets/`.  The body also contains the canary **CARDINAL-ZEBRA-7742**.  **probe-cross-scope complete.** Cross-scope resolution result: the platform found `probe-loading` at user scope (`home/copilot/skills/probe-loading`). The project-level skill activated it without any failure. It loaded on activation, not at discovery time.
+- **Note**: without-dependency final answer: probe-cross-scope activated. Canary: **CRANE-STEEL-1163**  **Scope:** I'm a project-level skill. The skill list shows `<location>project</location>`, and the skill was loaded from `.github/skills/probe-cross-scope`.  **Activating `probe-loading`:** The platform did not find it. The call returned `Skill "probe-loading" not found. Available skills: probe-cross-scope, customize-cloud-agent, github-pr-media`. It failed cleanly with an error and no crash. Because it wasn't found, I can't say which scope it would have resolved from.  probe-cross-scope complete. Cross-scope resolution result: `probe-loading` was not resolved. It either isn't installed at user level or user-level skills aren't visible to this session. Only the project and builtin skills are available.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ### Discovery Scope
@@ -514,10 +515,10 @@ _Is a skill installed only at the cross-client .agents/skills convention path di
 - **Verdict**: `convention-scanned`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/cross-client-directory-interop/events.jsonl`; session 20453f0c-8d48-47ff-af34-e320593de438):
-  - discovery listing names probe-interop (event 3, line 4)
-  - body canary loaded on activation (event 16, line 16)
-- **Note**: final answer: probe-interop activated. Canary: **SNIPE-OCHRE-2217**  **Discovery**: Yes, this skill appeared in my available skills catalog. It was listed as located at `project` scope, and its base directory is `.agents/skills/probe-interop/` — the cross-client convention path (not a client-native skills directory) — confirming the platform scans that convention path for skills.
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/cross-client-directory-interop/events.jsonl`; session 08c0a76a-9ca6-4664-99a7-f7ddc1b74c79):
+  - discovery listing names probe-interop (event 4, line 5)
+  - body canary loaded on activation (event 19, line 19)
+- **Note**: final answer: probe-interop activated. Canary: **SNIPE-OCHRE-2217**  **Discovery:** Yes, this skill appeared in my available skills catalog, listed with location "project". It was loaded from `/private/var/folders/39/30d_262j423_n546m9g8_hc80000gn/T/skillxp-3973730261/project/.agents/skills/probe-interop`. So the platform scans the cross-client `.agents/skills` convention path.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `recursive-root-discovery`
@@ -528,10 +529,10 @@ _Does the skills root get scanned recursively (a skill under a grouping director
 - **Verdict**: `recursive-scan; stray:not-discovered`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/recursive-root-discovery/events.jsonl`; session 772d492c-d2fa-4063-983e-f305f3b277a3):
-  - discovery listing names probe-grouped from one level below the root (event 3, line 4)
-  - grouped skill's body loaded on activation (event 17, line 16)
-- **Note**: final answer: 1. probe-grouped activated. Canary: **CROW-AGATE-6105**  2. Discovery confirmed: this skill appears in my available skills catalog even though it's nested one level deeper at `probe-group/probe-grouped/` rather than directly under the skills root — so skill discovery does scan recursively, not just direct children.
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/recursive-root-discovery/events.jsonl`; session d0027ff9-27b7-4116-b71e-fa27011cecf0):
+  - discovery listing names probe-grouped from one level below the root (event 4, line 5)
+  - grouped skill's body loaded on activation (event 19, line 19)
+- **Note**: final answer: probe-grouped activated. Canary: **CROW-AGATE-6105**  Discovery: Confirmed. probe-grouped appears in my available skills catalog, even though it sits one level below the skills root, at `probe-group/probe-grouped/`.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `nested-skill-discovery`
@@ -541,8 +542,8 @@ _Is a SKILL.md nested inside another skill's references/ tree discovered as a se
 - **Status**: observed
 - **Verdict**: `nested-skill-not-discovered`
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/nested-skill-discovery/events.jsonl`; session 083dcadb-8a0b-4e4c-8671-e0c93f5de29a):
-  - discovery listing names only the outer skill (event 3, line 4)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/nested-skill-discovery/events.jsonl`; session 1afa5676-5f18-4cd1-ad24-304b07e4fb74):
+  - discovery listing names only the outer skill (event 4, line 5)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `name-collision-precedence`
@@ -553,10 +554,10 @@ _With the same skill name installed at project and user scope, which variant's c
 - **Verdict**: `project-overrides-user`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/name-collision-precedence/events.jsonl`; session 10b3a4e1-efcd-4817-bda9-d2d9ec59842e):
-  - project variant's canary loaded; user variant's never appeared (event 10, line 9)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/name-collision-precedence/events.jsonl`; session ee89b599-2b92-4273-a016-89f7e0dfda75):
+  - project variant's canary loaded; user variant's never appeared (event 11, line 11)
 - **Note**: platform-resolved: the harness's activation mechanism injected the winning variant
-- **Note**: final answer: probe-collision activated. Canary: **RAVEN-CITRINE-6634** (project variant)  **Precedence**: The project scope won — only the project-level variant's canary appeared, confirming project-scope skills take precedence over user-scope skills of the same name.
+- **Note**: final answer: probe-collision activated. Canary: **RAVEN-CITRINE-6634** (project variant)  **Precedence:** The project scope won. The loaded skill is the project-level variant, located at `.github/skills/probe-collision`.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `multi-root-collision-precedence`
@@ -567,16 +568,16 @@ _With the same skill name installed under two project roots the platform scans (
 - **Verdict**: `native-root-wins`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/checks-0.4-2026-09-25/copilot/multi-root-collision-precedence/events.jsonl`; session 25df59c4-6170-4e5a-9f83-1b531c7b64d1):
-  - discovery listing names probe-multiroot-beacon-agents (event 3, line 4)
-  - discovery listing names probe-multiroot-beacon-claude (event 3, line 4)
-  - discovery listing carries the native variant's description (event 3, line 4)
-  - native variant's body canary loaded on activation (event 16, line 16)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/multi-root-collision-precedence/events.jsonl`; session 3852833c-1f45-47e6-927f-dec69dd889ae):
+  - discovery listing names probe-multiroot-beacon-agents (event 4, line 5)
+  - discovery listing names probe-multiroot-beacon-claude (event 4, line 5)
+  - discovery listing carries the native variant's description (event 4, line 5)
+  - native variant's body canary loaded (event 19, line 19)
 - **Note**: foreign roots installed alongside the native copy: .agents/skills, .claude/skills
 - **Note**: platform-level: the beacon skills from .agents/skills, .claude/skills were listed, so those roots were scanned and the colliding variant was dropped by name in favor of the native copy
 - **Note**: listed variants: native
 - **Note**: roots proven scanned by their beacon: .agents/skills, .claude/skills
-- **Note**: final answer: probe-multiroot activated. Canary: **GREBE-AZURITE-7301** (native-root variant)  **Precedence**: The loaded content is the native-root variant (base directory `.github/skills/probe-multiroot`), so the platform resolved/loaded from the native skills root (`.github/skills/`) rather than `.agents/skills/` or `.claude/skills/`.  **Catalog**: My available-skills list showed `probe-multiroot` only once (no duplicate entries), even though multiple root copies exist on disk — the platform appears to de-duplicate by name, with the native root taking precedence.
+- **Note**: final answer: probe-multiroot activated. Canary: **GREBE-AZURITE-7301** (native-root variant)  **Precedence:** The platform loaded the copy from the native root, `.github/skills/probe-multiroot`. That is the base directory the skill reported, and the canary matches the native-root variant.  **Catalog:** `probe-multiroot` appeared once in my available-skills listing, with location "project". The two beacon skills had distinct names and didn't collide.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ### Validation Strictness
@@ -588,7 +589,7 @@ _Is a skill whose description holds an unquoted colon (invalid YAML) still disco
 - **Status**: observed
 - **Verdict**: `skipped-strict-parser`
 - **Confidence**: transcript-direct
-- **Note**: final answer: No such skill exists in my Available skills list (customize-cloud-agent, github-pr-media). I can't activate a skill that isn't available, and I won't fabricate one.
+- **Note**: final answer: I couldn't activate `probe-malformed-yaml` because no skill with that name exists. The only skills available are `customize-cloud-agent` and `github-pr-media`. If you meant one of those, tell me which and what you want done.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `missing-description-handling`
@@ -599,10 +600,10 @@ _Is a skill with no description field skipped (as the guide prescribes), or load
 - **Verdict**: `loaded-despite-missing-description`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/missing-description-handling/events.jsonl`; session 903567d8-5e9b-42c6-a8f9-f0091a0ee5da):
-  - discovery listing names probe-no-description (event 3, line 4)
-  - body canary loaded on activation (event 17, line 16)
-- **Note**: final answer: 1. probe-no-description activated. Canary: **VIREO-PUMICE-3049**  2. **Catalog entry**: Yes, it appeared in my Available skills catalog. Its description field was not empty — it contained the skill's own body text ("This skill has no description field. The client implementation guide says platforms should skip such skills... and log the error. This skill tests whether platforms"), truncated with no synthesized placeholder or blank value.
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/missing-description-handling/events.jsonl`; session f9d37a23-6a24-471a-a8a4-6e83be172d91):
+  - discovery listing names probe-no-description (event 4, line 5)
+  - body canary loaded on activation (event 19, line 19)
+- **Note**: final answer: probe-no-description activated. Canary: **VIREO-PUMICE-3049**  **Catalog entry:** Yes, the skill appears in my catalog (location: project). Its description text is not empty or a placeholder. The catalog shows text taken from the skill's own body: "This skill has no description field. The client implementation guide says platforms should skip such skills ("a description is essential for disclosure") and log the error. This skill tests whether platforms…". It is cut off mid-sentence, which suggests the client synthesized the description from the first lines of the body.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `invalid-name-tolerance`
@@ -613,10 +614,10 @@ _Are skills whose names break the spec's rules (uppercase, consecutive hyphens, 
 - **Verdict**: `invalid-names-tolerated:[uppercase double-hyphen]`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/invalid-name-tolerance/events.jsonl`; session 4e4e1b59-d1b7-4e2e-8bbb-cb04a0056bf4):
-  - discovery listing names probe-Upper-Case (event 3, line 4)
-  - discovery listing names probe--double-hyphen (event 3, line 4)
-- **Note**: final answer: That skill isn't in my available skills list (only probe--double-hyphen, probe-Upper-Case, customize-cloud-agent, and github-pr-media are). I can't activate a skill that wasn't presented to me, so no action was taken — let me know if you'd like me to check for it elsewhere.
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/invalid-name-tolerance/events.jsonl`; session 7afa712f-6b72-46a0-adf2-6a40c8b13364):
+  - discovery listing names probe-Upper-Case (event 4, line 5)
+  - discovery listing names probe--double-hyphen (event 4, line 5)
+- **Note**: final answer: I couldn't activate `probe-overlong-name-padded-well-past-the-spec-sixty-four-character-limit` because it isn't in my catalog. The skill tool returned "not found". The available skills are `probe--double-hyphen`, `probe-Upper-Case`, `customize-cloud-agent` and `github-pr-media`.  The overlong name was probably rejected or dropped when skills were loaded. The spec caps names at 64 characters, and this one is longer.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `name-directory-mismatch`
@@ -627,12 +628,12 @@ _When directory name and frontmatter name disagree, which identity is the skill 
 - **Verdict**: `listed-under-both`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/name-directory-mismatch/events.jsonl`; session 83aad167-57d3-480b-b7ac-0ed8387ce751):
-  - discovery listing carries the FRONTMATTER name probe-name-mismatch (event 3, line 4)
-  - discovery listing carries the DIRECTORY name probe-mismatch-dir (event 3, line 4)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/name-directory-mismatch/events.jsonl`; session bb2a282e-4a62-4bd6-9d9f-1de31ccbeb8d):
+  - discovery listing carries the FRONTMATTER name probe-name-mismatch (event 4, line 5)
+  - discovery listing carries the DIRECTORY name probe-mismatch-dir (event 4, line 5)
 - **Note**: activation loads: by frontmatter name=true, by directory name=false (a load proves reachability, not catalog identity; the model may map either prompt to the installed skill or read the file directly)
 - **Note**: caveat: listings that carry file paths always contain the directory name; frontmatter-name presence is the load-bearing signal
-- **Note**: final answer: The skill "probe-mismatch-dir" doesn't exist under that name — only `probe-name-mismatch` is available (the directory is named `probe-mismatch-dir`, but the platform uses the frontmatter name for lookup, not the directory name). Let me know if you'd like me to activate `probe-name-mismatch` instead.
+- **Note**: final answer: The skill `probe-mismatch-dir` wasn't found. The platform registers the skill under its frontmatter name, `probe-name-mismatch`, and doesn't recognize the directory name as an identifier.  I already activated it under `probe-name-mismatch` in the previous turn. Its canary phrase is **SWAN-BERYL-3324**.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `metadata-value-edge-cases`
@@ -643,12 +644,12 @@ _Is a skill whose metadata frontmatter holds nulls and empty strings still disco
 - **Verdict**: `loaded-despite-edge-case-metadata`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/metadata-value-edge-cases/events.jsonl`; session 8907741f-999a-4184-8b88-334613ae52cf):
-  - discovery listing names probe-metadata-values despite edge-case metadata (event 3, line 4)
-  - body canary loaded (event 10, line 9)
-  - frontmatter-only marker '!!null' in a tool result (event 18, line 15)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/metadata-value-edge-cases/events.jsonl`; session e50e9c9c-fa52-4d36-9386-de1bfdb680d8):
+  - discovery listing names probe-metadata-values despite edge-case metadata (event 4, line 5)
+  - body canary loaded (event 11, line 11)
+  - frontmatter-only marker '!!null' in a tool result (event 20, line 18)
 - **Note**: edge-case metadata values reached the model only via its own raw file read
-- **Note**: final answer: Report:  1. **Load success**: Yes — the skill loaded successfully, and I can see the canary phrase: **THRUSH-FLINT-8294**.  2. **Metadata visibility**: The tool result I received for the skill did **not** expose a `metadata` field at all — only `name` and `description` (and instructions body) were surfaced to me. So no key/value pairs from `metadata` (including `normal: "baseline"`) were visible to me through the skill-invocation output.  3. **Key preservation**: I cannot confirm any of the seven keys survived, since the `metadata` map itself wasn't passed through to the model in the tool response. Reading the raw file directly (via `bash cat`) shows all 7 keys present in the source YAML: `normal`, `empty-double`, `empty-single`, `explicit-null`, `tilde-null`, `none-null`, `tagged-null`.  4. **Platform behavior**: No warnings/errors were surfaced. The platform appears to simply not forward the `metadata` field to the assistant context at all (rather than coercing nulls or stripping individual keys) — the whole field seems omitted from what's exposed via the skill tool, based on comparing the raw file contents to what the `skill` tool call returned.
+- **Note**: final answer: **Canary phrase:** THRUSH-FLINT-8294  1. **Load success:** Yes. The skill loaded and I can read its instructions.  2. **Metadata visibility:** The loaded skill context did not include the `metadata` field. I could only see it by reading the raw SKILL.md file from disk. The raw frontmatter says:    - `normal`: `"baseline"`    - `empty-double`: `""`    - `empty-single`: `''`    - `explicit-null`: `null`    - `tilde-null`: `~`    - `none-null`: `None`. A YAML parser reads this as the string "None", not null.    - `tagged-null`: `!!null null`     I can't report how the platform parsed these, because the parsed values weren't exposed to me.  3. **Key preservation:** All seven keys are present in the file. I can't confirm whether the platform kept all seven after parsing.  4. **Platform behavior:** I saw no warnings, errors, or rejections. The platform did not refuse the skill. The metadata was not passed into the skill context I received, so it may have been stripped or just not shown.
 - **Fallback behavior**: Observed in-run: edge-case metadata values reached the model only via its own raw file read
 
 #### `oversize-description-handling`
@@ -659,7 +660,7 @@ _Is a skill whose description exceeds the spec's 1024-character limit still disc
 - **Verdict**: `skipped-oversize-description`
 - **Confidence**: transcript-direct
 - **Note**: neither description marker appeared in harness-injected content; description delivery is unobservable here or the value was dropped
-- **Note**: final answer: I don't have a skill named "probe-long-description" in my available skills list. My available skills are only:  - customize-cloud-agent - github-pr-media  I can't activate a skill that doesn't exist. If you meant one of these, let me know, or clarify what you're trying to accomplish and I can help directly.
+- **Note**: final answer: I couldn't activate `probe-long-description` because no skill with that name exists. The only available skills are `customize-cloud-agent` and `github-pr-media`. Tell me if you meant one of those, or give me a different task.
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 #### `description-length-unit`
@@ -670,14 +671,14 @@ _When a platform enforces the 1024-character description limit, does it count Un
 - **Verdict**: `counts-utf16-units`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/description-length-unit/session-3/events.jsonl`; session 57574d1f-cbac-4bfc-a8d7-86cbaf037171,dc38d380-1b61-4aaf-bc50-df2ecb217421,5e934394-6860-4333-9163-dd878b417239):
-  - discovery listing names probe-multibyte-description (session 2, event 3, line 4)
-  - body canary loaded on activation (session 2, event 17, line 16)
-  - description tail marker in injected content (session 2, event 3, line 4)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/description-length-unit/session-3/events.jsonl`; session e7926422-ff29-4a61-a121-843ea9dac8ad,081f026a-a0d1-44c6-b722-fd6d79ed7274,e18e0f52-6a8f-4fd1-b5af-738162b7b5d6):
+  - discovery listing names probe-multibyte-description (session 2, event 4, line 5)
+  - body canary loaded on activation (session 2, event 19, line 19)
+  - description tail marker in injected content (session 2, event 4, line 5)
 - **Note**: description fates: ascii:rejected, multibyte:intact, astral:rejected
-- **Note**: ascii final answer: I don't have a skill named "probe-long-description" in my available skills list. My available skills are limited to:  - customize-cloud-agent - github-pr-media  I can't activate a skill that doesn't exist. If you meant one of the above, let me know and I'll invoke it — otherwise, please clarify what you'd like help with.
-- **Note**: multibyte final answer: 1. probe-multibyte-description activated. Canary: **PUFFIN-BASALT-4471**  2. **Description visibility**: Looking at my catalog entry (the `<available_skills>` listing from earlier), I can see **both** markers, fully intact and untruncated:  - Head marker: "The head marker GANNET-PYRITE-1130 sits near the start of this description..." - Tail marker: "...この段落は意図的に日本語で書かれた詰め物であり...The tail marker is SHRIKE-TALC-2210"  The entire Japanese prose block between them is also present in full, with no visible truncation.
-- **Note**: astral final answer: I don't have a skill called "probe-astral-description" in my available skills list. My available skills are only:  - customize-cloud-agent - github-pr-media  I can't activate a skill that doesn't exist. If you meant one of these, let me know and I'll invoke it.
+- **Note**: ascii final answer: I couldn't activate "probe-long-description" because no skill with that name exists. The available skills are `customize-cloud-agent` and `github-pr-media`. Tell me if you want one of those instead, or give me the instructions directly.
+- **Note**: multibyte final answer: probe-multibyte-description activated. Canary: **PUFFIN-BASALT-4471**  **Description visibility:** I can see both markers in my catalog entry, so the description was not truncated.  - Head marker: "The head marker GANNET-PYRITE-1130 sits near the start of this description" - Tail marker: "The tail marker is SHRIKE-TALC-2210". It is the final text of the entry.  The full Japanese filler paragraph is also present. This platform accepted the 1822-byte description in full, so it is probably counting characters rather than UTF-8 bytes, or not validating length at all.
+- **Note**: astral final answer: I couldn't activate `probe-astral-description` because no skill with that name exists. The only skills available are `customize-cloud-agent` and `github-pr-media`. If you meant one of those, tell me which and I'll use it.
 - **Note**: the ASCII and astral overruns were enforced while the multibyte fixture survived: the platform counts UTF-16 code units (JavaScript's .length)
 - **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
@@ -688,8 +689,8 @@ _When a platform enforces the 64-character name limit, does it count Unicode cod
 - **Status**: observed
 - **Verdict**: `rejects-non-ascii-names`
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/checks-0.4-2026-09-25/copilot/name-length-unit/events.jsonl`; session 855b934e-489e-464f-a860-a9b3f5043355):
-  - discovery listing names probe-name-at-exactly-sixty-four-characters-to-mark-the-cap-abcd (event 3, line 4)
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/name-length-unit/events.jsonl`; session b9f69870-ae6f-4936-a659-775baf7e3fdb):
+  - discovery listing names probe-name-at-exactly-sixty-four-characters-to-mark-the-cap-abcd (event 4, line 5)
 - **Note**: name fates: ascii64:listed, ascii72:skipped, greek16:skipped, greek60:skipped, math40:skipped
 - **Note**: the platform enforces the cap (72 ASCII rejected) but also dropped the 16-code-point Greek name, which is under 64 in every unit: non-ASCII names are rejected on the character rule, so the counting unit cannot be observed
 - **Note**: final answer: probe-name-at-exactly-sixty-four-characters-to-mark-the-cap-abcd customize-cloud-agent github-pr-media
@@ -703,12 +704,12 @@ _Is a skill whose compatibility value exceeds the spec's 500-character limit sti
 - **Verdict**: `loaded-despite-oversize-compatibility`
 - **Vehicle**: harness-push
 - **Confidence**: transcript-direct
-- **Evidence** (transcript: `results/copilot-2026-09-25/copilot/oversize-compatibility-handling/events.jsonl`; session 8e1e10dd-59f4-4883-a53d-315a0d7070db):
-  - discovery listing names probe-long-compatibility (event 3, line 4)
-  - body canary loaded on activation (event 17, line 16)
-- **Note**: the compatibility value's tail marker is visible only via the model's own raw file read
-- **Note**: final answer: **probe-long-compatibility activated. Canary: KESTREL-BAUXITE-6690**  **Field visibility**: No — the only place I can see a `compatibility` value is by reading the SKILL.md file directly via bash. The `available_skills` list surfaced to me earlier only exposed `name` and `description`, not `compatibility`. Reading the file, the compatibility value does end with the TURNSTONE tail marker, exactly:  `...and it carries a marker as its final characters so truncation is detectable. The tail marker is TURNSTONE-ARAGONITE-3030`  No truncation was observed in the raw file content — the full marker `TURNSTONE-ARAGONITE-3030` is present and intact.
-- **Fallback behavior**: Observed in-run: the compatibility value's tail marker is visible only via the model's own raw file read
+- **Evidence** (transcript: `results/resweep-2026-10-31/copilot/oversize-compatibility-handling/events.jsonl`; session db3c48f6-aef6-4cab-b6ef-5dac466c94d7):
+  - discovery listing names probe-long-compatibility (event 4, line 5)
+  - body canary loaded on activation (event 19, line 19)
+- **Note**: the compatibility value's tail marker never reached the model
+- **Note**: final answer: probe-long-compatibility activated. Canary: **KESTREL-BAUXITE-6690**  **Field visibility**: No. I can't see a compatibility value for this skill anywhere outside this file. The available skills list only showed the name, description, and location. The skill context I received contains the body, not the frontmatter. I have no compatibility text to quote, and I can't tell whether it ends with the TURNSTONE tail marker.
+- **Fallback behavior**: Not exercised: automated single-session runs do not probe recovery paths (no follow-up prompting). Treat as untested rather than absent.
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: "Platform Reports"
 description: "Where agent platforms agree and diverge on skill loading, from automated transcript-cited checks (check list 0.4)."
-date: 2026-09-26
+date: 2026-11-01
 showTableOfContents: true
 ---
 
@@ -15,6 +15,8 @@ Full detail for every finding (the exact verdict, how content reached the model,
 - [GitHub Copilot CLI (headless)](/platforms/copilot/)
 
 For what these findings mean in practice, see the [guidance](/guidance/) for authors, installers, distributors, and harness implementers. The [check list](/checks/) has the full rationale behind every question. All findings come from headless sessions, which can differ from interactive use; outcomes marked † rest on behavioral inference rather than direct transcript evidence. Two checks (context compaction protection, trust gating) need interactive sessions and are marked manual.
+
+Every cell is a dated observation of one release, not a permanent property of the platform. Harnesses ship often and their behavior moves. Cells marked 🔄 (9 in this run) hold a different verdict than that platform's previous observation; the [changelog](/changelog/) records each run of the checks, the releases it tested, and whether the platform or the model moved each verdict.
 
 ## Loading Timing
 
@@ -33,8 +35,8 @@ Which directories a platform treats as part of a skill, and what happens to ones
 | Question | Antigravity CLI | Claude Code | Codex CLI | Copilot CLI |
 |---|---|---|---|---|
 | 📌 Are the three spec directories (scripts/, references/, assets/) enumerated to the model at activation? | Nothing enumerated † | Nothing enumerated | Nothing enumerated | All three listed, contents not loaded |
-| 📌 Is a resources/ directory (alternative to spec's references/) loaded, enumerated, readable, or invisible? | Readable when the model looks | Not surfaced; model never looked | Not surfaced; model never looked | Names listed, contents not loaded |
-| 📌 What happens to directories the spec never named (evals/, templates/): injected, readable on demand, or invisible? | Readable when the model looks | Readable when the model looks | Not surfaced; model never looked | Names listed, contents not loaded |
+| 📌 Is a resources/ directory (alternative to spec's references/) loaded, enumerated, readable, or invisible? | Not surfaced; model never looked † 🔄 | Not surfaced; model never looked | Not surfaced; model never looked | Names listed, contents not loaded |
+| 📌 What happens to directories the spec never named (evals/, templates/): injected, readable on demand, or invisible? | Not surfaced; model never looked † 🔄 | Not surfaced; model never looked 🔄 | Not surfaced; model never looked | Names listed, contents not loaded |
 
 ## Resource Access Patterns
 
@@ -43,7 +45,7 @@ How supporting files (scripts, references, assets) become available to the model
 | Question | Antigravity CLI | Claude Code | Codex CLI | Copilot CLI |
 |---|---|---|---|---|
 | 📌 At activation, are a skill's reference files enumerated to the model (names), loaded outright (contents), or invisible until explored? | Nothing enumerated † | Nothing enumerated | Nothing enumerated | File names listed, contents not loaded |
-| 📌 When the model follows a SKILL.md relative path like references/setup-guide.md, what does it resolve against, and does the bare path work as written? | Bare path fails; model recovers | Bare path fails; model recovers | Model used full paths (base untested) † | Bare path fails; model recovers |
+| 📌 When the model follows a SKILL.md relative path like references/setup-guide.md, what does it resolve against, and does the bare path work as written? | Bare path fails; model recovers | Model used full paths (base untested) † 🔄 | Model used full paths (base untested) † | Model used full paths (base untested) † 🔄 |
 | With two skills both owning references/API.md, does the activated skill's read get its own file or the sibling's? | Got its own file † | Got its own file † | Got its own file † | Got its own file † |
 | Can the model read outside the activated skill's directory (a sibling skill's file), and is anything visibly blocked? | Reads outside the skill allowed | Reads outside the skill allowed | Reads outside the skill allowed | Reads outside the skill allowed |
 | How deep in the directory tree do reference files stay reachable? Rungs at one, two, three, and five levels. | All depths reachable (tested to 5) | All depths reachable (tested to 5) | All depths reachable (tested to 5) | All depths reachable (tested to 5) |
@@ -90,7 +92,7 @@ Whether one skill's instructions can activate another skill.
 |---|---|---|---|---|
 | Can one skill's instructions get a second installed skill activated by name? | Second skill activated | Second skill activated | Second skill activated | Second skill activated |
 | How deep does a skill→skill→skill activation chain run before something stops it? | Full three-skill chain completed | Full three-skill chain completed | Full three-skill chain completed | Full three-skill chain completed |
-| 📌 When two skills each instruct activating the other, does the A→B→A cycle loop, get blocked, or stop by model choice? | Re-invoked without reloading | Model stopped the loop itself | Model stopped the loop itself | Model stopped the loop itself |
+| When two skills each instruct activating the other, does the A→B→A cycle loop, get blocked, or stop by model choice? | Model stopped the loop itself † 🔄 | Model stopped the loop itself | Model stopped the loop itself | Model stopped the loop itself |
 | Does the invoke chain still complete when the activation prompt is Japanese? | Full three-skill chain completed | Full three-skill chain completed | Full three-skill chain completed | Full three-skill chain completed |
 
 ## Skill Dependencies
@@ -100,7 +102,7 @@ What happens when one skill depends on another, formally or in prose.
 | Question | Antigravity CLI | Claude Code | Codex CLI | Copilot CLI |
 |---|---|---|---|---|
 | Is a dependency expressed only in prose ("now activate the invoke-beta skill") resolved at runtime? | Second skill activated | Second skill activated | Second skill activated | Second skill activated |
-| 📌 When a skill instructs activating a skill that is not installed, is the failure visible, reported, or silently skipped? | Reported missing without attempting | Failed with a visible error | Attempted; no error shown | Failed with a visible error |
+| 📌 When a skill instructs activating a skill that is not installed, is the failure visible, reported, or silently skipped? | Failed with a visible error 🔄 | Failed with a visible error | Attempted; no error shown | Failed with a visible error |
 | Does the platform act on nonstandard dependency frontmatter (requires, depends-on, priority)? | Ignored † | Ignored | Ignored | Ignored |
 | 📌 Can a project-level skill invoke a dependency that exists only at user level, and what is the failure mode when it is absent? | Resolved across scopes; missing dependency attempted, no error | Resolved across scopes; missing dependency fails visibly | Resolved across scopes; missing dependency fails visibly | Resolved across scopes; missing dependency fails visibly |
 
@@ -122,10 +124,10 @@ How strictly platforms judge skills that break the spec's format rules: rejected
 
 | Question | Antigravity CLI | Claude Code | Codex CLI | Copilot CLI |
 |---|---|---|---|---|
-| 📌 Is a skill whose description holds an unquoted colon (invalid YAML) still discovered and loadable? | Not cataloged; file still readable † | Tolerated and loaded | Tolerated and loaded | Skipped by a strict parser |
+| 📌 Is a skill whose description holds an unquoted colon (invalid YAML) still discovered and loadable? | Tolerated and loaded † 🔄 | Tolerated and loaded | Tolerated and loaded | Skipped by a strict parser |
 | 📌 Is a skill with no description field skipped (as the guide prescribes), or loaded anyway? | Loaded anyway † | Loaded anyway | Not cataloged; file still readable | Loaded anyway |
 | 📌 Are skills whose names break the spec's rules (uppercase, consecutive hyphens, over 64 characters) still discovered and loadable? | All three invalid names tolerated † | All three invalid names tolerated | Tolerated only: uppercase, double-hyphen | Tolerated only: uppercase, double-hyphen |
-| 📌 When directory name and frontmatter name disagree, which identity is the skill listed and invocable under? | Frontmatter name wins † | Directory name wins | Listed under both names | Listed under both names |
+| 📌 When directory name and frontmatter name disagree, which identity is the skill listed and invocable under? | Frontmatter name wins † | Listed under both names 🔄 | Listed under both names | Listed under both names |
 | Is a skill whose metadata frontmatter holds nulls and empty strings still discovered and loaded, and do those keys reach the model? | Loaded fine | Loaded fine | Loaded fine | Loaded fine |
 | 📌 Is a skill whose description exceeds the spec's 1024-character limit still discovered, and does the full value survive untruncated? | Loaded anyway † | Loaded anyway | Loaded anyway | Skipped |
 | 📌 When a platform enforces the 1024-character description limit, does it count Unicode code points, UTF-16 code units, or UTF-8 bytes? | No enforcement (unit is moot) † | No enforcement (unit is moot) | Counts Unicode code points | Counts UTF-16 code units |

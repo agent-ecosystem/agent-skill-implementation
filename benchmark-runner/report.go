@@ -415,7 +415,7 @@ func loadFindings(dirs []string) (map[string]map[string]checks.Finding, error) {
 }
 
 // writeReports emits one markdown report per harness into outDir.
-func writeReports(findingsDirs []string, outDir string) error {
+func writeReports(findingsDirs []string, outDir string, ledgers []LedgerEntry) error {
 	all, err := loadFindings(findingsDirs)
 	if err != nil {
 		return err
@@ -423,6 +423,7 @@ func writeReports(findingsDirs []string, outDir string) error {
 	if len(all) == 0 {
 		return fmt.Errorf("report: no findings under %v", findingsDirs)
 	}
+	prior := priorVerdicts(all, ledgers)
 	if err := os.MkdirAll(outDir, 0o755); err != nil {
 		return err
 	}
@@ -433,7 +434,7 @@ func writeReports(findingsDirs []string, outDir string) error {
 	sort.Strings(harnesses)
 	for _, h := range harnesses {
 		path := filepath.Join(outDir, h+".md")
-		if err := os.WriteFile(path, []byte(renderReport(h, all[h], false)), 0o644); err != nil {
+		if err := os.WriteFile(path, []byte(renderReport(h, all[h], false, prior[h])), 0o644); err != nil {
 			return err
 		}
 		fmt.Printf("wrote %s (%d findings)\n", path, len(all[h]))
@@ -452,7 +453,7 @@ var shortNames = map[string]string{
 // writeSite emits the site's platforms section: a comparison index plus
 // one full report page per platform, with evidence reduced to prose (the
 // site audience has no access to the archived transcripts).
-func writeSite(findingsDirs []string, siteRoot string) error {
+func writeSite(findingsDirs []string, siteRoot string, ledgers []LedgerEntry) error {
 	all, err := loadFindings(findingsDirs)
 	if err != nil {
 		return err
@@ -460,6 +461,7 @@ func writeSite(findingsDirs []string, siteRoot string) error {
 	if len(all) == 0 {
 		return fmt.Errorf("report: no findings under %v", findingsDirs)
 	}
+	prior := priorVerdicts(all, ledgers)
 	outDir := filepath.Join(siteRoot, "content", "platforms")
 	if err := os.MkdirAll(outDir, 0o755); err != nil {
 		return err
@@ -469,13 +471,13 @@ func writeSite(findingsDirs []string, siteRoot string) error {
 		harnesses = append(harnesses, h)
 	}
 	sort.Strings(harnesses)
-	if err := os.WriteFile(filepath.Join(outDir, "_index.md"), []byte(renderComparison(all, harnesses)), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(outDir, "_index.md"), []byte(renderComparison(all, harnesses, prior)), 0o644); err != nil {
 		return err
 	}
 	fmt.Printf("wrote %s\n", filepath.Join(outDir, "_index.md"))
 	for _, h := range harnesses {
 		path := filepath.Join(outDir, h+".md")
-		if err := os.WriteFile(path, []byte(renderReport(h, all[h], true)), 0o644); err != nil {
+		if err := os.WriteFile(path, []byte(renderReport(h, all[h], true, prior[h])), 0o644); err != nil {
 			return err
 		}
 		fmt.Printf("wrote %s (%d findings)\n", path, len(all[h]))
@@ -485,8 +487,10 @@ func writeSite(findingsDirs []string, siteRoot string) error {
 
 // renderComparison builds the platforms index for a human audience: each
 // row leads with the check's question, cells hold plain-language outcomes,
-// and rows where platforms disagree are flagged with a 📌 marker.
-func renderComparison(all map[string]map[string]checks.Finding, harnesses []string) string {
+// and rows where platforms disagree are flagged with a 📌 marker. Cells
+// whose verdict differs from the platform's previous observation (per the
+// ledgers, when supplied) carry a 🔄 marker.
+func renderComparison(all map[string]map[string]checks.Finding, harnesses []string, prior map[string]map[string]LedgerEntry) string {
 	questions := checkQuestions()
 	var b strings.Builder
 	w := func(format string, args ...any) { fmt.Fprintf(&b, format+"\n", args...) }
@@ -530,6 +534,16 @@ func renderComparison(all map[string]map[string]checks.Finding, harnesses []stri
 	w("")
 	w("For what these findings mean in practice, see the [guidance](/guidance/) for authors, installers, distributors, and harness implementers. The [check list](/checks/) has the full rationale behind every question. All findings come from headless sessions, which can differ from interactive use; outcomes marked † rest on behavioral inference rather than direct transcript evidence. Two checks (context compaction protection, trust gating) need interactive sessions and are marked manual.")
 	w("")
+	changed := 0
+	for _, m := range prior {
+		changed += len(m)
+	}
+	if changed > 0 {
+		w("Every cell is a dated observation of one release, not a permanent property of the platform. Harnesses ship often and their behavior moves. Cells marked 🔄 (%d in this run) hold a different verdict than that platform's previous observation; the [changelog](/changelog/) records each run of the checks, the releases it tested, and whether the platform or the model moved each verdict.", changed)
+	} else {
+		w("Every cell is a dated observation of one release, not a permanent property of the platform. Harnesses ship often and their behavior moves; the [changelog](/changelog/) records each run of the checks, the releases it tested, and which verdicts changed since the one before.")
+	}
+	w("")
 
 	for _, cat := range reportCategories {
 		w("## %s", cat.Name)
@@ -563,6 +577,9 @@ func renderComparison(all map[string]map[string]checks.Finding, harnesses []stri
 					if f.Confidence == checks.ConfidenceInferred {
 						cell += " †"
 					}
+					if _, moved := prior[h][id]; moved {
+						cell += " 🔄"
+					}
 				}
 				row += " " + cell + " |"
 			}
@@ -573,7 +590,7 @@ func renderComparison(all map[string]map[string]checks.Finding, harnesses []stri
 	return b.String()
 }
 
-func renderReport(harness string, fs map[string]checks.Finding, site bool) string {
+func renderReport(harness string, fs map[string]checks.Finding, site bool, prior map[string]LedgerEntry) string {
 	var b strings.Builder
 	w := func(format string, args ...any) { fmt.Fprintf(&b, format+"\n", args...) }
 
@@ -632,8 +649,32 @@ func renderReport(harness string, fs map[string]checks.Finding, site bool) strin
 		caveat += " Evidence line numbers cite the archived transcripts in the results directories."
 	}
 	caveat += " Fallback-behavior fields are auto-derived: where a run incidentally demonstrated a recovery path it is reported, otherwise the field says \"not exercised\". Automation does not probe recovery, so absence of a fallback observation is not evidence that none exists."
+	if site {
+		caveat += " These findings describe the release in the header on the test date; platform behavior changes between releases, and the [changelog](/changelog/) records what moved from one run of the checks to the next."
+	}
 	w("%s", caveat)
 	w("")
+	if len(prior) > 0 {
+		var ids []string
+		for id := range prior {
+			ids = append(ids, id)
+		}
+		sort.Strings(ids)
+		var links []string
+		for _, id := range ids {
+			if site {
+				links = append(links, fmt.Sprintf("[`%s`](#%s)", id, id))
+			} else {
+				links = append(links, "`"+id+"`")
+			}
+		}
+		noun := "verdicts differ"
+		if len(ids) == 1 {
+			noun = "verdict differs"
+		}
+		w("> **Changed since the previous observation**: %d %s from the previous run of the checks on this platform: %s. Each finding below states the earlier verdict and release.", len(ids), noun, strings.Join(links, ", "))
+		w("")
+	}
 
 	questions := checkQuestions()
 	w("%s", renderSpecAlignment(fs, len(questions)))
@@ -663,6 +704,17 @@ func renderReport(harness string, fs map[string]checks.Finding, site bool) strin
 					w("- **Verdict**: %s (`%s`)", humanVerdict(f.Verdict), f.Verdict)
 				} else {
 					w("- **Verdict**: `%s`", f.Verdict)
+				}
+				if p, moved := prior[id]; moved {
+					was := fmt.Sprintf("`%s`", p.Verdict)
+					if site {
+						was = fmt.Sprintf("%s (`%s`)", humanVerdict(p.Verdict), p.Verdict)
+					}
+					line := fmt.Sprintf("- **Changed since previous observation**: was %s on %s (%s)", was, orDash(p.HarnessVersion), shortDate(p.Ended))
+					if site {
+						line += "; the [changelog](/changelog/) says what moved it"
+					}
+					w("%s", line)
 				}
 				if f.Vehicle != "" && f.Vehicle != "none" {
 					w("- **Vehicle**: %s", f.Vehicle)

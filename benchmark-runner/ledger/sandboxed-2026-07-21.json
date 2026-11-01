@@ -1,0 +1,168 @@
+{
+  "source": "sandboxed-2026-07-21",
+  "generated": "2026-11-01",
+  "entries": [
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.5",
+      "model": "Gemini 3.5 Flash (Medium)",
+      "check_id": "activation-loading-scope",
+      "status": "observed",
+      "verdict": "body-only",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-07-20T23:40:52.415643-04:00"
+    },
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.5",
+      "model": "Gemini 3.5 Flash (Medium)",
+      "check_id": "cross-scope-dependency",
+      "status": "observed",
+      "verdict": "resolved-across-scopes; missing:attempted-no-error",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-07-20T23:52:37.605271-04:00"
+    },
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.5",
+      "model": "Gemini 3.5 Flash (Medium)",
+      "check_id": "discovery-reading-depth",
+      "status": "observed",
+      "verdict": "metadata-only",
+      "confidence": "behavioral-inference",
+      "ended": "2026-07-20T23:40:45.817236-04:00"
+    },
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.5",
+      "model": "Gemini 3.5 Flash (Medium)",
+      "check_id": "reactivation-deduplication",
+      "status": "observed",
+      "verdict": "re-read-each-activation",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-07-20T23:41:06.614315-04:00"
+    },
+    {
+      "harness": "antigravity",
+      "harness_version": "1.1.5",
+      "model": "Gemini 3.5 Flash (Medium)",
+      "check_id": "reactivation-freshness",
+      "status": "observed",
+      "verdict": "fresh-content-served",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-07-20T23:41:16.974712-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.205",
+      "model": "claude-sonnet-5",
+      "check_id": "activation-loading-scope",
+      "status": "observed",
+      "verdict": "body-only",
+      "vehicle": "harness-push",
+      "confidence": "transcript-direct",
+      "ended": "2026-07-20T23:41:34.861886-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.205",
+      "model": "claude-sonnet-5",
+      "check_id": "cross-scope-dependency",
+      "status": "observed",
+      "verdict": "resolved-across-scopes; missing:visible-failure",
+      "vehicle": "harness-push",
+      "confidence": "transcript-direct",
+      "ended": "2026-07-20T23:50:20.827873-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.205",
+      "model": "claude-sonnet-5",
+      "check_id": "discovery-reading-depth",
+      "status": "observed",
+      "verdict": "metadata-only",
+      "confidence": "transcript-direct",
+      "ended": "2026-07-20T23:41:20.181232-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.205",
+      "model": "claude-sonnet-5",
+      "check_id": "reactivation-deduplication",
+      "status": "observed",
+      "verdict": "reinjected-each-activation",
+      "vehicle": "harness-push",
+      "confidence": "transcript-direct",
+      "ended": "2026-07-20T23:41:54.701349-04:00"
+    },
+    {
+      "harness": "claude-code",
+      "harness_version": "2.1.205",
+      "model": "claude-sonnet-5",
+      "check_id": "reactivation-freshness",
+      "status": "observed",
+      "verdict": "fresh-content-served",
+      "vehicle": "harness-push",
+      "confidence": "transcript-direct",
+      "ended": "2026-07-20T23:42:16.332207-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.144.6",
+      "model": "gpt-5.6-sol",
+      "check_id": "activation-loading-scope",
+      "status": "observed",
+      "verdict": "body-only",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-07-20T23:42:30.79069-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.144.6",
+      "model": "gpt-5.6-sol",
+      "check_id": "cross-scope-dependency",
+      "status": "observed",
+      "verdict": "resolved-across-scopes; missing:not-attempted",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-07-20T23:50:40.345195-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.144.6",
+      "model": "gpt-5.6-sol",
+      "check_id": "discovery-reading-depth",
+      "status": "observed",
+      "verdict": "metadata-only",
+      "confidence": "transcript-direct",
+      "ended": "2026-07-20T23:42:21.754878-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.144.6",
+      "model": "gpt-5.6-sol",
+      "check_id": "reactivation-deduplication",
+      "status": "observed",
+      "verdict": "re-read-each-activation",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-07-20T23:42:46.393662-04:00"
+    },
+    {
+      "harness": "codex",
+      "harness_version": "0.144.6",
+      "model": "gpt-5.6-sol",
+      "check_id": "reactivation-freshness",
+      "status": "observed",
+      "verdict": "fresh-content-served",
+      "vehicle": "model-pull",
+      "confidence": "transcript-direct",
+      "ended": "2026-07-20T23:43:03.805814-04:00"
+    }
+  ]
+}

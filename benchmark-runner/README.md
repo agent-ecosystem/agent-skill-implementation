@@ -21,7 +21,9 @@ may differ from interactive use**. Manual testing remains the only path for the 
 ## Usage
 
 Requires Go and at least one supported harness installed and
-authenticated.
+authenticated. For the end-to-end maintainer procedure (dependency bump,
+running every harness, validating, recording the ledger, writing the
+changelog, regenerating the site), see [RUNNING-CHECKS.md](RUNNING-CHECKS.md).
 
 ```bash
 cd benchmark-runner
@@ -43,12 +45,47 @@ go run . -harness codex -check reactivation-deduplication -runs 5 -out results
 go run . -sandbox -out results
 
 # Generate per-platform markdown reports from findings (latest finding
-# wins when the same harness+check appears in several dirs)
+# wins when the same harness+check appears in several dirs); verdicts
+# that differ from the previous observation in ledger/ are marked
 go run . -report results/batch2-2026-08-01,results/batch3-2026-08-01 -out reports
+
+# Record a run's verdicts in a committable ledger (one file per dir)
+go run . -ledger results/resweep-2026-10-31 -out ledger
+
+# Draft a changelog entry: what moved between two runs
+go run . -ledger-diff ledger/resweep-2026-10-31.json \
+  -baseline ledger/resweep-2026-09-25.json,ledger/copilot-2026-09-25.json
 ```
 
 Output: `results/<harness>/<check>/finding.json` plus the archived
 transcript(s) its evidence cites by line number.
+
+## Ledgers
+
+Results directories hold transcripts and stay out of version control, so
+on their own they leave no public record of what a platform did on an
+earlier release. `-ledger` reduces a results directory to one small JSON
+file under [ledger/](ledger/): every finding's verdict, vehicle,
+confidence, run count, harness version, model, and end time, and nothing
+else. Ledgers are committed with each run, so the history of verdicts,
+release by release, is public and reproducible.
+
+`-report` reads the committed ledgers too (`-ledgers`, default `ledger/`).
+A finding whose verdict differs from the platform's most recent earlier
+observation gets a "changed since previous observation" line naming the
+earlier verdict, release, and date; the site's comparison table marks the
+cell with 🔄, and each platform page opens with the list of changed
+checks. The marker compares against the previous observation only, so a
+verdict that moved two runs ago and has held since is not marked.
+
+`-ledger-diff` compares the latest entry per harness and check across the
+ledgers on each side (several partial runs can make up a side, as they
+do for the reports) and prints a markdown draft: releases tested, verdicts
+that moved, same-verdict evidence-grade changes, first observations, and
+baseline checks the new run did not repeat. The draft sorts the facts;
+deciding whether a move is platform-level or the model's choice takes the
+transcripts and stays with the maintainer, who writes it up in the site's
+[changelog](../site/content/changelog/_index.md).
 
 ## Reading a finding
 
@@ -128,7 +165,8 @@ prompt).
 
 This directory is a Go module so the repository stays a content-first
 project; the module depends on the published
-[skillxp](https://github.com/agent-ecosystem/skillxp) release (v0.3.0 as
-of this writing, the first with Copilot CLI support). Unlike the repository's CC-BY-4.0 content, code
+[skillxp](https://github.com/agent-ecosystem/skillxp) release (v0.4.1 as
+of this writing, validated against the harness releases current on
+2026-10-31). Unlike the repository's CC-BY-4.0 content, code
 under this directory is intended to be MIT-licensed to match the rest of
 the tooling; see the repository maintainers if that matters to your use.

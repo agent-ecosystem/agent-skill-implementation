@@ -2,6 +2,7 @@
 title: "Authoring Guidance"
 description: "What skill authors should do differently based on observed platform divergence, derived from platform reports."
 date: 2026-08-01
+lastmod: 2026-11-01
 weight: 1
 showTableOfContents: true
 ---
@@ -10,7 +11,7 @@ This guidance is derived from the automated findings in the [platform comparison
 
 ## Naming and identity
 
-**Make the frontmatter `name` match the directory name exactly.** The spec requires it. In platforms under test, we've observed they don't enforce this convention, nor resolve it the same way. Codex, Antigravity, and Copilot CLI activate the skill by its frontmatter name (Codex and Copilot CLI also show the directory name in their listings, because the listed path contains it, but activating by that name fails), while Claude Code lists and activates it under the directory name only. A mismatched skill answers to different names on different platforms. Anything that references it by name, such as documentation, other skills, or user habit, breaks on whichever platform chose the other identity (`name-directory-mismatch`).
+**Make the frontmatter `name` match the directory name exactly.** The spec requires it. In platforms under test, we've observed they don't enforce this convention, nor resolve it the same way. Codex, Antigravity, and Copilot CLI activate the skill by its frontmatter name (Codex and Copilot CLI also show the directory name in their listings, because the listed path contains it, but activating by that name fails). Claude Code listed and activated it under the directory name only through 2.1.274; since 2.1.309 its listing shows the directory name with the frontmatter name in parentheses, and either name activates the skill (see the [changelog](/changelog/)). A mismatched skill answers to different names on different platforms, and to a different set of names on different releases of the same platform. Anything that references it by name, such as documentation, other skills, or user habit, breaks on whichever platform chose the other identity (`name-directory-mismatch`).
 
 **Follow all of the name rules, not just the ones your platform enforces.** Enforcement varies by rule: every tested platform tolerated uppercase letters and consecutive hyphens in a skill name, but a name over the spec's 64-character limit is rejected by Codex and Copilot CLI while Claude Code and Antigravity load it anyway. A rule-breaking name works where you tested it and vanishes elsewhere, with no error (`invalid-name-tolerance`).
 

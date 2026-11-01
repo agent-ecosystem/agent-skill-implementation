@@ -1,7 +1,9 @@
 // Command benchmark-runner executes this repository's automated
 // skill-loading checks against installed harnesses, using skillxp as the
 // invocation and observation engine. Findings and archived transcripts
-// land under -out, one directory per harness and check.
+// land under -out, one directory per harness and check. It also derives
+// the maintainer reports, the site's platforms section, and the
+// committable verdict ledgers from those findings.
 package main
 
 import (
@@ -38,17 +40,48 @@ func run() error {
 	list := flag.Bool("list", false, "list implemented checks and exit")
 	report := flag.String("report", "", "comma-separated findings dirs; generate per-platform markdown reports into -out (default reports/) instead of running checks")
 	site := flag.String("site", "", "with -report: site root; write the platforms content section (comparison index + per-platform pages) instead of maintainer reports")
+	ledger := flag.String("ledger", "", "comma-separated findings dirs; write one committable verdict ledger per dir into -out (default ledger/) instead of running checks")
+	ledgerDiff := flag.String("ledger-diff", "", "comma-separated ledger files for the newer run of the checks; print a markdown changelog draft against -baseline")
+	baseline := flag.String("baseline", "", "with -ledger-diff: comma-separated ledger files for the earlier run(s) to compare against")
+	ledgers := flag.String("ledgers", "ledger", "with -report: directory of committed ledgers; findings whose verdict differs from the platform's previous observation are marked (no marks if the default directory is absent)")
 	flag.Parse()
 
+	if *ledger != "" {
+		dest := *out
+		if dest == "results" {
+			dest = "ledger"
+		}
+		return writeLedgers(strings.Split(*ledger, ","), dest)
+	}
+	if *ledgerDiff != "" {
+		if *baseline == "" {
+			return fmt.Errorf("-ledger-diff needs -baseline")
+		}
+		old, err := loadLedgers(strings.Split(*baseline, ","))
+		if err != nil {
+			return err
+		}
+		newer, err := loadLedgers(strings.Split(*ledgerDiff, ","))
+		if err != nil {
+			return err
+		}
+		fmt.Print(renderLedgerDiff(old, newer))
+		return nil
+	}
+
 	if *report != "" {
+		history, err := ledgerHistory(*ledgers)
+		if err != nil {
+			return err
+		}
 		if *site != "" {
-			return writeSite(strings.Split(*report, ","), *site)
+			return writeSite(strings.Split(*report, ","), *site, history)
 		}
 		dest := *out
 		if dest == "results" {
 			dest = "reports"
 		}
-		return writeReports(strings.Split(*report, ","), dest)
+		return writeReports(strings.Split(*report, ","), dest, history)
 	}
 
 	if *list {
@@ -303,4 +336,22 @@ func defaultSkillsDir() string {
 		}
 	}
 	return "../benchmark-skills"
+}
+
+// ledgerHistory loads the committed ledgers the reports mark changes
+// against. The default directory may legitimately be absent (a checkout
+// without ledgers, or a run from another cwd); an explicitly named one
+// may not.
+func ledgerHistory(dir string) ([]LedgerEntry, error) {
+	if dir == "" {
+		return nil, nil
+	}
+	if _, err := os.Stat(dir); err != nil {
+		if dir == "ledger" {
+			fmt.Fprintln(os.Stderr, "benchmark-runner: no ledger/ directory; reports will carry no change markers")
+			return nil, nil
+		}
+		return nil, fmt.Errorf("ledgers: %w", err)
+	}
+	return loadLedgerDir(dir)
 }
